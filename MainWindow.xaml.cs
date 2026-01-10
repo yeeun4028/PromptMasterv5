@@ -9,6 +9,9 @@ using System.Text;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using PromptMasterv5.Models;
 
+// ★★★ 引用 InputMode，解决歧义 ★★★
+using InputMode = PromptMasterv5.Models.InputMode;
+
 // 解决控件引用歧义
 using Button = System.Windows.Controls.Button;
 using TextBox = System.Windows.Controls.TextBox;
@@ -20,7 +23,6 @@ namespace PromptMasterv5
     {
         public MainViewModel ViewModel { get; }
 
-        // 用于检测双击 Enter
         private DateTime _lastEnterTime = DateTime.MinValue;
 
         public MainWindow()
@@ -38,23 +40,27 @@ namespace PromptMasterv5
             }
         }
 
-        // ★★★ 核心方法提取：统一的发送处理流程 ★★★
-        private void TriggerSendProcess(TextBox sourceBox)
+        // 统一发送流程 (async void 是允许的，因为它被设计为顶级调用)
+        private async void TriggerSendProcess(TextBox sourceBox, InputMode mode)
         {
-            // 1. 强制更新绑定 (所见即所得，防止输入法未提交)
+            // 1. 强制同步数据
             sourceBox?.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
 
-            // 2. 强制隐藏窗口 (用户体验第一位)
+            // 2. 强制隐藏窗口
             this.Hide();
 
-            // 3. 执行发送命令
-            // 注意：如果是变量模式，ViewModel 会自动读取 Variables 集合；
-            // 如果是附加输入模式，ViewModel 会读取 AdditionalInput 属性。
-            ViewModel.SendCombinedInputCommand.Execute(null);
+            // 3. 根据模式调用不同的 ViewModel 方法 (使用 await)
+            if (mode == InputMode.SmartFocus)
+            {
+                await ViewModel.SendBySmartFocus();
+            }
+            else
+            {
+                await ViewModel.SendByCoordinate();
+            }
         }
 
-        // BLOCK3: 变量输入框的按键逻辑
-        // ★★★ 修复点：在此处增加了 Ctrl+Enter 检测 ★★★
+        // BLOCK3 (变量框) 按键逻辑
         private void TextBox_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
@@ -62,15 +68,15 @@ namespace PromptMasterv5
                 var textBox = sender as TextBox;
                 if (textBox == null) return;
 
-                // 1. 检测 Ctrl + Enter (新增功能)
+                // Ctrl + Enter -> 智能回退
                 if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
                 {
                     e.Handled = true;
-                    TriggerSendProcess(textBox);
+                    TriggerSendProcess(textBox, InputMode.SmartFocus);
                     return;
                 }
 
-                // 2. 原有的智能有序列表逻辑 (保持不变)
+                // 有序列表逻辑
                 int caretIndex = textBox.CaretIndex;
                 int lineIndex = textBox.GetLineIndexFromCharacterIndex(caretIndex);
                 if (lineIndex < 0) return;
@@ -94,7 +100,7 @@ namespace PromptMasterv5
             }
         }
 
-        // BLOCK4: 附加输入框的按键逻辑
+        // BLOCK4 (附加输入框) 按键逻辑
         private void AdditionalInputBox_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
@@ -102,24 +108,27 @@ namespace PromptMasterv5
                 var textBox = sender as TextBox;
                 if (textBox == null) return;
 
-                // 判断是否是 Ctrl+Enter
                 bool isCtrlEnter = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
 
-                // 判断是否是双击 Enter (500ms 内连按)
                 var now = DateTime.Now;
                 var span = (now - _lastEnterTime).TotalMilliseconds;
                 bool isDoubleEnter = span < 500;
 
-                if (isCtrlEnter || isDoubleEnter)
+                // 并行触发逻辑
+                if (isCtrlEnter)
                 {
-                    e.Handled = true; // 阻止换行符输入
-
-                    // ★★★ 调用统一的发送流程 ★★★
-                    // 额外动作：对于 BLOCK4，我们手动同步一下属性，双重保险
+                    // 情况1：Ctrl + Enter -> 智能回退
+                    e.Handled = true;
                     ViewModel.AdditionalInput = textBox.Text;
-                    TriggerSendProcess(textBox);
-
-                    if (isDoubleEnter) _lastEnterTime = DateTime.MinValue;
+                    TriggerSendProcess(textBox, InputMode.SmartFocus);
+                }
+                else if (isDoubleEnter)
+                {
+                    // 情况2：双击 Enter -> 坐标点击
+                    e.Handled = true;
+                    ViewModel.AdditionalInput = textBox.Text;
+                    TriggerSendProcess(textBox, InputMode.CoordinateClick);
+                    _lastEnterTime = DateTime.MinValue;
                 }
                 else
                 {
@@ -128,57 +137,43 @@ namespace PromptMasterv5
             }
         }
 
-        // 列表项双击发送
-        private void FileListBoxItem_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        // ★★★ 修复点：添加 async 关键字并使用 await ★★★
+        private async void FileListBoxItem_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (sender is ListBoxItem)
             {
-                ViewModel.SendDirectPromptCommand.Execute(null);
+                // 现在这里会等待异步任务完成，消除了 CS4014 警告
+                await ViewModel.SendBySmartFocus();
             }
         }
 
         private void WebDavPasswordBox_Loaded(object sender, RoutedEventArgs e)
         {
-            var passwordBox = sender as PasswordBox;
-            if (passwordBox != null && ViewModel.Config != null)
-            {
-                if (passwordBox.Password != ViewModel.Config.Password)
-                {
-                    passwordBox.Password = ViewModel.Config.Password;
-                }
-            }
+            var pb = sender as PasswordBox;
+            if (pb != null && ViewModel.Config != null && pb.Password != ViewModel.Config.Password)
+                pb.Password = ViewModel.Config.Password;
         }
 
         private void WebDavPasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
         {
-            var passwordBox = sender as PasswordBox;
-            if (passwordBox != null && ViewModel.Config != null)
-            {
-                ViewModel.Config.Password = passwordBox.Password;
-            }
+            var pb = sender as PasswordBox;
+            if (pb != null && ViewModel.Config != null)
+                ViewModel.Config.Password = pb.Password;
         }
 
         private void HotkeyTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             Key key = (e.Key == Key.System ? e.SystemKey : e.Key);
-
-            if (key == Key.LeftCtrl || key == Key.RightCtrl ||
-                key == Key.LeftAlt || key == Key.RightAlt ||
-                key == Key.LeftShift || key == Key.RightShift ||
-                key == Key.LWin || key == Key.RWin)
-            {
+            if (key == Key.LeftCtrl || key == Key.RightCtrl || key == Key.LeftAlt || key == Key.RightAlt ||
+                key == Key.LeftShift || key == Key.RightShift || key == Key.LWin || key == Key.RWin)
                 return;
-            }
 
             e.Handled = true;
-
             var sb = new StringBuilder();
-
             if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control) sb.Append("Ctrl+");
             if ((Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt) sb.Append("Alt+");
             if ((Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift) sb.Append("Shift+");
             if ((Keyboard.Modifiers & ModifierKeys.Windows) == ModifierKeys.Windows) sb.Append("Win+");
-
             sb.Append(key.ToString());
 
             var textBox = sender as TextBox;
@@ -189,14 +184,11 @@ namespace PromptMasterv5
             }
         }
 
-        // 坐标拾取逻辑
         private async void PickCoordinate_Click(object sender, RoutedEventArgs e)
         {
             var btn = sender as Button;
             if (btn == null) return;
-
             string originalContent = btn.Content.ToString() ?? "拾取";
-
             try
             {
                 btn.IsEnabled = false;
@@ -205,11 +197,9 @@ namespace PromptMasterv5
                     btn.Content = $"{i}";
                     await Task.Delay(1000);
                 }
-
                 var pt = WinFormsCursor.Position;
                 ViewModel.LocalConfig.ClickX = pt.X;
                 ViewModel.LocalConfig.ClickY = pt.Y;
-
                 btn.Content = "已获取!";
                 await Task.Delay(1000);
             }

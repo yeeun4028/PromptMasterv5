@@ -17,7 +17,10 @@ using NHotkey.Wpf;
 using PromptMasterv5.Models;
 using PromptMasterv5.Services;
 
-// 别名解决冲突
+// ★★★ 修复1：明确指定 InputMode 指的是我们 Models 里的那个枚举 ★★★
+using InputMode = PromptMasterv5.Models.InputMode;
+
+// 别名解决 WPF 与 WinForms 的引用冲突
 using MessageBox = System.Windows.MessageBox;
 using Application = System.Windows.Application;
 using Clipboard = System.Windows.Clipboard;
@@ -33,13 +36,13 @@ namespace PromptMasterv5.ViewModels
         private DispatcherTimer _timer;
         private DateTime _lastSyncTime = DateTime.Now;
 
-        // 记录上一个窗口句柄
+        // 记录上一个窗口句柄 (用于智能回退)
         private IntPtr _previousWindowHandle = IntPtr.Zero;
 
         [ObservableProperty]
         private AppConfig config;
 
-        // 字段保持小写，初始化防止 CS8618
+        // 本地配置 (坐标等)，初始化防止空引用
         [ObservableProperty]
         private LocalSettings localConfig = new LocalSettings();
 
@@ -90,7 +93,7 @@ namespace PromptMasterv5.ViewModels
         {
             Config = ConfigService.Load();
 
-            // ★★★ 修复：使用大写属性 LocalConfig ★★★
+            // 加载本地配置
             LocalConfig = LocalConfigService.Load();
 
             UpdateGlobalHotkey();
@@ -155,6 +158,7 @@ namespace PromptMasterv5.ViewModels
             ToggleMainWindow();
         }
 
+        // 捕获当前活动窗口句柄
         public void CaptureForegroundWindow()
         {
             var handle = NativeMethods.GetForegroundWindow();
@@ -316,7 +320,6 @@ namespace PromptMasterv5.ViewModels
         private void OpenSettings()
         {
             Config = ConfigService.Load();
-            // ★★★ 修复：使用大写属性 LocalConfig ★★★
             LocalConfig = LocalConfigService.Load();
             SelectedSettingsTab = 0;
             IsSettingsOpen = true;
@@ -326,7 +329,6 @@ namespace PromptMasterv5.ViewModels
         private void SaveSettings()
         {
             ConfigService.Save(Config);
-            // ★★★ 修复：使用大写属性 LocalConfig ★★★
             LocalConfigService.Save(LocalConfig);
 
             UpdateGlobalHotkey();
@@ -487,8 +489,7 @@ namespace PromptMasterv5.ViewModels
             HasVariables = Variables.Count > 0;
         }
 
-        // 修改后的 CompileContent：支持无选中文档时单独发送 BLOCK4 内容
-        // ★★★ 修复后的 CompileContent：支持无选中文档时单独发送 BLOCK4 内容 ★★★
+        // 编译内容：合并变量和 BLOCK4
         private string CompileContent()
         {
             // 基础内容：如果有选中文档，取文档内容；否则为空字符串
@@ -524,21 +525,42 @@ namespace PromptMasterv5.ViewModels
             if (!string.IsNullOrEmpty(content)) Clipboard.SetText(content);
         }
 
+        // ============================================
+        // ★★★ 核心发送逻辑 (双模式并行) ★★★
+        // ============================================
+
+        // 1. 公开方法：智能回退发送 (供前端调用，对应 Ctrl+Enter 或列表双击)
+        public async Task SendBySmartFocus()
+        {
+            string content = CompileContent();
+            await ExecuteSendAsync(content, InputMode.SmartFocus);
+        }
+
+        // 2. 公开方法：坐标点击发送 (供前端调用，对应 双击 Enter)
+        public async Task SendByCoordinate()
+        {
+            // 坐标点击模式下，通常不需要末尾的换行符，所以 Trim 一下更稳妥
+            string content = CompileContent().TrimEnd();
+            await ExecuteSendAsync(content, InputMode.CoordinateClick);
+        }
+
+        // 3. 原有的 Command 绑定 (列表项双击时使用)
         [RelayCommand]
         private async Task SendDirectPrompt()
         {
-            string content = CompileContent();
-            await ExecuteSendAsync(content);
+            await SendBySmartFocus();
         }
 
+        // 4. 原有的 Command 绑定 (保留以兼容可能的 XAML 绑定，虽然前端主要用 TriggerSendProcess)
         [RelayCommand]
         private async Task SendCombinedInput()
         {
-            string content = CompileContent().TrimEnd();
-            await ExecuteSendAsync(content);
+            // 默认行为走智能回退
+            await SendBySmartFocus();
         }
 
-        private async Task ExecuteSendAsync(string content)
+        // 5. 核心底层发送实现
+        private async Task ExecuteSendAsync(string content, InputMode targetMode)
         {
             if (string.IsNullOrWhiteSpace(content)) return;
 
@@ -548,9 +570,11 @@ namespace PromptMasterv5.ViewModels
                 window.Hide();
             }
 
-            // ★★★ 修复：使用大写属性 LocalConfig ★★★
-            await InputSender.SendAsync(content, LocalConfig, _previousWindowHandle);
+            // 调用 InputSender 服务，传入明确的 targetMode
+            await InputSender.SendAsync(content, targetMode, LocalConfig, _previousWindowHandle);
         }
+
+        // ============================================
 
         [RelayCommand]
         private void ToggleEditMode()
