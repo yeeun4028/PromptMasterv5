@@ -20,8 +20,11 @@
     <Window.Resources>
         <SolidColorBrush x:Key="TextBrush" Color="#333333"/>
         <SolidColorBrush x:Key="GitHubBlue" Color="#4183C4"/>
+        <SolidColorBrush x:Key="Block1Background" Color="#F1F1EF"/>
 
-        <!-- 图标资源 -->
+        <Geometry x:Key="IconChevronRight">M 9,6 L 15,12 L 9,18</Geometry>
+        <Geometry x:Key="IconChevronLeft">M 15,6 L 9,12 L 15,18</Geometry>
+
         <Geometry x:Key="IconFolder">M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z</Geometry>
         <Geometry x:Key="IconNewFolder">M20 6h-8l-2-2H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.9-2-2-2zm-1 8h-3v3h-2v-3h-3v-2h3V9h2v3h3v2z</Geometry>
         <Geometry x:Key="IconNewDoc">M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z</Geometry>
@@ -33,6 +36,30 @@
 
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
 
+        <Style x:Key="Block1ToolTipStyle" TargetType="ToolTip">
+            <Setter Property="Background" Value="{StaticResource Block1Background}"/>
+            <Setter Property="Foreground" Value="#333"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="HasDropShadow" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToolTip">
+                        <Grid Margin="0,0,5,5">
+                            <Border Background="{TemplateBinding Background}"
+                                    CornerRadius="2"
+                                    Padding="8,4">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="Black" Opacity="0.2" ShadowDepth="2" Direction="315" BlurRadius="4"/>
+                                </Border.Effect>
+                                <ContentPresenter />
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="FolderListBoxItemStyle" TargetType="ListBoxItem">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -40,7 +67,11 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
-                        <Border Background="{TemplateBinding Background}" Width="40" Height="40" CornerRadius="4" ToolTip="{Binding Name}">
+                        <Border Background="{TemplateBinding Background}" Width="40" Height="40" CornerRadius="4">
+                            <Border.ToolTip>
+                                <ToolTip Style="{StaticResource Block1ToolTipStyle}" Content="{Binding Name}"/>
+                            </Border.ToolTip>
+
                             <Path x:Name="IconPath" Data="{StaticResource IconFolder}" Fill="#898888" Stretch="Uniform" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -136,18 +167,19 @@
     <Border Background="#FAFAFA" CornerRadius="5">
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="60"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="250"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- 顶部拖动区1 -->
-            <Border Grid.Column="0" Grid.ColumnSpan="2" Height="40" VerticalAlignment="Top" Background="Transparent" MouseLeftButtonDown="TopBar_MouseLeftButtonDown" />
+            <Border Grid.Column="0" Height="40" VerticalAlignment="Top" Background="Transparent" MouseLeftButtonDown="TopBar_MouseLeftButtonDown" />
 
-            <!-- BLOCK 1: 侧边导航 -->
-            <Border Grid.Column="0" Background="#F1F1EF" CornerRadius="5,0,0,5">
+            <Border Grid.Column="0" 
+                    Width="60"
+                    Visibility="{Binding IsNavigationVisible, Converter={StaticResource BoolToVis}}"
+                    Background="{StaticResource Block1Background}" 
+                    CornerRadius="5,0,0,5">
                 <Grid>
-                    <!-- ★★★ 修改：绑定 SelectedItem 到 SelectedFolder ★★★ -->
                     <ListBox ItemsSource="{Binding Folders}" 
                              SelectedItem="{Binding SelectedFolder}"
                              ItemContainerStyle="{StaticResource FolderListBoxItemStyle}" 
@@ -155,7 +187,9 @@
                              BorderThickness="0" 
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
                              VerticalAlignment="Top" 
-                             Margin="0,15,0,0"/>
+                             Margin="0,15,0,0"
+                             dd:DragDrop.IsDropTarget="True"
+                             dd:DragDrop.DropHandler="{Binding FolderDropHandler}"/>
 
                     <StackPanel VerticalAlignment="Bottom" Margin="0,0,0,20">
                         <Button Style="{StaticResource ActionBtnStyle}" Content="新建文档" Command="{Binding CreateFileCommand}">
@@ -182,17 +216,28 @@
                     </StackPanel>
                 </Grid>
             </Border>
-            <GridSplitter Grid.Column="0" Width="5" HorizontalAlignment="Right" VerticalAlignment="Stretch" Background="Transparent" ShowsPreview="True"/>
 
-            <!-- BLOCK 2: 文件列表 -->
+            <GridSplitter Grid.Column="0" 
+                          Visibility="{Binding IsNavigationVisible, Converter={StaticResource BoolToVis}}"
+                          Width="5" HorizontalAlignment="Right" VerticalAlignment="Stretch" Background="Transparent" ShowsPreview="True"/>
+
             <Border Grid.Column="1" Background="#F1F1EF">
                 <Grid>
-                    <ListBox ItemsSource="{Binding Files}"
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Height="40" Background="Transparent" MouseLeftButtonDown="TopBar_MouseLeftButtonDown">
+                    </Grid>
+
+                    <ListBox Grid.Row="1"
+                             ItemsSource="{Binding FilesView}"
                              SelectedItem="{Binding SelectedFile}"
                              ItemContainerStyle="{StaticResource FileListBoxItemStyle}"
                              Background="Transparent"
                              BorderThickness="0"
-                             Margin="10,20,5,10"
+                             Margin="10,5,5,10"
                              dd:DragDrop.IsDragSource="True"
                              dd:DragDrop.IsDropTarget="True">
 
@@ -211,7 +256,6 @@
             <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Right" VerticalAlignment="Stretch" Background="Transparent" ShowsPreview="True"/>
             <Border Grid.Column="1" Width="1" HorizontalAlignment="Right" Background="#E0E0E0" IsHitTestVisible="False"/>
 
-            <!-- BLOCK 3: 编辑/预览区 -->
             <Border Grid.Column="2" Background="#FAFAFA" CornerRadius="0,5,5,0">
                 <Grid>
                     <Grid.Resources>
@@ -258,7 +302,6 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <!-- 顶部拖动区2 -->
                         <Grid Grid.Row="0" Margin="0,0,0,10" Background="Transparent" MouseLeftButtonDown="TopBar_MouseLeftButtonDown">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -266,7 +309,7 @@
                             </Grid.ColumnDefinitions>
 
                             <TextBox Grid.Column="0" Text="{Binding SelectedFile.Title, UpdateSourceTrigger=PropertyChanged}" 
-                                     FontSize="18" FontWeight="Bold" BorderThickness="0" Background="Transparent" Foreground="#333333">
+                                     FontSize="18" FontWeight="Bold" BorderThickness="0" Background="Transparent" Foreground="#333333" FontFamily="Segoe UI, Microsoft YaHei UI">
                                 <TextBox.Style>
                                     <Style TargetType="TextBox">
                                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -280,7 +323,7 @@
                             </TextBox>
 
                             <TextBlock Grid.Column="0" Text="{Binding SelectedFile.Title}" 
-                                       FontSize="18" FontWeight="Bold" VerticalAlignment="Center" IsHitTestVisible="False" Foreground="#333333">
+                                       FontSize="18" FontWeight="Bold" VerticalAlignment="Center" IsHitTestVisible="False" Foreground="#333333" FontFamily="Segoe UI, Microsoft YaHei UI">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Visibility" Value="Visible"/>
@@ -294,6 +337,33 @@
                             </TextBlock>
 
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
+
+                                <Button Command="{Binding ToggleNavigationCommand}" Style="{StaticResource ActionBtnStyle}" ToolTip="切换侧边栏">
+                                    <Button.ContentTemplate>
+                                        <DataTemplate>
+                                            <Grid>
+                                                <Path x:Name="ChevronPath" 
+                                                      Stroke="#666666" 
+                                                      StrokeThickness="1.5" 
+                                                      Stretch="None" 
+                                                      Data="{StaticResource IconChevronLeft}"/>
+                                            </Grid>
+                                            <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding DataContext.IsNavigationVisible, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                    <Setter TargetName="ChevronPath" Property="Data" Value="{StaticResource IconChevronLeft}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding DataContext.IsNavigationVisible, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
+                                                    <Setter TargetName="ChevronPath" Property="Data" Value="{StaticResource IconChevronRight}"/>
+                                                </DataTrigger>
+
+                                                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Button}}" Value="True">
+                                                    <Setter TargetName="ChevronPath" Property="Stroke" Value="#333333"/>
+                                                </DataTrigger>
+                                            </DataTemplate.Triggers>
+                                        </DataTemplate>
+                                    </Button.ContentTemplate>
+                                </Button>
+
                                 <Button Command="{Binding CopyCompiledTextCommand}" Style="{StaticResource ActionBtnStyle}" ToolTip="复制最终结果 (Ctrl+C)">
                                     <Button.ContentTemplate>
                                         <DataTemplate>
@@ -361,7 +431,7 @@
                                  BorderThickness="0" Background="Transparent"
                                  FontSize="14"
                                  Padding="5" 
-                                 FontFamily="Consolas, Microsoft YaHei UI, Segoe UI">
+                                 FontFamily="Segoe UI, Microsoft YaHei UI">
                             <TextBox.Style>
                                 <Style TargetType="TextBox">
                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -375,70 +445,8 @@
                         </TextBox>
 
                         <md:MarkdownViewer Grid.Row="1" 
-                                           Markdown="{Binding SelectedFile.Content}">
-                            <md:MarkdownViewer.Resources>
-                                <Style TargetType="{x:Type Paragraph}">
-                                    <Setter Property="FontFamily" Value="Microsoft YaHei UI, Segoe UI"/>
-                                    <Setter Property="Foreground" Value="#333333"/>
-                                    <Setter Property="FontSize" Value="15"/>
-                                    <Setter Property="LineHeight" Value="24"/>
-                                    <Setter Property="Margin" Value="0,10,0,10"/>
-                                </Style>
-                                <Style x:Key="{x:Static md:Styles.Heading1StyleKey}" TargetType="{x:Type Paragraph}">
-                                    <Setter Property="FontFamily" Value="Microsoft YaHei UI, Segoe UI"/>
-                                    <Setter Property="FontSize" Value="28"/>
-                                    <Setter Property="FontWeight" Value="Bold"/>
-                                    <Setter Property="Foreground" Value="Black"/>
-                                    <Setter Property="BorderBrush" Value="#EEEEEE"/>
-                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                    <Setter Property="Padding" Value="0,0,0,10"/>
-                                    <Setter Property="Margin" Value="0,20,0,15"/>
-                                </Style>
-                                <Style x:Key="{x:Static md:Styles.Heading2StyleKey}" TargetType="{x:Type Paragraph}">
-                                    <Setter Property="FontFamily" Value="Microsoft YaHei UI, Segoe UI"/>
-                                    <Setter Property="FontSize" Value="22"/>
-                                    <Setter Property="FontWeight" Value="Bold"/>
-                                    <Setter Property="Foreground" Value="Black"/>
-                                    <Setter Property="BorderBrush" Value="#EEEEEE"/>
-                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                    <Setter Property="Padding" Value="0,0,0,8"/>
-                                    <Setter Property="Margin" Value="0,15,0,10"/>
-                                </Style>
-                                <Style x:Key="{x:Static md:Styles.Heading3StyleKey}" TargetType="{x:Type Paragraph}">
-                                    <Setter Property="FontFamily" Value="Microsoft YaHei UI, Segoe UI"/>
-                                    <Setter Property="FontSize" Value="18"/>
-                                    <Setter Property="FontWeight" Value="Bold"/>
-                                    <Setter Property="Margin" Value="0,10,0,5"/>
-                                </Style>
-                                <Style TargetType="{x:Type Hyperlink}">
-                                    <Setter Property="FontFamily" Value="Microsoft YaHei UI, Segoe UI"/>
-                                    <Setter Property="Foreground" Value="#4183C4"/>
-                                    <Setter Property="TextDecorations" Value="None"/>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="TextDecorations" Value="Underline"/>
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                                <Style x:Key="{x:Static md:Styles.CodeBlockStyleKey}" TargetType="Border">
-                                    <Setter Property="Background" Value="#F8F8F8"/>
-                                    <Setter Property="BorderBrush" Value="#E7EAED"/>
-                                    <Setter Property="BorderThickness" Value="1"/>
-                                    <Setter Property="CornerRadius" Value="3"/>
-                                    <Setter Property="Padding" Value="10"/>
-                                    <Setter Property="Margin" Value="0,8,0,8"/>
-                                    <Setter Property="TextElement.FontFamily" Value="Consolas, Microsoft YaHei UI"/>
-                                    <Setter Property="TextElement.FontSize" Value="13"/>
-                                </Style>
-                                <Style x:Key="{x:Static md:Styles.QuoteBlockStyleKey}" TargetType="{x:Type Section}">
-                                    <Setter Property="BorderBrush" Value="#DFE2E5"/>
-                                    <Setter Property="BorderThickness" Value="4,0,0,0"/>
-                                    <Setter Property="Padding" Value="15,0,0,0"/>
-                                    <Setter Property="Margin" Value="0,10"/>
-                                    <Setter Property="Foreground" Value="#777777"/>
-                                    <Setter Property="FontFamily" Value="Microsoft YaHei UI, Segoe UI"/>
-                                </Style>
-                            </md:MarkdownViewer.Resources>
+                                           Markdown="{Binding SelectedFile.Content}"
+                                           xml:lang="zh-CN">
                             <md:MarkdownViewer.Style>
                                 <Style TargetType="md:MarkdownViewer">
                                     <Setter Property="Visibility" Value="Visible"/>
@@ -450,13 +458,77 @@
                                     </Style.Triggers>
                                 </Style>
                             </md:MarkdownViewer.Style>
+
+                            <md:MarkdownViewer.Resources>
+                                <Style x:Key="{x:Static md:Styles.DocumentStyleKey}" TargetType="{x:Type FlowDocument}">
+                                    <Setter Property="FontFamily" Value="Segoe UI, Microsoft YaHei UI, sans-serif"/>
+                                    <Setter Property="FontSize" Value="15"/>
+                                    <Setter Property="Foreground" Value="#333333"/>
+                                    <Setter Property="TextAlignment" Value="Left"/>
+                                    <Setter Property="LineHeight" Value="24"/>
+                                </Style>
+
+                                <Style x:Key="{x:Static md:Styles.Heading1StyleKey}" TargetType="{x:Type Paragraph}">
+                                    <Setter Property="FontSize" Value="28"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                    <Setter Property="Foreground" Value="Black"/>
+                                    <Setter Property="BorderBrush" Value="#EEEEEE"/>
+                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                    <Setter Property="Padding" Value="0,0,0,10"/>
+                                    <Setter Property="Margin" Value="0,20,0,15"/>
+                                </Style>
+
+                                <Style x:Key="{x:Static md:Styles.Heading2StyleKey}" TargetType="{x:Type Paragraph}">
+                                    <Setter Property="FontSize" Value="22"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                    <Setter Property="Foreground" Value="Black"/>
+                                    <Setter Property="BorderBrush" Value="#EEEEEE"/>
+                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                    <Setter Property="Padding" Value="0,0,0,8"/>
+                                    <Setter Property="Margin" Value="0,15,0,10"/>
+                                </Style>
+
+                                <Style x:Key="{x:Static md:Styles.Heading3StyleKey}" TargetType="{x:Type Paragraph}">
+                                    <Setter Property="FontSize" Value="18"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                    <Setter Property="Margin" Value="0,10,0,5"/>
+                                </Style>
+
+                                <Style TargetType="{x:Type Hyperlink}">
+                                    <Setter Property="Foreground" Value="#4183C4"/>
+                                    <Setter Property="TextDecorations" Value="None"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="TextDecorations" Value="Underline"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+
+                                <Style x:Key="{x:Static md:Styles.CodeBlockStyleKey}" TargetType="Border">
+                                    <Setter Property="Background" Value="#F8F8F8"/>
+                                    <Setter Property="BorderBrush" Value="#E7EAED"/>
+                                    <Setter Property="BorderThickness" Value="1"/>
+                                    <Setter Property="CornerRadius" Value="3"/>
+                                    <Setter Property="Padding" Value="10"/>
+                                    <Setter Property="Margin" Value="0,8,0,8"/>
+                                    <Setter Property="TextElement.FontFamily" Value="Consolas, Microsoft YaHei UI"/>
+                                    <Setter Property="TextElement.FontSize" Value="13"/>
+                                </Style>
+
+                                <Style x:Key="{x:Static md:Styles.QuoteBlockStyleKey}" TargetType="{x:Type Section}">
+                                    <Setter Property="BorderBrush" Value="#DFE2E5"/>
+                                    <Setter Property="BorderThickness" Value="4,0,0,0"/>
+                                    <Setter Property="Padding" Value="15,0,0,0"/>
+                                    <Setter Property="Margin" Value="0,10"/>
+                                    <Setter Property="Foreground" Value="#777777"/>
+                                </Style>
+                            </md:MarkdownViewer.Resources>
                         </md:MarkdownViewer>
                     </Grid>
 
                     <Border Grid.Row="1" Height="1" Background="#E0E0E0" VerticalAlignment="Center" IsHitTestVisible="False"/>
                     <GridSplitter Grid.Row="1" Height="8" HorizontalAlignment="Stretch" VerticalAlignment="Center" Background="Transparent" ResizeBehavior="PreviousAndNext" ShowsPreview="True"/>
 
-                    <!-- BLOCK 4 -->
                     <Grid Grid.Row="2" Margin="20,10">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" BorderThickness="0">
                             <ScrollViewer.Style>
