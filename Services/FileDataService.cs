@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using System.Threading.Tasks;
 using PromptMasterv5.Models;
 
 namespace PromptMasterv5.Services
@@ -10,7 +11,7 @@ namespace PromptMasterv5.Services
     {
         private readonly string _filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data.json");
 
-        public void Save(IEnumerable<FolderItem> folders, IEnumerable<PromptItem> files)
+        public async Task SaveAsync(IEnumerable<FolderItem> folders, IEnumerable<PromptItem> files)
         {
             var data = new AppData
             {
@@ -22,23 +23,25 @@ namespace PromptMasterv5.Services
 
             try
             {
-                string jsonString = JsonSerializer.Serialize(data, options);
-                File.WriteAllText(_filePath, jsonString);
+                // 使用异步流写入，不卡界面
+                using FileStream createStream = File.Create(_filePath);
+                await JsonSerializer.SerializeAsync(createStream, data, options);
             }
             catch (Exception)
             {
-                // TODO: 生产环境应记录日志
+                // TODO: 记录日志
             }
         }
 
-        public AppData Load()
+        public async Task<AppData> LoadAsync()
         {
             if (!File.Exists(_filePath)) return new AppData();
 
             try
             {
-                string jsonString = File.ReadAllText(_filePath);
-                return JsonSerializer.Deserialize<AppData>(jsonString) ?? new AppData();
+                // 异步读取
+                using FileStream openStream = File.OpenRead(_filePath);
+                return await JsonSerializer.DeserializeAsync<AppData>(openStream) ?? new AppData();
             }
             catch (Exception)
             {
