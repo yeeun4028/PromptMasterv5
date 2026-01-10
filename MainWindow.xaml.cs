@@ -9,7 +9,7 @@ using System.Text;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using PromptMasterv5.Models;
 
-// ★★★ 引用 InputMode，解决歧义 ★★★
+// ★★★ 引用 InputMode，解决引用歧义 ★★★
 using InputMode = PromptMasterv5.Models.InputMode;
 
 // 解决控件引用歧义
@@ -23,7 +23,9 @@ namespace PromptMasterv5
     {
         public MainViewModel ViewModel { get; }
 
-        private DateTime _lastEnterTime = DateTime.MinValue;
+        // 分别记录两个输入区域的按键时间，互不干扰
+        private DateTime _lastVarEnterTime = DateTime.MinValue;
+        private DateTime _lastAddEnterTime = DateTime.MinValue;
 
         public MainWindow()
         {
@@ -40,27 +42,31 @@ namespace PromptMasterv5
             }
         }
 
-        // 统一发送流程 (async void 是允许的，因为它被设计为顶级调用)
+        // ★★★ 核心方法：统一发送处理流程 ★★★
         private async void TriggerSendProcess(TextBox sourceBox, InputMode mode)
         {
-            // 1. 强制同步数据
+            // 1. 强制同步数据 (确保 ViewModel 拿到最新文本)
             sourceBox?.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
 
-            // 2. 强制隐藏窗口
+            // 2. 强制隐藏窗口 (立即响应用户)
             this.Hide();
 
-            // 3. 根据模式调用不同的 ViewModel 方法 (使用 await)
+            // 3. 根据传入的模式执行发送 (使用 await 等待)
             if (mode == InputMode.SmartFocus)
             {
+                // 场景 A: Ctrl+Enter / 列表双击 -> 智能回退
                 await ViewModel.SendBySmartFocus();
             }
             else
             {
+                // 场景 B: 双击 Enter -> 强制坐标点击
                 await ViewModel.SendByCoordinate();
             }
         }
 
-        // BLOCK3 (变量框) 按键逻辑
+        // ==========================================
+        // BLOCK3: 变量输入框 (逻辑已增强，支持双击Enter)
+        // ==========================================
         private void TextBox_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
@@ -68,15 +74,34 @@ namespace PromptMasterv5
                 var textBox = sender as TextBox;
                 if (textBox == null) return;
 
-                // Ctrl + Enter -> 智能回退
-                if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+                bool isCtrlEnter = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
+
+                // 计算双击
+                var now = DateTime.Now;
+                var span = (now - _lastVarEnterTime).TotalMilliseconds;
+                bool isDoubleEnter = span < 500;
+
+                // 1. Ctrl + Enter -> 智能回退 (Smart Focus)
+                if (isCtrlEnter)
                 {
                     e.Handled = true;
                     TriggerSendProcess(textBox, InputMode.SmartFocus);
                     return;
                 }
 
-                // 有序列表逻辑
+                // 2. 双击 Enter -> 强制坐标点击 (Coordinate Click)
+                if (isDoubleEnter)
+                {
+                    e.Handled = true;
+                    TriggerSendProcess(textBox, InputMode.CoordinateClick);
+                    _lastVarEnterTime = DateTime.MinValue; // 重置
+                    return;
+                }
+
+                // 3. 如果都不是发送指令，则执行原本的“智能有序列表”逻辑
+                _lastVarEnterTime = now; // 记录本次按键时间
+
+                // --- 以下是列表自动编号逻辑 ---
                 int caretIndex = textBox.CaretIndex;
                 int lineIndex = textBox.GetLineIndexFromCharacterIndex(caretIndex);
                 if (lineIndex < 0) return;
@@ -100,7 +125,9 @@ namespace PromptMasterv5
             }
         }
 
-        // BLOCK4 (附加输入框) 按键逻辑
+        // ==========================================
+        // BLOCK4: 附加输入框 (逻辑已增强)
+        // ==========================================
         private void AdditionalInputBox_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
@@ -110,42 +137,47 @@ namespace PromptMasterv5
 
                 bool isCtrlEnter = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
 
+                // 计算双击
                 var now = DateTime.Now;
-                var span = (now - _lastEnterTime).TotalMilliseconds;
+                var span = (now - _lastAddEnterTime).TotalMilliseconds;
                 bool isDoubleEnter = span < 500;
 
-                // 并行触发逻辑
                 if (isCtrlEnter)
                 {
-                    // 情况1：Ctrl + Enter -> 智能回退
+                    // 场景 1：Ctrl + Enter -> 智能回退
                     e.Handled = true;
                     ViewModel.AdditionalInput = textBox.Text;
                     TriggerSendProcess(textBox, InputMode.SmartFocus);
                 }
                 else if (isDoubleEnter)
                 {
-                    // 情况2：双击 Enter -> 坐标点击
+                    // 场景 2：双击 Enter -> 强制坐标点击
                     e.Handled = true;
                     ViewModel.AdditionalInput = textBox.Text;
                     TriggerSendProcess(textBox, InputMode.CoordinateClick);
-                    _lastEnterTime = DateTime.MinValue;
+                    _lastAddEnterTime = DateTime.MinValue;
                 }
                 else
                 {
-                    _lastEnterTime = now;
+                    // 既不是发送指令 -> 记录时间，允许正常换行
+                    _lastAddEnterTime = now;
                 }
             }
         }
 
-        // ★★★ 修复点：添加 async 关键字并使用 await ★★★
+        // ==========================================
+        // 列表双击 -> 智能回退 (Smart Focus)
+        // ==========================================
         private async void FileListBoxItem_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (sender is ListBoxItem)
             {
-                // 现在这里会等待异步任务完成，消除了 CS4014 警告
+                // 使用 await 等待异步任务，消除警告
                 await ViewModel.SendBySmartFocus();
             }
         }
+
+        // ... 以下辅助代码保持不变 ...
 
         private void WebDavPasswordBox_Loaded(object sender, RoutedEventArgs e)
         {
