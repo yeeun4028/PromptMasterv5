@@ -306,7 +306,7 @@
 
             <Border Grid.Column="1" Background="#F1F1EF">
                 <Grid>
-                    <Grid Height="40" VerticalAlignment="Top" Background="Transparent" MouseLeftButtonDown="TopBar_MouseLeftButtonDown" Panel.ZIndex="99"/>
+                    <Grid Height="40" VerticalAlignment="Top" Background="Transparent" MouseLeftButtonDown="TopBar_MouseLeftButtonDown"/>
 
                     <ListBox ItemsSource="{Binding FilesView}"
                              SelectedItem="{Binding SelectedFile}"
