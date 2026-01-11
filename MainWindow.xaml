@@ -296,7 +296,6 @@
                                  Text="{Binding MiniInputText, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource MiniTextBoxStyle}"
                                  d:Text="输入 / 搜索提示词..."
-                                 MaxHeight="200" 
                                  PreviewKeyDown="MiniInput_PreviewKeyDown"
                                  TextChanged="MiniInput_TextChanged">
                             <!-- 应用隐形滚动条 -->
