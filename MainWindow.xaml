@@ -230,7 +230,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        <!-- ★ 新增：极细隐形滚动条样式 ★ -->
+
         <Style x:Key="HiddenScrollBarStyle" TargetType="ScrollBar">
             <Setter Property="Width" Value="4"/>
             <Setter Property="Background" Value="Transparent"/>
@@ -259,19 +259,15 @@
     </Window.Resources>
 
     <Grid>
-        <!-- ★★★ 核心修复：极简模式容器改为 Grid 行布局，消除遮挡 ★★★ -->
         <Grid x:Name="MiniModeContainer" 
               Visibility="{Binding IsFullMode, Converter={StaticResource InverseBoolToVis}}"
               Background="Transparent">
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
-                <!-- Row 0: 输入框 -->
                 <RowDefinition Height="Auto"/>
-                <!-- Row 1: 变量列表 (自动堆叠) -->
             </Grid.RowDefinitions>
 
-            <!-- Row 0: 输入框区域 -->
             <Border Grid.Row="0"
                     Background="{StaticResource MiniBackgroundBrush}" 
                     CornerRadius="8" 
@@ -285,27 +281,23 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- 拖拽手柄 -->
                     <Border Grid.Column="0" Width="15" Background="Transparent" Cursor="SizeAll" MouseLeftButtonDown="MiniWindow_MouseLeftButtonDown">
                         <Path Data="M4,10 L4,20 M8,10 L8,20" Stroke="#555" StrokeThickness="2" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </Border>
 
-                    <!-- 核心输入框 -->
                     <Grid Grid.Column="1" VerticalAlignment="Stretch" Margin="5,5">
                         <TextBox x:Name="MiniInputBox"
-         Text="{Binding MiniInputText, UpdateSourceTrigger=PropertyChanged}"
-         Style="{StaticResource MiniTextBoxStyle}"
-         VerticalScrollBarVisibility="Auto"  
-         d:Text="输入 / 搜索提示词..."
-         PreviewKeyDown="MiniInput_PreviewKeyDown"
-         TextChanged="MiniInput_TextChanged">
-                            <!-- 应用隐形滚动条 -->
+                                 Text="{Binding MiniInputText, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource MiniTextBoxStyle}"
+                                 VerticalScrollBarVisibility="Auto"  
+                                 d:Text="输入 / 搜索提示词..."
+                                 PreviewKeyDown="MiniInput_PreviewKeyDown"
+                                 TextChanged="MiniInput_TextChanged">
                             <TextBox.Resources>
                                 <Style TargetType="ScrollBar" BasedOn="{StaticResource HiddenScrollBarStyle}"/>
                             </TextBox.Resources>
                         </TextBox>
 
-                        <!-- 搜索下拉框 (位置微调) -->
                         <Popup IsOpen="{Binding IsSearchPopupOpen}" 
                                PlacementTarget="{Binding ElementName=MiniInputBox}"
                                Placement="Bottom"
@@ -360,7 +352,6 @@
                         </Popup>
                     </Grid>
 
-                    <!-- 展开按钮 -->
                     <Button Grid.Column="2" 
                             Command="{Binding EnterFullModeCommand}"
                             Background="Transparent" BorderThickness="0"
@@ -371,8 +362,6 @@
                 </Grid>
             </Border>
 
-            <!-- Row 1: 变量填写区域 (Block4 风格 + 滚动支持) -->
-            <!-- Row 1: 变量填写区域 (样式修正：宽度对齐 + 四周圆角 + 阴影) -->
             <Border Grid.Row="1"
                     Background="{StaticResource MiniSearchBackgroundBrush}" 
                     CornerRadius="8"
@@ -382,7 +371,6 @@
                     Visibility="{Binding IsMiniVarsExpanded, Converter={StaticResource BoolToVis}}"
                     VerticalAlignment="Top">
 
-                <!-- 限制最大高度，超过出隐形滚动条 -->
                 <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="300">
                     <ScrollViewer.Resources>
                         <Style TargetType="ScrollBar" BasedOn="{StaticResource HiddenScrollBarStyle}"/>
@@ -391,22 +379,17 @@
                     <ItemsControl x:Name="MiniVarsList" ItemsSource="{Binding Variables}" Margin="15,5">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <!-- 下划线风格 -->
                                 <Grid Margin="0,8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" SharedSizeGroup="MiniLabel"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-
-                                    <!-- 变量名 -->
                                     <TextBlock Text="{Binding Name, StringFormat='{}{0}:'}" 
                                                Foreground="#CCC" 
                                                FontWeight="SemiBold"
                                                VerticalAlignment="Center" 
                                                HorizontalAlignment="Right" 
                                                Margin="0,0,10,0"/>
-
-                                    <!-- 输入框 -->
                                     <Border x:Name="InputBorder" Grid.Column="1" 
                                             BorderThickness="0,0,0,1" 
                                             BorderBrush="#555" 
@@ -963,8 +946,9 @@
                                                     </Style>
                                                 </Button.Resources>
                                             </Button>
-                                            <Button Content="⬇️ 从远程恢复" Command="{Binding ManualRestoreCommand}" 
-                                                    Background="White" Foreground="#4183C4" BorderBrush="#4183C4" BorderThickness="1" Padding="15,8" Cursor="Hand">
+                                            <!-- ★★★ 新增：导入按钮 ★★★ -->
+                                            <Button Content="📂 导入 Markdown" Command="{Binding ImportMarkdownFilesCommand}" 
+                                                    Background="White" Foreground="#333" BorderBrush="#CCC" BorderThickness="1" Padding="15,8" Cursor="Hand">
                                                 <Button.Resources>
                                                     <Style TargetType="Border">
                                                         <Setter Property="CornerRadius" Value="4"/>

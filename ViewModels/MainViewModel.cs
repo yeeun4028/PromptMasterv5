@@ -17,6 +17,9 @@ using PromptMasterv5.Models;
 using PromptMasterv5.Services;
 using System.Collections.Generic;
 using System.Runtime.Versioning;
+using System.IO;
+// 移除了可能有歧义的全局引用，将在代码中显式调用
+// using Microsoft.Win32; 
 
 using InputMode = PromptMasterv5.Models.InputMode;
 using MessageBox = System.Windows.MessageBox;
@@ -44,7 +47,6 @@ namespace PromptMasterv5.ViewModels
         [ObservableProperty] private PromptItem? selectedSearchItem;
         [ObservableProperty] private bool isMiniVarsExpanded = false;
 
-        // 原有属性
         [ObservableProperty] private bool isSettingsOpen = false;
         [ObservableProperty] private int selectedSettingsTab = 0;
         [ObservableProperty] private string syncTimeDisplay = "Now";
@@ -53,7 +55,6 @@ namespace PromptMasterv5.ViewModels
         [ObservableProperty] private bool isNavigationVisible = true;
         [ObservableProperty] private ObservableCollection<FolderItem> folders = new();
 
-        // 注意：SelectedFolder 的变化现在会被 OnSelectedFolderChanged 捕获
         [ObservableProperty] private FolderItem? selectedFolder;
 
         [ObservableProperty] private ObservableCollection<PromptItem> files = new();
@@ -108,8 +109,6 @@ namespace PromptMasterv5.ViewModels
 
         private void OnGlobalHotkeyTriggered(object? sender, HotkeyEventArgs e) => ToggleMainWindow();
 
-        // --- 逻辑部分 ---
-
         partial void OnMiniInputTextChanged(string value)
         {
             if (value.StartsWith("/") || value.StartsWith("、"))
@@ -152,8 +151,6 @@ namespace PromptMasterv5.ViewModels
             for (int i = Variables.Count - 1; i >= 0; i--) if (!newVarNames.Contains(Variables[i].Name)) Variables.RemoveAt(i);
             foreach (var name in newVarNames) if (!Variables.Any(v => v.Name == name)) Variables.Add(new VariableItem { Name = name });
             HasVariables = Variables.Count > 0;
-            HasVariables = Variables.Count > 0;
-            // 只有在非完全模式下才自动展开，避免全屏模式下布局跳动
             if (!IsFullMode)
             {
                 IsMiniVarsExpanded = HasVariables;
@@ -219,11 +216,8 @@ namespace PromptMasterv5.ViewModels
                     window.Activate();
                     window.Topmost = true;
                     window.Focus();
-
-                    // ★★★ 新增：强制将焦点归还给极简模式的输入框 ★★★
                     if (window is MainWindow mainWin)
                     {
-                        // 使用 Dispatcher 确保窗口元素已渲染完毕，特别是当变量列表收起导致布局变化时
                         await mainWin.Dispatcher.BeginInvoke(new Action(() =>
                         {
                             mainWin.MiniInputBox.Focus();
@@ -244,10 +238,7 @@ namespace PromptMasterv5.ViewModels
 
         partial void OnSelectedFolderChanged(FolderItem? value)
         {
-            // 1. 强制刷新文件列表视图，这会重新触发 FilterFiles 方法
             FilesView?.Refresh();
-
-            // 2. 切换文件夹时，清空当前选中的文件
             SelectedFile = null;
         }
 
@@ -282,8 +273,6 @@ namespace PromptMasterv5.ViewModels
                 CaptureForegroundWindow();
                 if (window.Visibility != Visibility.Visible) IsFullMode = false;
                 window.Show(); window.Activate(); window.Focus();
-
-                // 确保唤醒时焦点也在输入框
                 if (!IsFullMode && window is MainWindow mainWin)
                 {
                     mainWin.Dispatcher.BeginInvoke(new Action(() =>
@@ -300,7 +289,7 @@ namespace PromptMasterv5.ViewModels
             if (handle != IntPtr.Zero) _previousWindowHandle = handle;
         }
 
-        // ... 命令保持不变 ...
+        // ... 命令 ...
         [RelayCommand] private void CreateFolder() { var f = new FolderItem { Name = $"新建文件夹 {Folders.Count + 1}" }; Folders.Add(f); SelectedFolder = f; RequestSave(); }
         [RelayCommand] private void CreateFile() { if (SelectedFolder == null) return; _isCreatingFile = true; var f = new PromptItem { Title = "新文档", Content = "# 新文档", FolderId = SelectedFolder.Id, LastModified = DateTime.Now }; Files.Add(f); SelectedFile = f; IsEditMode = true; RequestSave(); _isCreatingFile = false; }
         [RelayCommand] private void DeleteFile(PromptItem? i) { var t = i ?? SelectedFile; if (t != null) { Files.Remove(t); if (SelectedFile == t) SelectedFile = null; RequestSave(); } }
@@ -320,6 +309,61 @@ namespace PromptMasterv5.ViewModels
         [RelayCommand] private async Task ManualBackup() { ConfigService.Save(Config); try { await _dataService.SaveAsync(Folders, Files); _lastSyncTime = DateTime.Now; MessageBox.Show("备份成功"); } catch (Exception e) { MessageBox.Show(e.Message); } }
         [RelayCommand] private async Task ManualRestore() { /* ... */ }
 
+        [RelayCommand]
+        private async Task ImportMarkdownFiles()
+        {
+            // ★★★ 修复点：显式引用 Microsoft.Win32 命名空间下的 OpenFileDialog ★★★
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "选择 Markdown 文件 (支持多选)",
+                Filter = "Markdown Files (*.md;*.txt)|*.md;*.txt|All Files (*.*)|*.*",
+                Multiselect = true
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                var targetFolder = SelectedFolder ?? Folders.FirstOrDefault();
+                if (targetFolder == null)
+                {
+                    targetFolder = new FolderItem { Name = "导入的提示词" };
+                    Folders.Add(targetFolder);
+                    SelectedFolder = targetFolder;
+                }
+
+                int count = 0;
+                foreach (var filePath in dialog.FileNames)
+                {
+                    try
+                    {
+                        string title = Path.GetFileNameWithoutExtension(filePath);
+                        string content = await File.ReadAllTextAsync(filePath);
+
+                        var newItem = new PromptItem
+                        {
+                            Title = title,
+                            Content = content,
+                            FolderId = targetFolder.Id,
+                            LastModified = DateTime.Now
+                        };
+
+                        Files.Add(newItem);
+                        count++;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"导入文件失败 {filePath}: {ex.Message}");
+                    }
+                }
+
+                if (count > 0)
+                {
+                    RequestSave();
+                    FilesView?.Refresh();
+                    MessageBox.Show($"成功导入 {count} 个文件到文件夹 [{targetFolder.Name}]。", "导入完成");
+                }
+            }
+        }
+
         private async Task InitializeAsync()
         {
             var data = await _dataService.LoadAsync();
@@ -330,19 +374,14 @@ namespace PromptMasterv5.ViewModels
             foreach (var f in Files) if (string.IsNullOrEmpty(f.FolderId)) f.FolderId = fid;
             var v = CollectionViewSource.GetDefaultView(Files);
 
-            // 设定过滤器，但必须调用 Refresh 才会重新执行
             if (v != null) v.Filter = FilterFiles;
             FilesView = v;
 
             Files.CollectionChanged += (s, e) => RequestSave();
-
-            // 默认选中第一个文件夹，这会触发 OnSelectedFolderChanged -> Refresh
             SelectedFolder = Folders.FirstOrDefault();
-
             IsFullMode = true;
         }
 
-        // 过滤逻辑：只显示 FolderId 匹配的文件
         private bool FilterFiles(object o) => o is PromptItem f && SelectedFolder != null && f.FolderId == SelectedFolder.Id;
         private async void RequestSave() { if (!string.IsNullOrEmpty(Config.UserName)) await SaveDataAsync(); }
         private async Task SaveDataAsync() { try { await _dataService.SaveAsync(Folders, Files); _lastSyncTime = DateTime.Now; UpdateTimeDisplay(); } catch { SyncTimeDisplay = "Err"; } }
