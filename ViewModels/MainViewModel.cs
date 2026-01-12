@@ -72,31 +72,114 @@ namespace PromptMasterv5.ViewModels
 
         public MainViewModel()
         {
+            // 1. 初始化配置
             Config = ConfigService.Load();
             LocalConfig = LocalConfigService.Load();
             UpdateGlobalHotkey();
 
-            _keyService = new GlobalKeyService();
-            _keyService.OnDoubleCtrlDetected += (s, e) => Application.Current.Dispatcher.Invoke(() => ToggleMainWindow());
-
-            if (Config.EnableDoubleCtrl) try { _keyService.Start(); } catch { }
+            // 2. ★★★ 初始化所有服务 (解决字段为 null 的报错) ★★★
+            _dataService = new WebDavDataService(); // 默认使用 WebDav，也可改为 new FileDataService()
+            _aiService = new AiService();
+            _fabricService = new FabricService();
 
             _browserService = new BrowserAutomationService();
             _browserService.OnTargetSiteMatched += BrowserService_OnTargetSiteMatched;
             _browserService.Start();
 
-            _aiService = new AiService();
-            // ★★★ 初始化 Fabric 服务 ★★★
-            _fabricService = new FabricService();
-
-            _dataService = new WebDavDataService();
+            // 3. 初始化拖拽处理器
             FolderDropHandler = new FolderDropHandler(this);
 
+            // 4. 初始化定时器
             _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
             _timer.Tick += (s, e) => UpdateTimeDisplay();
             _timer.Start();
 
+            // 5. 初始化按键监听服务
+            _keyService = new GlobalKeyService();
+
+            // 绑定 Ctrl 双击事件 (唤醒/隐藏)
+            _keyService.OnDoubleCtrlDetected += (s, e) => Application.Current.Dispatcher.Invoke(() => ToggleMainWindow());
+
+            // ★★★ 绑定双击分号事件 (包含强制焦点修复) ★★★
+            _keyService.OnDoubleSemiColonDetected += (s, e) => Application.Current.Dispatcher.Invoke(async () =>
+            {
+                var mainWindow = Application.Current.MainWindow as MainWindow;
+                if (mainWindow == null) return;
+
+                // 逻辑：如果窗口未显示或不在前台，则显示
+                if (!IsFullMode && mainWindow.Visibility == Visibility.Visible && mainWindow.IsActive)
+                {
+                    // 已经在前台且激活，直接清空即可
+                    MiniInputText = "";
+                }
+                else
+                {
+                    // 如果窗口是隐藏的，调用切换显示逻辑
+                    if (mainWindow.Visibility != Visibility.Visible)
+                    {
+                        ToggleMainWindow();
+                    }
+                    MiniInputText = ""; // 刚唤醒时清空输入框
+                }
+
+                // ★★★ 核心修复：强制抢占输入焦点 ★★★
+                // 给一点点延迟，等待窗口渲染完成，防止焦点设置失败
+                await Task.Delay(50);
+
+                // A. 强制置顶 (WPF 层面)
+                mainWindow.Show();
+                mainWindow.Activate();
+                mainWindow.Topmost = true;
+
+                // B. 强制抢占系统前台窗口 (Win32 API 层面) - 解决“目视有焦点但无法输入”的问题
+                var interopHelper = new System.Windows.Interop.WindowInteropHelper(mainWindow);
+                NativeMethods.SetForegroundWindow(interopHelper.Handle);
+
+                // C. 强制聚焦输入框 (WPF 输入层面)
+                mainWindow.MiniInputBox.Focus();           // 逻辑焦点
+                Keyboard.Focus(mainWindow.MiniInputBox);   // 键盘焦点 (关键)
+
+                // D. 确保光标在最后
+                mainWindow.MiniInputBox.CaretIndex = mainWindow.MiniInputBox.Text.Length;
+            });
+
+            // 启动按键监听
+            if (Config.EnableDoubleCtrl) try { _keyService.Start(); } catch { }
+
+            // 6. 异步加载数据
             _ = InitializeAsync();
+        }
+
+        // ★★★ 修改 1：实时检测输入框内容 ★★★
+        partial void OnMiniInputTextChanged(string value)
+        {
+            // 1. AI 触发检测：ai(加空格)、''(英文双单引号)、’‘(中文双单引号)
+            if (value.StartsWith("ai ", StringComparison.OrdinalIgnoreCase) ||
+                value.StartsWith("ai　", StringComparison.OrdinalIgnoreCase) ||
+                value.StartsWith("''") ||
+                value.StartsWith("’‘"))
+            {
+                IsSearchPopupOpen = false;
+                Variables.Clear();
+                HasVariables = false;
+                IsMiniVarsExpanded = false;
+                return;
+            }
+
+            // 2. 补回缺失的逻辑：搜索触发 (/)
+            if (value.StartsWith("/") || value.StartsWith("、"))
+            {
+                string keyword = value.Length > 1 ? value.Substring(1) : "";
+                PerformSearch(keyword);
+                IsSearchPopupOpen = true;
+            }
+            else
+            {
+                IsSearchPopupOpen = false;
+            }
+
+            // 3. 补回缺失的逻辑：实时变量解析
+            ParseVariablesRealTime(value);
         }
 
         // ... (BrowserService_OnTargetSiteMatched, UpdateGlobalHotkey 等方法保持不变) ...
@@ -141,71 +224,38 @@ namespace PromptMasterv5.ViewModels
         }
 
         private void OnGlobalHotkeyTriggered(object? sender, HotkeyEventArgs e) => ToggleMainWindow();
-
-        partial void OnMiniInputTextChanged(string value)
-        {
-            if (value.StartsWith("ai ", StringComparison.OrdinalIgnoreCase) ||
-                value.StartsWith("? ") || value.StartsWith("？ "))
-            {
-                IsSearchPopupOpen = false;
-                Variables.Clear();
-                HasVariables = false;
-                IsMiniVarsExpanded = false;
-                return;
-            }
-
-            if (value.StartsWith("/") || value.StartsWith("、"))
-            {
-                string keyword = value.Length > 1 ? value.Substring(1) : "";
-                PerformSearch(keyword);
-                IsSearchPopupOpen = true;
-            }
-            else IsSearchPopupOpen = false;
-            ParseVariablesRealTime(value);
-        }
-
         // ★★★ 修改：执行 AI 路由与组装逻辑 (选项 B) ★★★
         public async Task ExecuteAiQuery()
         {
             string inputText = MiniInputText.Trim();
             string query = "";
 
-            if (inputText.StartsWith("ai ", StringComparison.OrdinalIgnoreCase)) query = inputText.Substring(3);
-            else if (inputText.StartsWith("? ")) query = inputText.Substring(2);
-            else if (inputText.StartsWith("？ ")) query = inputText.Substring(2);
-            else return;
+            if (inputText.StartsWith("ai ", StringComparison.OrdinalIgnoreCase))
+                query = inputText.Substring(3);
+            else if (inputText.StartsWith("ai　", StringComparison.OrdinalIgnoreCase))
+                query = inputText.Substring(3);
+
+            // ★★★ 变更：识别单引号 ★★★
+            else if (inputText.StartsWith("''"))
+                query = inputText.Substring(2); // '' 长度为2
+            else if (inputText.StartsWith("’‘"))
+                query = inputText.Substring(2); // ’‘ 长度为2
+            else
+                return;
 
             if (string.IsNullOrWhiteSpace(query)) return;
 
             IsAiProcessing = true;
-
             try
             {
-                // 1. 调用 FabricService 进行语义路由，获取匹配的 Prompt 内容
-                // 这一步会问 DeepSeek：“用户这句话匹配哪个模式？”
                 string patternContent = await _fabricService.FindBestPatternAndContentAsync(query, _aiService, Config);
-
                 if (!string.IsNullOrEmpty(patternContent))
                 {
-                    // 2. 匹配成功！执行【选项 B】：组装 Prompt
-                    // 格式：[System Prompt] + [用户输入]
-
-                    // 我们用分割线让内容清晰一点
                     string assembledPrompt = $"{patternContent}\n\n---\n\nUSER INPUT:\n{query}";
-
                     MiniInputText = assembledPrompt;
                 }
                 else
                 {
-                    // 3. 匹配失败（或没有本地文件夹），则回退到原来的逻辑：直接对话
-                    // 或者你也可以选择只显示原话。这里我们保持“智能”，如果没匹配到模式，就直接让AI回答问题
-                    // 但根据你的需求“替换为提示词”，这里如果不匹配，我们也许可以直接生成一段简单的 Prompt
-
-                    // 方案修正：如果没有匹配到 Fabric 模式，我们就把用户的输入原样保留，或者不做任何处理
-                    // 这里演示：直接让 AI 优化这段话，变成一个 Prompt
-
-                    // 为了不打断体验，如果没匹配到，我们暂时直接替换为 AI 的直接回答 (保持 V1 功能)，
-                    // 或者显示提示 "未匹配到模式"
                     string result = await _aiService.ChatAsync(query, Config);
                     MiniInputText = result;
                 }
@@ -303,12 +353,20 @@ namespace PromptMasterv5.ViewModels
             if (string.IsNullOrWhiteSpace(content)) return;
             var window = Application.Current.MainWindow;
 
+            // 1. 先隐藏窗口
             if (window != null) window.Hide();
 
+            // 2. 执行发送（模拟剪贴板粘贴）
             await InputSender.SendAsync(content, targetMode, LocalConfig, _previousWindowHandle);
 
+            // 3. 发送完成后清理输入框
             if (!IsFullMode)
             {
+                MiniInputText = ""; // 清空输入框
+
+                // ★★★ 修改：注释掉或删除下面的“重新显示”逻辑 ★★★
+                // 原来的逻辑是发送完自动弹回来，现在注释掉，让它保持隐藏。
+                /*
                 await Task.Delay(100);
                 if (window != null)
                 {
@@ -325,6 +383,12 @@ namespace PromptMasterv5.ViewModels
                         }), DispatcherPriority.Render);
                     }
                 }
+                */
+            }
+            else
+            {
+                // 如果是完整模式，通常也清空附加输入框
+                AdditionalInput = "";
             }
         }
 

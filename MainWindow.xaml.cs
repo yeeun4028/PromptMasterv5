@@ -213,7 +213,7 @@ namespace PromptMasterv5
             var textBox = sender as TextBox;
             if (textBox == null) return;
 
-            // 搜索列表导航
+            // 1. 搜索提示列表导航 (Up/Down)
             if (ViewModel.IsSearchPopupOpen && ViewModel.SearchResults.Count > 0)
             {
                 if (e.Key == Key.Down)
@@ -238,7 +238,7 @@ namespace PromptMasterv5
 
             if (e.Key == Key.Enter)
             {
-                // 1. 搜索确认
+                // 2. 确认搜索结果
                 if (ViewModel.IsSearchPopupOpen)
                 {
                     ViewModel.ConfirmSearchResultCommand.Execute(null);
@@ -246,6 +246,7 @@ namespace PromptMasterv5
                     await Dispatcher.BeginInvoke(new Action(() =>
                     {
                         UpdateMiniHeight();
+                        // 如果选中的模版有变量，尝试聚焦第一个变量输入框
                         if (ViewModel.HasVariables)
                         {
                             var container = MiniVarsList.ItemContainerGenerator.ContainerFromIndex(0) as FrameworkElement;
@@ -266,16 +267,18 @@ namespace PromptMasterv5
                     return;
                 }
 
-                // ★★★ 新增：AI 触发检测 (方案 B) ★★★
-                // 检查前缀 ai , ? , ？
+                // 3. ★★★ AI 触发逻辑 (更新版) ★★★
+                // 支持：ai+空格(半角/全角)、''(英文双单引号)、’‘(中文双单引号)
                 string text = ViewModel.MiniInputText.Trim();
                 if (text.StartsWith("ai ", StringComparison.OrdinalIgnoreCase) ||
-                    text.StartsWith("? ") || text.StartsWith("？ "))
+                    text.StartsWith("ai　", StringComparison.OrdinalIgnoreCase) ||
+                    text.StartsWith("''") ||
+                    text.StartsWith("’‘"))
                 {
-                    e.Handled = true; // 拦截 Enter，不发送
+                    e.Handled = true; // 拦截 Enter，不发送，转为执行 AI
                     await ViewModel.ExecuteAiQuery();
 
-                    // AI 返回后，等待渲染更新并聚焦末尾
+                    // AI 返回结果后，更新高度并聚焦末尾
                     await Dispatcher.BeginInvoke(new Action(() => {
                         UpdateMiniHeight();
                         MiniInputBox.Focus();
@@ -284,7 +287,7 @@ namespace PromptMasterv5
                     return;
                 }
 
-                // --- 正常的发送逻辑 (按原样保留) ---
+                // 4. 常规发送逻辑
                 _ = Dispatcher.BeginInvoke(new Action(() => {
                     UpdateMiniHeight();
                 }), System.Windows.Threading.DispatcherPriority.Render);
@@ -293,6 +296,7 @@ namespace PromptMasterv5
                 var now = DateTime.Now;
                 var span = (now - _lastMiniEnterTime).TotalMilliseconds;
 
+                // 双击 Enter (间隔小于500ms) -> 坐标点击模式发送
                 if (span < 500 && !isCtrl)
                 {
                     e.Handled = true;
@@ -301,6 +305,7 @@ namespace PromptMasterv5
                     return;
                 }
 
+                // Ctrl + Enter -> 智能焦点回退发送
                 if (isCtrl)
                 {
                     e.Handled = true;
@@ -310,24 +315,27 @@ namespace PromptMasterv5
 
                 _lastMiniEnterTime = now;
 
-                // 自动编号
+                // 5. 自动列表编号 (1. -> Enter -> 2.)
                 int caretIndex = textBox.CaretIndex;
                 int lineIndex = textBox.GetLineIndexFromCharacterIndex(caretIndex);
-                if (lineIndex < 0) return;
-                string lineText = textBox.GetLineText(lineIndex);
-                var match = Regex.Match(lineText, @"^(\s*)(\d+)\.(\s+)");
-                if (match.Success)
+                if (lineIndex >= 0)
                 {
-                    string indentation = match.Groups[1].Value;
-                    int currentNumber = int.Parse(match.Groups[2].Value);
-                    string spacing = match.Groups[3].Value;
-                    int nextNumber = currentNumber + 1;
-                    string insertText = $"\n{indentation}{nextNumber}.{spacing}";
-                    textBox.SelectedText = insertText;
-                    textBox.CaretIndex += insertText.Length;
-                    e.Handled = true;
+                    string lineText = textBox.GetLineText(lineIndex);
+                    var match = Regex.Match(lineText, @"^(\s*)(\d+)\.(\s+)");
+                    if (match.Success)
+                    {
+                        string indentation = match.Groups[1].Value;
+                        int currentNumber = int.Parse(match.Groups[2].Value);
+                        string spacing = match.Groups[3].Value;
+                        int nextNumber = currentNumber + 1;
+                        string insertText = $"\n{indentation}{nextNumber}.{spacing}";
+                        textBox.SelectedText = insertText;
+                        textBox.CaretIndex += insertText.Length;
+                        e.Handled = true;
+                    }
                 }
             }
+            // 6. Ctrl + Up -> 切换到完整模式
             else if (e.Key == Key.Up && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
             {
                 ViewModel.EnterFullModeCommand.Execute(null);
