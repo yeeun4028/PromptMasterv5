@@ -18,8 +18,6 @@ using PromptMasterv5.Services;
 using System.Collections.Generic;
 using System.Runtime.Versioning;
 using System.IO;
-// 移除了可能有歧义的全局引用，将在代码中显式调用
-// using Microsoft.Win32; 
 
 using InputMode = PromptMasterv5.Models.InputMode;
 using MessageBox = System.Windows.MessageBox;
@@ -33,6 +31,10 @@ namespace PromptMasterv5.ViewModels
     {
         private readonly IDataService _dataService;
         private readonly GlobalKeyService _keyService;
+
+        // ★★★ 新增：浏览器自动化服务 ★★★
+        private readonly BrowserAutomationService _browserService;
+
         private bool _isCreatingFile = false;
         private DispatcherTimer _timer;
         private DateTime _lastSyncTime = DateTime.Now;
@@ -75,6 +77,11 @@ namespace PromptMasterv5.ViewModels
 
             if (Config.EnableDoubleCtrl) try { _keyService.Start(); } catch { }
 
+            // ★★★ 新增：初始化并启动浏览器监听服务 ★★★
+            _browserService = new BrowserAutomationService();
+            _browserService.OnTargetSiteMatched += BrowserService_OnTargetSiteMatched;
+            _browserService.Start();
+
             _dataService = new WebDavDataService();
             FolderDropHandler = new FolderDropHandler(this);
 
@@ -83,6 +90,36 @@ namespace PromptMasterv5.ViewModels
             _timer.Start();
 
             _ = InitializeAsync();
+        }
+
+        // ★★★ 新增：处理浏览器匹配事件 ★★★
+        private void BrowserService_OnTargetSiteMatched(object? sender, EventArgs e)
+        {
+            // 必须在 UI 线程执行
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                var mainWindow = Application.Current.MainWindow;
+                if (mainWindow == null) return;
+
+                // 触发前提检查：
+                // 1. 软件必须处于 极简模式 (IsFullMode == false)
+                // 2. 极简窗口必须处于 显示状态 (Visibility == Visible)
+                if (!IsFullMode && mainWindow.Visibility == Visibility.Visible)
+                {
+                    // 记录刚才的浏览器窗口句柄，方便之后 SmartFocus 能够发送回去
+                    CaptureForegroundWindow();
+
+                    // 强制拉回焦点
+                    mainWindow.Activate();
+                    mainWindow.Focus();
+                    mainWindow.Topmost = true; // 确保置顶
+
+                    if (mainWindow is MainWindow win)
+                    {
+                        win.MiniInputBox.Focus();
+                    }
+                }
+            });
         }
 
         [SupportedOSPlatform("windows")]
@@ -312,7 +349,6 @@ namespace PromptMasterv5.ViewModels
         [RelayCommand]
         private async Task ImportMarkdownFiles()
         {
-            // ★★★ 修复点：显式引用 Microsoft.Win32 命名空间下的 OpenFileDialog ★★★
             var dialog = new Microsoft.Win32.OpenFileDialog
             {
                 Title = "选择 Markdown 文件 (支持多选)",
