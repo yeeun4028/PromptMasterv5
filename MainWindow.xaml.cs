@@ -7,14 +7,13 @@ using System.Windows.Input;
 using System.Text.RegularExpressions;
 using PromptMasterv5.ViewModels;
 using System.Text;
-using System.Windows.Media; // 用于 FindVisualChild
+using System.Windows.Media;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using PromptMasterv5.Models;
 
 // 引用自定义枚举和控件别名，解决命名冲突
 using InputMode = PromptMasterv5.Models.InputMode;
 using Button = System.Windows.Controls.Button;
-// ★ 明确指定 TextBox 别名，防止歧义
 using TextBox = System.Windows.Controls.TextBox;
 using WinFormsCursor = System.Windows.Forms.Cursor;
 
@@ -44,6 +43,30 @@ namespace PromptMasterv5
             // 监听 ViewModel 状态变化
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
             ApplyModeState();
+        }
+
+        // ★★★ 新增：窗口被激活（获得焦点）时的处理逻辑 ★★★
+        private void Window_Activated(object sender, EventArgs e)
+        {
+            // 只有在极简模式下才强制抢占焦点
+            if (ViewModel != null && !ViewModel.IsFullMode)
+            {
+                // 使用 ContextIdle 优先级，确保在 UI 渲染和系统上下文切换完成后才执行
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    if (MiniInputBox != null)
+                    {
+                        // 1. 强制设置 WPF 逻辑焦点
+                        MiniInputBox.Focus();
+
+                        // 2. 强制设置键盘设备焦点 (这是关键，解决“看得到光标但打不出字”的问题)
+                        Keyboard.Focus(MiniInputBox);
+
+                        // 3. 将光标移动到文本末尾 (符合用户直觉)
+                        MiniInputBox.CaretIndex = MiniInputBox.Text.Length;
+                    }
+                }), System.Windows.Threading.DispatcherPriority.ContextIdle);
+            }
         }
 
         private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -104,6 +127,9 @@ namespace PromptMasterv5
 
                 // 切换回极简模式后强制聚焦输入框
                 _ = Dispatcher.BeginInvoke(new Action(() => MiniInputBox.Focus()), System.Windows.Threading.DispatcherPriority.Render);
+
+                // ★★★ 核心修复：强制激活窗口，触发 Window_Activated 事件以抢占焦点 ★★★
+                this.Activate();
             }
         }
 
