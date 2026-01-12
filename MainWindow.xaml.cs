@@ -23,13 +23,11 @@ namespace PromptMasterv5
     {
         public MainViewModel ViewModel { get; }
 
-        // 记忆完整模式的窗口状态
         private double _lastFullWidth = 1000;
         private double _lastFullHeight = 600;
         private double _lastFullLeft = 100;
         private double _lastFullTop = 100;
 
-        // 输入区域按键判定计时器
         private DateTime _lastMiniEnterTime = DateTime.MinValue;
         private DateTime _lastVarEnterTime = DateTime.MinValue;
         private DateTime _lastAddEnterTime = DateTime.MinValue;
@@ -40,29 +38,20 @@ namespace PromptMasterv5
             ViewModel = new MainViewModel();
             this.DataContext = ViewModel;
 
-            // 监听 ViewModel 状态变化
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
             ApplyModeState();
         }
 
-        // ★★★ 新增：窗口被激活（获得焦点）时的处理逻辑 ★★★
         private void Window_Activated(object sender, EventArgs e)
         {
-            // 只有在极简模式下才强制抢占焦点
             if (ViewModel != null && !ViewModel.IsFullMode)
             {
-                // 使用 ContextIdle 优先级，确保在 UI 渲染和系统上下文切换完成后才执行
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
                     if (MiniInputBox != null)
                     {
-                        // 1. 强制设置 WPF 逻辑焦点
                         MiniInputBox.Focus();
-
-                        // 2. 强制设置键盘设备焦点 (这是关键，解决“看得到光标但打不出字”的问题)
                         Keyboard.Focus(MiniInputBox);
-
-                        // 3. 将光标移动到文本末尾 (符合用户直觉)
                         MiniInputBox.CaretIndex = MiniInputBox.Text.Length;
                     }
                 }), System.Windows.Threading.DispatcherPriority.ContextIdle);
@@ -77,15 +66,12 @@ namespace PromptMasterv5
             }
             else if (e.PropertyName == nameof(MainViewModel.IsMiniVarsExpanded))
             {
-                // 仅在极简模式且变量区域变动时更新高度
                 if (!ViewModel.IsFullMode) UpdateMiniHeight();
             }
-            // 监听输入内容清空（发送后），并在渲染完成后还原高度
             else if (e.PropertyName == nameof(MainViewModel.MiniInputText))
             {
                 if (string.IsNullOrEmpty(ViewModel.MiniInputText) && !ViewModel.IsFullMode)
                 {
-                    // 使用 Dispatcher + 弃元，消除 CS4014
                     _ = Dispatcher.BeginInvoke(new Action(() => {
                         UpdateMiniHeight();
                     }), System.Windows.Threading.DispatcherPriority.ContextIdle);
@@ -93,11 +79,13 @@ namespace PromptMasterv5
             }
         }
 
+        // ... (ApplyModeState, MiniInput_TextChanged, FindVisualChild, UpdateMiniHeight 等保持不变) ...
+        // 请保留中间这些负责窗口高度计算和拖拽的方法
+
         private void ApplyModeState()
         {
             if (ViewModel.IsFullMode)
             {
-                // === 完整模式：恢复尺寸并取消置顶 ===
                 this.Width = _lastFullWidth;
                 this.Height = _lastFullHeight;
                 this.Left = _lastFullLeft;
@@ -108,7 +96,6 @@ namespace PromptMasterv5
             }
             else
             {
-                // === 极简模式：保存当前状态并设为条状置顶 ===
                 _lastFullWidth = this.Width;
                 _lastFullHeight = this.Height;
                 _lastFullLeft = this.Left;
@@ -125,29 +112,18 @@ namespace PromptMasterv5
                 this.ResizeMode = ResizeMode.CanResize;
                 this.Topmost = true;
 
-                // 切换回极简模式后强制聚焦输入框
                 _ = Dispatcher.BeginInvoke(new Action(() => MiniInputBox.Focus()), System.Windows.Threading.DispatcherPriority.Render);
-
-                // ★★★ 核心修复：强制激活窗口，触发 Window_Activated 事件以抢占焦点 ★★★
                 this.Activate();
             }
         }
-
-        // ============================================
-        // ★ 高度动态计算逻辑 (防穿透屏幕底部 & 自动滚动) ★
-        // ============================================
 
         private void MiniInput_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (ViewModel != null && !ViewModel.IsFullMode)
             {
-                // ★★★ 核心修复：使用 Dispatcher 异步等待布局更新 ★★★
-                // ExtentHeight 在 TextChanged 触发时还未更新，必须等待 Render 优先级
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
                     UpdateMiniHeight();
-
-                    // 确保光标跟随逻辑也在高度调整后执行
                     if (MiniInputBox.LineCount > 0)
                     {
                         var caretIndex = MiniInputBox.CaretIndex;
@@ -161,21 +137,15 @@ namespace PromptMasterv5
             }
         }
 
-        // 辅助方法：用于在 ItemsControl 中查找 TextBox (增加可空引用支持)
         private childItem? FindVisualChild<childItem>(DependencyObject? obj) where childItem : DependencyObject
         {
             if (obj == null) return null;
-
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(obj); i++)
             {
                 DependencyObject child = VisualTreeHelper.GetChild(obj, i);
-
-                if (child is childItem item)
-                    return item;
-
+                if (child is childItem item) return item;
                 childItem? childOfChild = FindVisualChild<childItem>(child);
-                if (childOfChild != null)
-                    return childOfChild;
+                if (childOfChild != null) return childOfChild;
             }
             return null;
         }
@@ -183,68 +153,37 @@ namespace PromptMasterv5
         private void UpdateMiniHeight()
         {
             if (MiniInputBox == null) return;
-
-            // --- 1. 计算内容所需总高度 ---
             double contentHeight = MiniInputBox.ExtentHeight;
             if (contentHeight < 40) contentHeight = 40;
-
             double chromePadding = 60;
             double varsHeight = 0;
-
-            // 计算变量区域高度
             if (ViewModel.IsMiniVarsExpanded)
             {
                 double estimatedVarsHeight = ViewModel.Variables.Count * 45 + 20;
-                // 限制变量区最大高度 (配合 XAML 中的 MaxHeight)
                 if (estimatedVarsHeight > 300) estimatedVarsHeight = 300;
                 varsHeight = estimatedVarsHeight;
             }
-
-            // 初步目标高度 (内容 + 边框 + 变量区)
             double targetHeight = contentHeight + chromePadding + varsHeight;
-
-            // --- 2. 应用高度限制 (屏幕的一半) ---
             double screenHalf = SystemParameters.PrimaryScreenHeight / 2;
             if (targetHeight > screenHalf) targetHeight = screenHalf;
-
-            // --- 3. ★★★ 智能上移逻辑 (Smart Lift) ★★★ ---
-            // 获取当前屏幕的工作区信息
             double workAreaTop = SystemParameters.WorkArea.Top;
             double workAreaBottom = SystemParameters.WorkArea.Bottom;
             double currentTop = this.Top;
-
-            // 底部安全边距 (防止紧贴任务栏)
             double safetyMargin = 20;
-
-            // 预测：如果保持当前 Top 不变，窗口底部会在哪里？
             double predictedBottom = currentTop + targetHeight + safetyMargin;
-
-            // 检测是否撞到底部
             if (predictedBottom > workAreaBottom)
             {
-                // 计算溢出量 (需要上移多少)
                 double offset = predictedBottom - workAreaBottom;
-
-                // 计算新的 Top
                 double newTop = currentTop - offset;
-
-                // 边界检查：不能移出屏幕顶部
                 if (newTop < workAreaTop)
                 {
                     newTop = workAreaTop;
-                    // 如果顶到底部也顶到顶部了，只能压缩高度
                     double maxPossibleHeight = workAreaBottom - workAreaTop - safetyMargin;
                     if (targetHeight > maxPossibleHeight) targetHeight = maxPossibleHeight;
                 }
-
-                // 执行上移
                 this.Top = newTop;
             }
-
-            // --- 4. 应用最终高度 ---
             this.Height = targetHeight;
-
-            // --- 5. 滚动光标跟随 ---
             if (MiniInputBox.IsKeyboardFocused && MiniInputBox.LineCount > 0)
             {
                 var caretIndex = MiniInputBox.CaretIndex;
@@ -266,7 +205,7 @@ namespace PromptMasterv5
         private void FullWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { if (e.ButtonState == MouseButtonState.Pressed) this.DragMove(); }
 
         // =========================================================
-        // ★ 极简模式按键逻辑 (含键盘导航与智能焦点)
+        // ★ 核心修改：在按键预览中处理 AI 触发 ★
         // =========================================================
 
         private async void MiniInput_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -274,7 +213,7 @@ namespace PromptMasterv5
             var textBox = sender as TextBox;
             if (textBox == null) return;
 
-            // 搜索列表的键盘导航 (上/下键选择)
+            // 搜索列表导航
             if (ViewModel.IsSearchPopupOpen && ViewModel.SearchResults.Count > 0)
             {
                 if (e.Key == Key.Down)
@@ -299,25 +238,16 @@ namespace PromptMasterv5
 
             if (e.Key == Key.Enter)
             {
-                // 搜索确认后的智能焦点流转
+                // 1. 搜索确认
                 if (ViewModel.IsSearchPopupOpen)
                 {
-                    // 1. 执行确认命令 (填入文本)
                     ViewModel.ConfirmSearchResultCommand.Execute(null);
-
-                    // 2. 标记事件已处理
                     e.Handled = true;
-
-                    // 3. 等待 UI 更新 (变量列表生成需要时间)
                     await Dispatcher.BeginInvoke(new Action(() =>
                     {
-                        // 强制刷新高度
                         UpdateMiniHeight();
-
                         if (ViewModel.HasVariables)
                         {
-                            // 场景 A：有变量 -> 聚焦第一个变量输入框
-                            // 利用 ItemsControl 的 ItemContainerGenerator 找到第一个容器
                             var container = MiniVarsList.ItemContainerGenerator.ContainerFromIndex(0) as FrameworkElement;
                             if (container != null)
                             {
@@ -330,19 +260,31 @@ namespace PromptMasterv5
                                 }
                             }
                         }
-
-                        // 场景 B：无变量 (或查找失败) -> 聚焦主输入框并移到末尾
                         MiniInputBox.Focus();
                         MiniInputBox.CaretIndex = MiniInputBox.Text.Length;
-
-                    }), System.Windows.Threading.DispatcherPriority.ContextIdle); // 使用 ContextIdle 确保数据绑定完成
-
+                    }), System.Windows.Threading.DispatcherPriority.ContextIdle);
                     return;
                 }
 
-                // --- 发送逻辑 ---
+                // ★★★ 新增：AI 触发检测 (方案 B) ★★★
+                // 检查前缀 ai , ? , ？
+                string text = ViewModel.MiniInputText.Trim();
+                if (text.StartsWith("ai ", StringComparison.OrdinalIgnoreCase) ||
+                    text.StartsWith("? ") || text.StartsWith("？ "))
+                {
+                    e.Handled = true; // 拦截 Enter，不发送
+                    await ViewModel.ExecuteAiQuery();
 
-                // 强制刷新高度防止遮挡
+                    // AI 返回后，等待渲染更新并聚焦末尾
+                    await Dispatcher.BeginInvoke(new Action(() => {
+                        UpdateMiniHeight();
+                        MiniInputBox.Focus();
+                        MiniInputBox.CaretIndex = MiniInputBox.Text.Length;
+                    }), System.Windows.Threading.DispatcherPriority.ContextIdle);
+                    return;
+                }
+
+                // --- 正常的发送逻辑 (按原样保留) ---
                 _ = Dispatcher.BeginInvoke(new Action(() => {
                     UpdateMiniHeight();
                 }), System.Windows.Threading.DispatcherPriority.Render);
@@ -351,7 +293,6 @@ namespace PromptMasterv5
                 var now = DateTime.Now;
                 var span = (now - _lastMiniEnterTime).TotalMilliseconds;
 
-                // 双击 Enter 检测 (坐标模式)
                 if (span < 500 && !isCtrl)
                 {
                     e.Handled = true;
@@ -360,7 +301,6 @@ namespace PromptMasterv5
                     return;
                 }
 
-                // Ctrl + Enter 检测 (智能回退)
                 if (isCtrl)
                 {
                     e.Handled = true;
@@ -370,7 +310,7 @@ namespace PromptMasterv5
 
                 _lastMiniEnterTime = now;
 
-                // 自动编号逻辑
+                // 自动编号
                 int caretIndex = textBox.CaretIndex;
                 int lineIndex = textBox.GetLineIndexFromCharacterIndex(caretIndex);
                 if (lineIndex < 0) return;
@@ -390,7 +330,6 @@ namespace PromptMasterv5
             }
             else if (e.Key == Key.Up && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
             {
-                // Ctrl + Up 切换到完整模式
                 ViewModel.EnterFullModeCommand.Execute(null);
                 e.Handled = true;
             }
@@ -398,17 +337,12 @@ namespace PromptMasterv5
 
         private void SearchResult_Click(object sender, MouseButtonEventArgs e) => ViewModel.ConfirmSearchResultCommand.Execute(null);
 
-        // =========================================================
-        // ★ 完整模式逻辑处理
-        // =========================================================
+        // ... (TriggerSendProcess, TextBox_PreviewKeyDown, AdditionalInputBox_PreviewKeyDown 等保持不变) ...
 
         private async Task TriggerSendProcess(TextBox sourceBox, InputMode mode)
         {
-            // 同步 UI 更改到 ViewModel
             sourceBox?.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
             this.Hide();
-
-            // 内部调用也必须 await
             if (mode == InputMode.SmartFocus)
                 await ViewModel.SendBySmartFocus();
             else
@@ -421,18 +355,15 @@ namespace PromptMasterv5
             {
                 var textBox = sender as TextBox;
                 if (textBox == null) return;
-
                 bool isCtrlEnter = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
                 var now = DateTime.Now;
                 var span = (now - _lastVarEnterTime).TotalMilliseconds;
-
                 if (isCtrlEnter)
                 {
                     e.Handled = true;
                     await TriggerSendProcess(textBox, InputMode.SmartFocus);
                     return;
                 }
-
                 if (span < 500)
                 {
                     e.Handled = true;
@@ -450,11 +381,9 @@ namespace PromptMasterv5
             {
                 var textBox = sender as TextBox;
                 if (textBox == null) return;
-
                 bool isCtrlEnter = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
                 var now = DateTime.Now;
                 var span = (now - _lastAddEnterTime).TotalMilliseconds;
-
                 if (isCtrlEnter)
                 {
                     e.Handled = true;
@@ -469,7 +398,6 @@ namespace PromptMasterv5
                 else
                 {
                     _lastAddEnterTime = now;
-                    // 自动编号
                     int caretIndex = textBox.CaretIndex;
                     int lineIndex = textBox.GetLineIndexFromCharacterIndex(caretIndex);
                     if (lineIndex < 0) return;
@@ -510,7 +438,8 @@ namespace PromptMasterv5
             sb.Append(key.ToString());
             if (sender is TextBox tb) { ViewModel.Config.GlobalHotkey = sb.ToString(); tb.GetBindingExpression(TextBox.TextProperty)?.UpdateTarget(); }
         }
-
+        // ★★★ 修复 CA1416: 显式标记支持 Windows 平台 ★★★
+        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
         private async void PickCoordinate_Click(object sender, RoutedEventArgs e)
         {
             var btn = sender as Button; if (btn == null) return; string org = btn.Content.ToString() ?? "拾取";
@@ -526,8 +455,8 @@ namespace PromptMasterv5
             }
             finally { btn.Content = org; btn.IsEnabled = true; }
         }
+        
 
-        // ESC 键功能：完整模式->极简模式->隐藏
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Escape)

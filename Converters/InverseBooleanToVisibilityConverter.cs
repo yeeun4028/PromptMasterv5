@@ -3,7 +3,6 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 
-// 确保命名空间是 PromptMasterv5，这样 XAML 中的 local: 才能找到它
 namespace PromptMasterv5
 {
     public class InverseBooleanToVisibilityConverter : IValueConverter

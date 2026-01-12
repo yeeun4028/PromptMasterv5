@@ -2,9 +2,10 @@
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Markup;
+
+// ★★★ 核心修复：显式指定 Binding 为 WPF 的 Binding，解决与 WinForms 的冲突 ★★★
 using Binding = System.Windows.Data.Binding;
 
-// ★★★ 关键修复：命名空间必须设为 PromptMasterv5.Models 以匹配 XAML 中的 models: 前缀 ★★★
 namespace PromptMasterv5.Models
 {
     public class EnumToBoolConverter : MarkupExtension, IValueConverter

@@ -31,9 +31,11 @@ namespace PromptMasterv5.ViewModels
     {
         private readonly IDataService _dataService;
         private readonly GlobalKeyService _keyService;
-
-        // ★★★ 新增：浏览器自动化服务 ★★★
         private readonly BrowserAutomationService _browserService;
+        private readonly AiService _aiService;
+
+        // ★★★ 新增：Fabric 服务 ★★★
+        private readonly FabricService _fabricService;
 
         private bool _isCreatingFile = false;
         private DispatcherTimer _timer;
@@ -66,6 +68,8 @@ namespace PromptMasterv5.ViewModels
         [ObservableProperty] private bool hasVariables;
         [ObservableProperty] private string additionalInput = "";
 
+        [ObservableProperty] private bool isAiProcessing = false;
+
         public MainViewModel()
         {
             Config = ConfigService.Load();
@@ -77,10 +81,13 @@ namespace PromptMasterv5.ViewModels
 
             if (Config.EnableDoubleCtrl) try { _keyService.Start(); } catch { }
 
-            // ★★★ 新增：初始化并启动浏览器监听服务 ★★★
             _browserService = new BrowserAutomationService();
             _browserService.OnTargetSiteMatched += BrowserService_OnTargetSiteMatched;
             _browserService.Start();
+
+            _aiService = new AiService();
+            // ★★★ 初始化 Fabric 服务 ★★★
+            _fabricService = new FabricService();
 
             _dataService = new WebDavDataService();
             FolderDropHandler = new FolderDropHandler(this);
@@ -92,32 +99,21 @@ namespace PromptMasterv5.ViewModels
             _ = InitializeAsync();
         }
 
-        // ★★★ 新增：处理浏览器匹配事件 ★★★
+        // ... (BrowserService_OnTargetSiteMatched, UpdateGlobalHotkey 等方法保持不变) ...
+
         private void BrowserService_OnTargetSiteMatched(object? sender, EventArgs e)
         {
-            // 必须在 UI 线程执行
             Application.Current.Dispatcher.Invoke(() =>
             {
                 var mainWindow = Application.Current.MainWindow;
                 if (mainWindow == null) return;
-
-                // 触发前提检查：
-                // 1. 软件必须处于 极简模式 (IsFullMode == false)
-                // 2. 极简窗口必须处于 显示状态 (Visibility == Visible)
                 if (!IsFullMode && mainWindow.Visibility == Visibility.Visible)
                 {
-                    // 记录刚才的浏览器窗口句柄，方便之后 SmartFocus 能够发送回去
                     CaptureForegroundWindow();
-
-                    // 强制拉回焦点
                     mainWindow.Activate();
                     mainWindow.Focus();
-                    mainWindow.Topmost = true; // 确保置顶
-
-                    if (mainWindow is MainWindow win)
-                    {
-                        win.MiniInputBox.Focus();
-                    }
+                    mainWindow.Topmost = true;
+                    if (mainWindow is MainWindow win) win.MiniInputBox.Focus();
                 }
             });
         }
@@ -148,6 +144,16 @@ namespace PromptMasterv5.ViewModels
 
         partial void OnMiniInputTextChanged(string value)
         {
+            if (value.StartsWith("ai ", StringComparison.OrdinalIgnoreCase) ||
+                value.StartsWith("? ") || value.StartsWith("？ "))
+            {
+                IsSearchPopupOpen = false;
+                Variables.Clear();
+                HasVariables = false;
+                IsMiniVarsExpanded = false;
+                return;
+            }
+
             if (value.StartsWith("/") || value.StartsWith("、"))
             {
                 string keyword = value.Length > 1 ? value.Substring(1) : "";
@@ -157,6 +163,64 @@ namespace PromptMasterv5.ViewModels
             else IsSearchPopupOpen = false;
             ParseVariablesRealTime(value);
         }
+
+        // ★★★ 修改：执行 AI 路由与组装逻辑 (选项 B) ★★★
+        public async Task ExecuteAiQuery()
+        {
+            string inputText = MiniInputText.Trim();
+            string query = "";
+
+            if (inputText.StartsWith("ai ", StringComparison.OrdinalIgnoreCase)) query = inputText.Substring(3);
+            else if (inputText.StartsWith("? ")) query = inputText.Substring(2);
+            else if (inputText.StartsWith("？ ")) query = inputText.Substring(2);
+            else return;
+
+            if (string.IsNullOrWhiteSpace(query)) return;
+
+            IsAiProcessing = true;
+
+            try
+            {
+                // 1. 调用 FabricService 进行语义路由，获取匹配的 Prompt 内容
+                // 这一步会问 DeepSeek：“用户这句话匹配哪个模式？”
+                string patternContent = await _fabricService.FindBestPatternAndContentAsync(query, _aiService, Config);
+
+                if (!string.IsNullOrEmpty(patternContent))
+                {
+                    // 2. 匹配成功！执行【选项 B】：组装 Prompt
+                    // 格式：[System Prompt] + [用户输入]
+
+                    // 我们用分割线让内容清晰一点
+                    string assembledPrompt = $"{patternContent}\n\n---\n\nUSER INPUT:\n{query}";
+
+                    MiniInputText = assembledPrompt;
+                }
+                else
+                {
+                    // 3. 匹配失败（或没有本地文件夹），则回退到原来的逻辑：直接对话
+                    // 或者你也可以选择只显示原话。这里我们保持“智能”，如果没匹配到模式，就直接让AI回答问题
+                    // 但根据你的需求“替换为提示词”，这里如果不匹配，我们也许可以直接生成一段简单的 Prompt
+
+                    // 方案修正：如果没有匹配到 Fabric 模式，我们就把用户的输入原样保留，或者不做任何处理
+                    // 这里演示：直接让 AI 优化这段话，变成一个 Prompt
+
+                    // 为了不打断体验，如果没匹配到，我们暂时直接替换为 AI 的直接回答 (保持 V1 功能)，
+                    // 或者显示提示 "未匹配到模式"
+                    string result = await _aiService.ChatAsync(query, Config);
+                    MiniInputText = result;
+                }
+            }
+            catch (Exception ex)
+            {
+                MiniInputText = $"[AI 错误] {ex.Message}";
+            }
+            finally
+            {
+                IsAiProcessing = false;
+            }
+        }
+
+        // ... (其余代码完全保持不变) ...
 
         private void PerformSearch(string keyword)
         {
@@ -271,8 +335,6 @@ namespace PromptMasterv5.ViewModels
             else await SendBySmartFocus();
         }
 
-        // --- 辅助逻辑 (CRUD等) ---
-
         partial void OnSelectedFolderChanged(FolderItem? value)
         {
             FilesView?.Refresh();
@@ -326,7 +388,6 @@ namespace PromptMasterv5.ViewModels
             if (handle != IntPtr.Zero) _previousWindowHandle = handle;
         }
 
-        // ... 命令 ...
         [RelayCommand] private void CreateFolder() { var f = new FolderItem { Name = $"新建文件夹 {Folders.Count + 1}" }; Folders.Add(f); SelectedFolder = f; RequestSave(); }
         [RelayCommand] private void CreateFile() { if (SelectedFolder == null) return; _isCreatingFile = true; var f = new PromptItem { Title = "新文档", Content = "# 新文档", FolderId = SelectedFolder.Id, LastModified = DateTime.Now }; Files.Add(f); SelectedFile = f; IsEditMode = true; RequestSave(); _isCreatingFile = false; }
         [RelayCommand] private void DeleteFile(PromptItem? i) { var t = i ?? SelectedFile; if (t != null) { Files.Remove(t); if (SelectedFile == t) SelectedFile = null; RequestSave(); } }

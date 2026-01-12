@@ -1,0 +1,72 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using OpenAI;
+using OpenAI.Managers;
+using OpenAI.ObjectModels.RequestModels;
+using OpenAI.ObjectModels;
+using PromptMasterv5.Models;
+
+namespace PromptMasterv5.Services
+{
+    public class AiService
+    {
+        // ★★★ 修改：增加 systemPrompt 可选参数 ★★★
+        public async Task<string> ChatAsync(string userContent, AppConfig config, string? systemPrompt = null)
+        {
+            if (string.IsNullOrWhiteSpace(config.AiApiKey))
+            {
+                return "[设置错误] 请先在设置中配置 AI API Key";
+            }
+
+            var options = new OpenAiOptions
+            {
+                ApiKey = config.AiApiKey,
+                BaseDomain = config.AiBaseUrl
+            };
+
+            var openAiService = new OpenAIService(options);
+
+            // 如果没有传入特定的系统提示词，则使用默认的“直接回答”模式
+            string finalSystemPrompt = systemPrompt ?? "You are a helpful assistant. Output the result directly without unnecessary conversational filler. IMPORTANT: Always answer in Simplified Chinese unless the user explicitly asks for another language.";
+
+            var messages = new List<ChatMessage>
+            {
+                ChatMessage.FromSystem(finalSystemPrompt),
+                ChatMessage.FromUser(userContent)
+            };
+
+            var request = new ChatCompletionCreateRequest
+            {
+                Messages = messages,
+                Model = config.AiModel,
+                Temperature = 0.7f
+            };
+
+            try
+            {
+                var completionResult = await openAiService.ChatCompletion.CreateCompletion(request);
+
+                if (completionResult.Successful)
+                {
+                    var choice = completionResult.Choices?.FirstOrDefault();
+                    if (choice != null && choice.Message != null && !string.IsNullOrEmpty(choice.Message.Content))
+                    {
+                        return choice.Message.Content.Trim();
+                    }
+                    return "[AI 无响应] 返回内容为空";
+                }
+                else
+                {
+                    if (completionResult.Error == null) return "[AI 错误] 未知网络错误";
+                    return $"[AI 错误] {completionResult.Error.Message} ({completionResult.Error.Type})";
+                }
+            }
+            catch (Exception ex)
+            {
+                return $"[系统错误] {ex.Message}";
+            }
+        }
+    }
+}

@@ -16,12 +16,13 @@
         Background="Transparent"
         Topmost="True"
         PreviewKeyDown="Window_PreviewKeyDown"
-    Activated="Window_Activated">
+        Activated="Window_Activated">
 
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="0" ResizeBorderThickness="8" GlassFrameThickness="0" CornerRadius="0"/>
     </WindowChrome.WindowChrome>
 
+    <!-- (Window.Resources 保持不变) ... -->
     <Window.Resources>
         <SolidColorBrush x:Key="TextBrush" Color="#333333"/>
         <SolidColorBrush x:Key="GitHubBlue" Color="#4183C4"/>
@@ -30,7 +31,7 @@
         <Geometry x:Key="IconChevronRight">M 9,6 L 15,12 L 9,18</Geometry>
         <Geometry x:Key="IconChevronLeft">M 15,6 L 9,12 L 15,18</Geometry>
         <Geometry x:Key="IconFolderLinear">M20,18H4V8H20M20,6H12L10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6Z</Geometry>
-        <Geometry x:Key="IconFileLinear">M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z</Geometry>
+        <Geometry x:Key="IconFileLinear">M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z</Geometry>
         <Geometry x:Key="IconNewFolder">M20 6h-8l-2-2H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.9-2-2-2zm-1 8h-3v3h-2v-3h-3v-2h3V9h2v3h3v2z</Geometry>
         <Geometry x:Key="IconNewDoc">M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z</Geometry>
         <Geometry x:Key="IconSettings">M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84a.484.484 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0 .59-.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.27.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z</Geometry>
@@ -352,13 +353,21 @@
                         </Popup>
                     </Grid>
 
-                    <Button Grid.Column="2" 
-                            Command="{Binding EnterFullModeCommand}"
-                            Background="Transparent" BorderThickness="0"
-                            VerticalAlignment="Top"
-                            Margin="0,15,10,0" Cursor="Hand" ToolTip="展开 (Ctrl+Up)">
-                        <Path Data="M4,12 L10,6 L16,12" Stroke="#888" StrokeThickness="2"/>
-                    </Button>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,15,10,0">
+                        <!-- ★★★ 新增：AI 处理状态指示器 ★★★ -->
+                        <TextBlock Text="✨ 思考中..." 
+                                   Foreground="#AAA" 
+                                   FontSize="11" 
+                                   VerticalAlignment="Center" 
+                                   Margin="0,0,10,0"
+                                   Visibility="{Binding IsAiProcessing, Converter={StaticResource BoolToVis}}"/>
+
+                        <Button Command="{Binding EnterFullModeCommand}"
+                                Background="Transparent" BorderThickness="0"
+                                Cursor="Hand" ToolTip="展开 (Ctrl+Up)">
+                            <Path Data="M4,12 L10,6 L16,12" Stroke="#888" StrokeThickness="2"/>
+                        </Button>
+                    </StackPanel>
                 </Grid>
             </Border>
 
@@ -906,6 +915,7 @@
                                         </Button.Template>
                                     </Button>
 
+                                    <!-- Tab 0: 同步设置 -->
                                     <StackPanel>
                                         <StackPanel.Style>
                                             <Style TargetType="StackPanel">
@@ -918,36 +928,47 @@
                                             </Style>
                                         </StackPanel.Style>
 
+                                        <!-- ★★★ 新增：AI 配置区域 ★★★ -->
+                                        <TextBlock Text="AI 大模型配置" Foreground="#333" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
+
+                                        <TextBlock Text="API 地址 (Base URL)" Foreground="#666" Margin="0,0,0,5"/>
+                                        <TextBox Text="{Binding Config.AiBaseUrl}" Padding="5" Margin="0,0,0,10" Background="#F5F5F5" BorderThickness="0" ToolTip="例如: https://api.deepseek.com"/>
+
+                                        <TextBlock Text="API Key" Foreground="#666" Margin="0,0,0,5"/>
+                                        <TextBox Text="{Binding Config.AiApiKey}" Padding="5" Margin="0,0,0,10" Background="#F5F5F5" BorderThickness="0"/>
+
+                                        <TextBlock Text="模型名称" Foreground="#666" Margin="0,0,0,5"/>
+                                        <TextBox Text="{Binding Config.AiModel}" Padding="5" Margin="0,0,0,15" Background="#F5F5F5" BorderThickness="0" ToolTip="例如: deepseek-chat, qwen-turbo"/>
+
+                                        <Border Height="1" Background="#EEE" Margin="0,10"/>
+
                                         <TextBlock Text="WebDAV 网址" Foreground="#666" Margin="0,0,0,5"/>
-                                        <TextBox Text="{Binding Config.WebDavUrl}" Padding="5" Margin="0,0,0,15" Background="#F5F5F5" BorderThickness="0"/>
+                                        <TextBox Text="{Binding Config.WebDavUrl}" Padding="5" Margin="0,0,0,10" Background="#F5F5F5" BorderThickness="0"/>
 
                                         <TextBlock Text="账号 (邮箱)" Foreground="#666" Margin="0,0,0,5"/>
-                                        <TextBox Text="{Binding Config.UserName}" Padding="5" Margin="0,0,0,15" Background="#F5F5F5" BorderThickness="0"/>
+                                        <TextBox Text="{Binding Config.UserName}" Padding="5" Margin="0,0,0,10" Background="#F5F5F5" BorderThickness="0"/>
 
-                                        <TextBlock Text="应用密码 (非登录密码)" Foreground="#666" Margin="0,0,0,5"/>
+                                        <TextBlock Text="应用密码" Foreground="#666" Margin="0,0,0,5"/>
                                         <PasswordBox x:Name="WebDavPasswordBox" 
                                                      PasswordChar="●"
                                                      Padding="5" 
-                                                     Margin="0,0,0,20" 
+                                                     Margin="0,0,0,15" 
                                                      Background="#F5F5F5" 
                                                      BorderThickness="0"
                                                      PasswordChanged="WebDavPasswordBox_PasswordChanged"
                                                      Loaded="WebDavPasswordBox_Loaded"/>
 
-                                        <Border Height="1" Background="#EEE" Margin="0,10"/>
-
-                                        <TextBlock Text="手动操作" Foreground="#666" Margin="0,0,0,10"/>
-                                        <StackPanel Orientation="Horizontal">
+                                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                                             <Button Content="☁️ 备份到远程" Command="{Binding ManualBackupCommand}" 
-                                                    Background="#4183C4" Foreground="White" BorderThickness="0" Padding="15,8" Margin="0,0,10,0" Cursor="Hand">
+                                                    Background="#4183C4" Foreground="White" BorderThickness="0" Padding="15,6" Margin="0,0,10,0" Cursor="Hand">
                                                 <Button.Resources>
                                                     <Style TargetType="Border">
                                                         <Setter Property="CornerRadius" Value="4"/>
                                                     </Style>
                                                 </Button.Resources>
                                             </Button>
-                                            <Button Content="📂 导入 Markdown" Command="{Binding ImportMarkdownFilesCommand}" 
-                                                    Background="White" Foreground="#333" BorderBrush="#CCC" BorderThickness="1" Padding="15,8" Cursor="Hand">
+                                            <Button Content="📂 导入 MD" Command="{Binding ImportMarkdownFilesCommand}" 
+                                                    Background="White" Foreground="#333" BorderBrush="#CCC" BorderThickness="1" Padding="15,6" Cursor="Hand">
                                                 <Button.Resources>
                                                     <Style TargetType="Border">
                                                         <Setter Property="CornerRadius" Value="4"/>
@@ -957,6 +978,7 @@
                                         </StackPanel>
                                     </StackPanel>
 
+                                    <!-- Tab 1: 快捷键 -->
                                     <StackPanel>
                                         <StackPanel.Style>
                                             <Style TargetType="StackPanel">
@@ -1001,6 +1023,7 @@
                                         <TextBlock Text="* 点击输入框并直接按下键盘组合键（如 Ctrl+Shift+X）即可修改" Foreground="#999" FontSize="11" Margin="0,5,0,0"/>
                                     </StackPanel>
 
+                                    <!-- Tab 2: 自动化 -->
                                     <StackPanel>
                                         <StackPanel.Style>
                                             <Style TargetType="StackPanel">

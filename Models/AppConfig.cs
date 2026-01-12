@@ -16,9 +16,19 @@ namespace PromptMasterv5.Models
         [ObservableProperty]
         private string globalHotkey = "Alt+Space";
 
-        // ★★★ 修复关键：补上这个缺失的属性 ★★★
         [ObservableProperty]
         private bool enableDoubleCtrl = true;
+
+        // ★★★ 新增：AI 配置项 ★★★
+
+        [ObservableProperty]
+        private string aiBaseUrl = "https://api.deepseek.com"; // 默认 DeepSeek
+
+        [ObservableProperty]
+        private string aiApiKey = "";
+
+        [ObservableProperty]
+        private string aiModel = "deepseek-chat"; // 默认模型名
 
         public string RemoteFolderName { get; set; } = "PromptMaster";
     }
