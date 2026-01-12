@@ -101,45 +101,59 @@ namespace PromptMasterv5.ViewModels
             _keyService.OnDoubleCtrlDetected += (s, e) => Application.Current.Dispatcher.Invoke(() => ToggleMainWindow());
 
             // ★★★ 绑定双击分号事件 (包含强制焦点修复) ★★★
+            // ★★★ 绑定双击分号事件 (包含强制焦点修复 + 防泄漏清理) ★★★
             _keyService.OnDoubleSemiColonDetected += (s, e) => Application.Current.Dispatcher.Invoke(async () =>
             {
                 var mainWindow = Application.Current.MainWindow as MainWindow;
                 if (mainWindow == null) return;
 
-                // 逻辑：如果窗口未显示或不在前台，则显示
+                // 1. 唤醒窗口逻辑
                 if (!IsFullMode && mainWindow.Visibility == Visibility.Visible && mainWindow.IsActive)
                 {
-                    // 已经在前台且激活，直接清空即可
-                    MiniInputText = "";
+                    MiniInputText = ""; // 已经在前台，仅清空
                 }
                 else
                 {
-                    // 如果窗口是隐藏的，调用切换显示逻辑
                     if (mainWindow.Visibility != Visibility.Visible)
                     {
-                        ToggleMainWindow();
+                        ToggleMainWindow(); // 唤醒
                     }
-                    MiniInputText = ""; // 刚唤醒时清空输入框
+                    MiniInputText = ""; // 先清空一次
                 }
 
-                // ★★★ 核心修复：强制抢占输入焦点 ★★★
-                // 给一点点延迟，等待窗口渲染完成，防止焦点设置失败
+                // 2. 强制抢占焦点
+                // 给一点延迟等待窗口渲染
                 await Task.Delay(50);
 
-                // A. 强制置顶 (WPF 层面)
                 mainWindow.Show();
                 mainWindow.Activate();
                 mainWindow.Topmost = true;
 
-                // B. 强制抢占系统前台窗口 (Win32 API 层面) - 解决“目视有焦点但无法输入”的问题
                 var interopHelper = new System.Windows.Interop.WindowInteropHelper(mainWindow);
                 NativeMethods.SetForegroundWindow(interopHelper.Handle);
 
-                // C. 强制聚焦输入框 (WPF 输入层面)
-                mainWindow.MiniInputBox.Focus();           // 逻辑焦点
-                Keyboard.Focus(mainWindow.MiniInputBox);   // 键盘焦点 (关键)
+                mainWindow.MiniInputBox.Focus();
+                Keyboard.Focus(mainWindow.MiniInputBox);
 
-                // D. 确保光标在最后
+                // 3. ★★★ 核心修复：二次清理 ★★★
+                // 在获取焦点后，再次检查输入框。如果输入法或系统“漏”进来一个分号，在这里删掉它。
+                // 给极短的缓冲时间让“漏”进来的字符上屏
+                await Task.Delay(20);
+
+                // 检查并移除开头的分号 (兼容中英文)
+                if (!string.IsNullOrEmpty(MiniInputText))
+                {
+                    // 移除开头的 ; 或 ；
+                    string cleaned = MiniInputText.TrimStart(';', '；');
+
+                    // 只有当确实有变化时才赋值，避免光标跳动
+                    if (cleaned != MiniInputText)
+                    {
+                        MiniInputText = cleaned;
+                    }
+                }
+
+                // 4. 确保光标在最后
                 mainWindow.MiniInputBox.CaretIndex = mainWindow.MiniInputBox.Text.Length;
             });
 

@@ -47,6 +47,7 @@ namespace PromptMasterv5.Services
         }
 
         // ★★★ 新增：字符监听逻辑 ★★★
+        // ★★★ 修改：字符监听逻辑 ★★★
         private void GlobalHook_KeyPress(object? sender, KeyPressEventArgs e)
         {
             char currentChar = e.KeyChar;
@@ -60,7 +61,12 @@ namespace PromptMasterv5.Services
                 // 判断是否连续按下
                 if ((_lastChar == ';' || _lastChar == '；') && span < 800)
                 {
+                    // 触发唤醒事件
                     OnDoubleSemiColonDetected?.Invoke(this, EventArgs.Empty);
+
+                    // ★★★ 核心修复：将该按键标记为已处理，防止它“泄漏”进输入框 ★★★
+                    e.Handled = true;
+
                     _lastChar = '\0'; // 重置防止三连击触发两次
                     _lastCharTime = DateTime.MinValue;
                 }
