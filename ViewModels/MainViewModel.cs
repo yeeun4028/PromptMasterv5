@@ -469,6 +469,18 @@ namespace PromptMasterv5.ViewModels
         [RelayCommand] private void CreateFolder() { var f = new FolderItem { Name = $"新建文件夹 {Folders.Count + 1}" }; Folders.Add(f); SelectedFolder = f; RequestSave(); }
         [RelayCommand] private void CreateFile() { if (SelectedFolder == null) return; _isCreatingFile = true; var f = new PromptItem { Title = "新文档", Content = "# 新文档", FolderId = SelectedFolder.Id, LastModified = DateTime.Now }; Files.Add(f); SelectedFile = f; IsEditMode = true; RequestSave(); _isCreatingFile = false; }
         [RelayCommand] private void DeleteFile(PromptItem? i) { var t = i ?? SelectedFile; if (t != null) { Files.Remove(t); if (SelectedFile == t) SelectedFile = null; RequestSave(); } }
+        [RelayCommand] private void DeleteFolder(FolderItem? folder)
+        {
+            if (folder == null) return;
+
+            var filesInFolder = Files.Where(f => f.FolderId == folder.Id).ToList();
+            foreach (var file in filesInFolder) Files.Remove(file);
+
+            if (SelectedFolder == folder) SelectedFolder = null;
+
+            Folders.Remove(folder);
+            RequestSave();
+        }
         [RelayCommand] private void ChangeFolderIcon(FolderItem f) { /* ... */ }
         [RelayCommand] private void RenameFolder(FolderItem f) { /* ... */ }
         [RelayCommand] private void ChangeFileIcon(PromptItem f) { /* ... */ }
