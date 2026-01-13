@@ -1,4 +1,4 @@
-﻿<Window x:Class="PromptMasterv5.MainWindow"
+<Window x:Class="PromptMasterv5.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -825,6 +825,9 @@
                                                         <DataTrigger Binding="{Binding SelectedSettingsTab}" Value="2">
                                                             <Setter Property="Foreground" Value="#666"/>
                                                         </DataTrigger>
+                                                        <DataTrigger Binding="{Binding SelectedSettingsTab}" Value="3">
+                                                            <Setter Property="Foreground" Value="#666"/>
+                                                        </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </Button.Resources>
@@ -856,6 +859,9 @@
                                                             <Setter Property="Foreground" Value="#666"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding SelectedSettingsTab}" Value="2">
+                                                            <Setter Property="Foreground" Value="#666"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding SelectedSettingsTab}" Value="3">
                                                             <Setter Property="Foreground" Value="#666"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
@@ -891,11 +897,50 @@
                                                         <DataTrigger Binding="{Binding SelectedSettingsTab}" Value="1">
                                                             <Setter Property="Foreground" Value="#666"/>
                                                         </DataTrigger>
+                                                        <DataTrigger Binding="{Binding SelectedSettingsTab}" Value="3">
+                                                            <Setter Property="Foreground" Value="#666"/>
+                                                        </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </Button.Resources>
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="⚡  自动化" FontSize="14"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button Command="{Binding SelectSettingsTabCommand}" CommandParameter="3"
+                                                Style="{StaticResource SettingsTabBtnStyle}" Margin="0,5,0,0">
+                                            <Button.Background>
+                                                <SolidColorBrush Color="Transparent"/>
+                                            </Button.Background>
+                                            <Button.Resources>
+                                                <Style TargetType="Border">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding SelectedSettingsTab}" Value="3">
+                                                            <Setter Property="Background" Value="White"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding SelectedSettingsTab}" Value="3">
+                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                            <Setter Property="Foreground" Value="Black"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding SelectedSettingsTab}" Value="0">
+                                                            <Setter Property="Foreground" Value="#666"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding SelectedSettingsTab}" Value="1">
+                                                            <Setter Property="Foreground" Value="#666"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding SelectedSettingsTab}" Value="2">
+                                                            <Setter Property="Foreground" Value="#666"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Resources>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="🤖  模型" FontSize="14"/>
                                             </StackPanel>
                                         </Button>
                                     </StackPanel>
@@ -927,20 +972,6 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </StackPanel.Style>
-
-                                        <!-- ★★★ 新增：AI 配置区域 ★★★ -->
-                                        <TextBlock Text="AI 大模型配置" Foreground="#333" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
-
-                                        <TextBlock Text="API 地址 (Base URL)" Foreground="#666" Margin="0,0,0,5"/>
-                                        <TextBox Text="{Binding Config.AiBaseUrl}" Padding="5" Margin="0,0,0,10" Background="#F5F5F5" BorderThickness="0" ToolTip="例如: https://api.deepseek.com"/>
-
-                                        <TextBlock Text="API Key" Foreground="#666" Margin="0,0,0,5"/>
-                                        <TextBox Text="{Binding Config.AiApiKey}" Padding="5" Margin="0,0,0,10" Background="#F5F5F5" BorderThickness="0"/>
-
-                                        <TextBlock Text="模型名称" Foreground="#666" Margin="0,0,0,5"/>
-                                        <TextBox Text="{Binding Config.AiModel}" Padding="5" Margin="0,0,0,15" Background="#F5F5F5" BorderThickness="0" ToolTip="例如: deepseek-chat, qwen-turbo"/>
-
-                                        <Border Height="1" Background="#EEE" Margin="0,10"/>
 
                                         <TextBlock Text="WebDAV 网址" Foreground="#666" Margin="0,0,0,5"/>
                                         <TextBox Text="{Binding Config.WebDavUrl}" Padding="5" Margin="0,0,0,10" Background="#F5F5F5" BorderThickness="0"/>
@@ -1099,6 +1130,31 @@
                                             </Grid>
                                             <TextBlock Text="* 点击按钮后请迅速移动鼠标到目标位置，等待3秒自动记录。" Foreground="#999" FontSize="11"/>
                                         </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Tab 3: 模型配置 -->
+                                    <StackPanel>
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding SelectedSettingsTab}" Value="3">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </StackPanel.Style>
+
+                                        <TextBlock Text="AI 大模型配置" Foreground="#333" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
+
+                                        <TextBlock Text="API 地址 (Base URL)" Foreground="#666" Margin="0,0,0,5"/>
+                                        <TextBox Text="{Binding Config.AiBaseUrl}" Padding="5" Margin="0,0,0,10" Background="#F5F5F5" BorderThickness="0" ToolTip="例如: https://api.deepseek.com"/>
+
+                                        <TextBlock Text="API Key" Foreground="#666" Margin="0,0,0,5"/>
+                                        <TextBox Text="{Binding Config.AiApiKey}" Padding="5" Margin="0,0,0,10" Background="#F5F5F5" BorderThickness="0"/>
+
+                                        <TextBlock Text="模型名称" Foreground="#666" Margin="0,0,0,5"/>
+                                        <TextBox Text="{Binding Config.AiModel}" Padding="5" Margin="0,0,0,15" Background="#F5F5F5" BorderThickness="0" ToolTip="例如: deepseek-chat, qwen-turbo"/>
                                     </StackPanel>
 
                                     <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Right" Orientation="Horizontal">
