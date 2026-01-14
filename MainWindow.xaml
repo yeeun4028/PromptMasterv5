@@ -1145,7 +1145,7 @@
                                             </Style>
                                         </StackPanel.Style>
 
-                                        <TextBlock Text="AI 大模型配置" Foreground="#333" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
+                                        <TextBlock Text="AI 模型配置" Foreground="#333" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
 
                                         <TextBlock Text="API 地址 (Base URL)" Foreground="#666" Margin="0,0,0,5"/>
                                         <TextBox Text="{Binding Config.AiBaseUrl}" Padding="5" Margin="0,0,0,10" Background="#F5F5F5" BorderThickness="0" ToolTip="例如: https://api.deepseek.com"/>
