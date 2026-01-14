@@ -472,30 +472,39 @@ namespace PromptMasterv5
             var btn = sender as Button;
             if (btn == null) return;
 
-            string originalContent = btn.Content?.ToString() ?? "连通测试";
+            var statusText = this.FindName("TestStatusText") as TextBlock;
+            if (statusText == null) return;
 
             try
             {
+                statusText.Text = "🔄 测试中...";
+                statusText.Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
                 btn.IsEnabled = false;
-                btn.Content = "测试中...";
 
                 var aiService = new AiService();
                 (bool success, string message) = await aiService.TestConnectionAsync(ViewModel.Config);
 
-                MessageBox.Show(
-                    success ? "✓ " + message : "✗ " + message,
-                    "连接测试",
-                    MessageBoxButton.OK,
-                    success ? MessageBoxImage.Information : MessageBoxImage.Warning
-                );
+                if (success)
+                {
+                    statusText.Text = "✅ 成功连通";
+                    statusText.Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(67, 160, 71));
+
+                    await Task.Delay(3000);
+                    statusText.Text = "";
+                }
+                else
+                {
+                    statusText.Text = "❌ 连通失败";
+                    statusText.Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(229, 57, 53));
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"测试出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                statusText.Text = "❌ 连接异常";
+                statusText.Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(229, 57, 53));
             }
             finally
             {
-                btn.Content = originalContent;
                 btn.IsEnabled = true;
             }
         }

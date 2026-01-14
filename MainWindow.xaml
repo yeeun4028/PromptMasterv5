@@ -45,6 +45,9 @@
         <Geometry x:Key="IconShortcut">M845.807 779.999H180.575c-44.614 0-80.907-36.292-80.907-80.907V321.528c0-44.615 36.292-80.907 80.907-80.907h665.232c44.614 0 80.907 36.292 80.907 80.907v377.564c-0.001 44.615-36.293 80.907-80.907 80.907zM180.575 258.601c-34.694 0-62.927 28.233-62.927 62.927v377.564c0 34.694 28.233 62.927 62.927 62.927h665.232c34.694 0 62.927-28.233 62.927-62.927V321.528c0-34.694-28.233-62.927-62.927-62.927H180.575z M189.565 348.497h71.917v71.917h-71.917v-71.917z m143.833 0h71.917v71.917h-71.917v-71.917z m143.834 0h71.917v71.917h-71.917v-71.917z m143.834 0h71.917v71.917h-71.917v-71.917z m143.834 0h71.917V510.31H764.9V348.497z M189.565 474.352h143.834v71.917H189.565v-71.917z m215.75 0h71.917v71.917h-71.917v-71.917z m143.834 0h71.917v71.917h-71.917v-71.917z m143.834 0h143.834v71.917H692.983v-71.917zM189.565 600.206h71.917v71.917h-71.917v-71.917z m143.833 0h359.585v71.917H333.398v-71.917z m431.502 0h71.917v71.917H764.9v-71.917z</Geometry>
         <Geometry x:Key="IconModel">M682.666667 384m14.222222 0l0 0q14.222222 0 14.222222 14.222222l0 0q0 14.222222-14.222222 14.222222l0 0q-14.222222 0-14.222222-14.222222l0 0q0-14.222222 14.222222-14.222222Z M602.510222 384.654222m13.737612 3.680982l0 0q13.737612 3.680982 10.05663 17.418594l-58.895712 219.801788q-3.680982 13.737612-17.418594 10.05663l0 0q-13.737612-3.680982-10.056629-17.418594l58.895711-219.801788q3.680982-13.737612 17.418594-10.05663Z M510.264889 624.298667a14.136889 14.136889 0 0 1-28.103111 3.128889l-7.537778-67.697778a5.688889 5.688889 0 0 0-5.660444-5.063111h-76.885334a5.688889 5.688889 0 0 0-4.977778 2.929777l-42.211555 76.003556a12.430222 12.430222 0 0 1-21.731556-12.060444l126.464-227.669334a19.171556 19.171556 0 0 1 35.84 7.196445l24.803556 223.232z m-101.034667-106.524445a5.688889 5.688889 0 0 0 4.977778 8.448h50.346667a5.688889 5.688889 0 0 0 5.660444-6.314666l-8.419555-75.52a5.688889 5.688889 0 0 0-10.609778-2.133334l-41.955556 75.52z</Geometry>
 
+        <!-- 加载动画图标（旋转圆环） -->
+        <Geometry x:Key="IconLoading">M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2M12 4A8 8 0 1 1 4 12A8 8 0 0 1 12 4Z</Geometry>
+
         <Style x:Key="Block1ToolTipStyle" TargetType="ToolTip">
             <Setter Property="Background" Value="{StaticResource Block1Background}"/>
             <Setter Property="Foreground" Value="#333"/>
@@ -67,6 +70,31 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- 状态文本样式 -->
+        <Style x:Key="TestStatusTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,10,0"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding TestStatus}" Value="Failed">
+                    <Setter Property="Foreground" Value="#E53935"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding TestStatus}" Value="Success">
+                    <Setter Property="Foreground" Value="#43A047"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding TestStatus}" Value="Testing">
+                    <Setter Property="Foreground" Value="#666"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- 旋转动画 -->
+        <Storyboard x:Key="RotateAnimation" RepeatBehavior="Forever">
+            <DoubleAnimation
+                Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                From="0" To="360" Duration="0:0:1"/>
+        </Storyboard>
 
         <Style x:Key="FolderListBoxItemStyle" TargetType="ListBoxItem">
             <Setter Property="Background" Value="Transparent"/>
@@ -1157,7 +1185,12 @@
                                         <TextBox Text="{Binding Config.AiModel}" Padding="5" Margin="0,0,0,15" Background="#F5F5F5" BorderThickness="0" ToolTip="例如: deepseek-chat, qwen-turbo"/>
 
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-                                            <Button Content="连通测试"
+                                            <TextBlock x:Name="TestStatusText"
+                                                       Style="{StaticResource TestStatusTextStyle}"
+                                                       Text=""/>
+
+                                            <Button x:Name="TestConnectionBtn"
+                                                    Content="测试"
                                                     Click="TestAiConnection_Click"
                                                     Padding="20,8"
                                                     Background="#4183C4"
