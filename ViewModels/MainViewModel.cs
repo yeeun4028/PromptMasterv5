@@ -168,17 +168,23 @@ namespace PromptMasterv5.ViewModels
         // ★★★ 修改 1：实时检测输入框内容 ★★★
         partial void OnMiniInputTextChanged(string value)
         {
-            // 1. AI 触发检测：ai(加空格)、''(英文双单引号)、’‘(中文双单引号)
-            if (value.StartsWith("ai ", StringComparison.OrdinalIgnoreCase) ||
-                value.StartsWith("ai　", StringComparison.OrdinalIgnoreCase) ||
-                value.StartsWith("''") ||
-                value.StartsWith("’‘"))
+            // 1. AI 触发检测：根据配置决定是否需要前缀
+            bool needPrefix = !LocalConfig.MiniWindowUseAi;
+
+            if (needPrefix)
             {
-                IsSearchPopupOpen = false;
-                Variables.Clear();
-                HasVariables = false;
-                IsMiniVarsExpanded = false;
-                return;
+                // 需要前缀的检测逻辑
+                if (value.StartsWith("ai ", StringComparison.OrdinalIgnoreCase) ||
+                    value.StartsWith("ai　", StringComparison.OrdinalIgnoreCase) ||
+                    value.StartsWith("''") ||
+                    value.StartsWith("''"))
+                {
+                    IsSearchPopupOpen = false;
+                    Variables.Clear();
+                    HasVariables = false;
+                    IsMiniVarsExpanded = false;
+                    return;
+                }
             }
 
             // 2. 补回缺失的逻辑：搜索触发 (/)
@@ -245,18 +251,27 @@ namespace PromptMasterv5.ViewModels
             string inputText = MiniInputText.Trim();
             string query = "";
 
-            if (inputText.StartsWith("ai ", StringComparison.OrdinalIgnoreCase))
-                query = inputText.Substring(3);
-            else if (inputText.StartsWith("ai　", StringComparison.OrdinalIgnoreCase))
-                query = inputText.Substring(3);
+            bool needPrefix = !LocalConfig.MiniWindowUseAi;
 
-            // ★★★ 变更：识别单引号 ★★★
-            else if (inputText.StartsWith("''"))
-                query = inputText.Substring(2); // '' 长度为2
-            else if (inputText.StartsWith("’‘"))
-                query = inputText.Substring(2); // ’‘ 长度为2
+            if (needPrefix)
+            {
+                // 需要前缀的检测逻辑
+                if (inputText.StartsWith("ai ", StringComparison.OrdinalIgnoreCase))
+                    query = inputText.Substring(3);
+                else if (inputText.StartsWith("ai　", StringComparison.OrdinalIgnoreCase))
+                    query = inputText.Substring(3);
+                else if (inputText.StartsWith("''"))
+                    query = inputText.Substring(2);
+                else if (inputText.StartsWith("''"))
+                    query = inputText.Substring(2);
+                else
+                    return;
+            }
             else
-                return;
+            {
+                // 不需要前缀，直接使用全部输入
+                query = inputText;
+            }
 
             if (string.IsNullOrWhiteSpace(query)) return;
 

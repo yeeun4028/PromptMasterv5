@@ -33,6 +33,12 @@ namespace PromptMasterv5.Models
         [ObservableProperty]
         private double miniFontSize = 18.0;
 
+        [ObservableProperty]
+        private bool miniWindowUseAi = false; // 极简窗口默认使用AI
+
+        [ObservableProperty]
+        private bool miniEnterForAi = false; // Enter键用于AI查询（true=AI, false=普通发送）
+
         // 极简模式窗口位置记忆
         public double MiniWindowTop { get; set; } = 100;
         public double MiniWindowLeft { get; set; } = 100;

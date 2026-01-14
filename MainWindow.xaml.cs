@@ -271,12 +271,33 @@ namespace PromptMasterv5
                 }
 
                 // 3. ★★★ AI 触发逻辑 (更新版) ★★★
-                // 支持：ai+空格(半角/全角)、''(英文双单引号)、’‘(中文双单引号)
                 string text = ViewModel.MiniInputText.Trim();
-                if (text.StartsWith("ai ", StringComparison.OrdinalIgnoreCase) ||
-                    text.StartsWith("ai　", StringComparison.OrdinalIgnoreCase) ||
-                    text.StartsWith("''") ||
-                    text.StartsWith("’‘"))
+                bool shouldExecuteAi = false;
+
+                if (ViewModel.LocalConfig.MiniWindowUseAi)
+                {
+                    // 默认使用AI模式
+                    if (ViewModel.LocalConfig.MiniEnterForAi)
+                    {
+                        // Enter = AI查询
+                        shouldExecuteAi = true;
+                    }
+                    else
+                    {
+                        // Enter = 普通发送
+                        shouldExecuteAi = false;
+                    }
+                }
+                else
+                {
+                    // 需要前缀模式（原有逻辑）
+                    shouldExecuteAi = text.StartsWith("ai ", StringComparison.OrdinalIgnoreCase) ||
+                                      text.StartsWith("ai　", StringComparison.OrdinalIgnoreCase) ||
+                                      text.StartsWith("''") ||
+                                      text.StartsWith("''");
+                }
+
+                if (shouldExecuteAi)
                 {
                     e.Handled = true; // 拦截 Enter，不发送，转为执行 AI
                     await ViewModel.ExecuteAiQuery();
