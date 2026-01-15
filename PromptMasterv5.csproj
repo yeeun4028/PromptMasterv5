@@ -8,7 +8,12 @@
     <UseWPF>true</UseWPF>
 	  <UseWindowsForms>true</UseWindowsForms>
 	  <ApplicationManifest>app.manifest</ApplicationManifest>
+	  <ApplicationIcon>pro_icon.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="pro_icon.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Betalgo.OpenAI" Version="8.7.2" />
