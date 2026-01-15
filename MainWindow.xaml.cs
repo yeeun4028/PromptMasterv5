@@ -49,6 +49,9 @@ namespace PromptMasterv5
         {
             if (ViewModel != null && !ViewModel.IsFullMode)
             {
+                // 强制窗口到前台
+                NativeMethods.SetForegroundWindow(new System.Windows.Interop.WindowInteropHelper(this).Handle);
+                
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
                     if (MiniInputBox != null)
@@ -94,7 +97,7 @@ namespace PromptMasterv5
                 this.Left = _lastFullLeft;
                 this.Top = _lastFullTop;
                 this.ResizeMode = ResizeMode.CanResize;
-                this.Topmost = false;
+                this.Topmost = true;
                 EnsureWindowOnScreen();
             }
             else
@@ -115,8 +118,11 @@ namespace PromptMasterv5
                 this.ResizeMode = ResizeMode.CanResize;
                 this.Topmost = true;
 
-                _ = Dispatcher.BeginInvoke(new Action(() => MiniInputBox.Focus()), System.Windows.Threading.DispatcherPriority.Render);
                 this.Activate();
+                // 强制窗口到前台
+                NativeMethods.SetForegroundWindow(new System.Windows.Interop.WindowInteropHelper(this).Handle);
+                
+                _ = Dispatcher.BeginInvoke(new Action(() => MiniInputBox.Focus()), System.Windows.Threading.DispatcherPriority.Render);
             }
         }
 

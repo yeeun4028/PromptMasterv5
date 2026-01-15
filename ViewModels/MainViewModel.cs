@@ -480,6 +480,10 @@ namespace PromptMasterv5.ViewModels
                 CaptureForegroundWindow();
                 if (window.Visibility != Visibility.Visible) IsFullMode = _previousFullMode;
                 window.Show(); window.Activate(); window.Focus();
+                // 强制窗口到前台
+                NativeMethods.SetForegroundWindow(new System.Windows.Interop.WindowInteropHelper(window).Handle);
+                window.Topmost = true;
+                
                 if (!IsFullMode && window is MainWindow mainWin)
                 {
                     mainWin.Dispatcher.BeginInvoke(new Action(() =>
