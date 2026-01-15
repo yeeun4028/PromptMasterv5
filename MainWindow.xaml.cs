@@ -11,6 +11,7 @@ using System.Windows.Media;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using PromptMasterv5.Models;
 using PromptMasterv5.Services;
+using System.Windows.Forms;
 
 // 引用自定义枚举和控件别名，解决命名冲突
 using InputMode = PromptMasterv5.Models.InputMode;
@@ -34,15 +35,89 @@ namespace PromptMasterv5
         private DateTime _lastMiniEnterTime = DateTime.MinValue;
         private DateTime _lastVarEnterTime = DateTime.MinValue;
         private DateTime _lastAddEnterTime = DateTime.MinValue;
+        
+        private System.Windows.Forms.NotifyIcon? _notifyIcon;
+        private bool _isExiting = false;
 
         public MainWindow()
         {
             InitializeComponent();
+            
+            // 设置窗口不在任务栏显示
+            this.ShowInTaskbar = false;
+            
             ViewModel = new MainViewModel();
             this.DataContext = ViewModel;
 
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+            InitializeTrayIcon();
             ApplyModeState();
+            
+            // 处理窗口关闭事件
+            this.Closing += MainWindow_Closing;
+        }
+
+        private void InitializeTrayIcon()
+        {
+            _notifyIcon = new System.Windows.Forms.NotifyIcon();
+            _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon(System.Windows.Forms.Application.ExecutablePath);
+            _notifyIcon.Text = "PromptMaster v5";
+            _notifyIcon.Visible = true;
+            
+            // 添加托盘菜单
+            var contextMenu = new System.Windows.Forms.ContextMenuStrip();
+            contextMenu.Items.Add("显示/隐藏窗口", null, (s, e) => ToggleWindowVisibility());
+            contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+            contextMenu.Items.Add("退出", null, (s, e) => 
+            {
+                _isExiting = true;
+                this.Close();
+            });
+            
+            _notifyIcon.ContextMenuStrip = contextMenu;
+            
+            // 单击托盘图标显示/隐藏窗口
+            _notifyIcon.Click += (s, e) => 
+            {
+                if (e is System.Windows.Forms.MouseEventArgs mouseArgs && mouseArgs.Button == System.Windows.Forms.MouseButtons.Left)
+                {
+                    ToggleWindowVisibility();
+                }
+            };
+        }
+        
+        private void ToggleWindowVisibility()
+        {
+            if (this.Visibility == Visibility.Visible)
+            {
+                this.Hide();
+            }
+            else
+            {
+                this.Show();
+                this.Activate();
+                this.Focus();
+                NativeMethods.SetForegroundWindow(new System.Windows.Interop.WindowInteropHelper(this).Handle);
+                this.Topmost = true;
+            }
+        }
+        
+        private void MainWindow_Closing(object? sender, CancelEventArgs e)
+        {
+            // 如果不是通过退出菜单关闭，则隐藏窗口而不是关闭
+            if (!_isExiting)
+            {
+                e.Cancel = true;  // 取消关闭事件
+                this.Hide();       // 隐藏窗口
+                return;
+            }
+            
+            // 清理托盘图标
+            if (_notifyIcon != null)
+            {
+                _notifyIcon.Visible = false;
+                _notifyIcon.Dispose();
+            }
         }
 
         private void Window_Activated(object sender, EventArgs e)
