@@ -63,31 +63,57 @@ namespace PromptMasterv5
 
         private void InitializeTrayIcon()
         {
-            _notifyIcon = new System.Windows.Forms.NotifyIcon();
-            _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon(System.Windows.Forms.Application.ExecutablePath);
-            _notifyIcon.Text = "PromptMaster v5";
-            _notifyIcon.Visible = true;
-
-            // 添加托盘菜单
-            var contextMenu = new System.Windows.Forms.ContextMenuStrip();
-            contextMenu.Items.Add("显示/隐藏窗口", null, (s, e) => ToggleWindowVisibility());
-            contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
-            contextMenu.Items.Add("退出", null, (s, e) =>
+            try
             {
-                _isExiting = true;
-                this.Close();
-            });
-
-            _notifyIcon.ContextMenuStrip = contextMenu;
-
-            // 单击托盘图标显示/隐藏窗口
-            _notifyIcon.Click += (s, e) =>
-            {
-                if (e is System.Windows.Forms.MouseEventArgs mouseArgs && mouseArgs.Button == System.Windows.Forms.MouseButtons.Left)
+                _notifyIcon = new System.Windows.Forms.NotifyIcon();
+                
+                try
                 {
-                    ToggleWindowVisibility();
+                    _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon(System.Windows.Forms.Application.ExecutablePath);
                 }
-            };
+                catch
+                {
+                    try
+                    {
+                        if (System.IO.File.Exists("pro_icon.ico"))
+                            _notifyIcon.Icon = new System.Drawing.Icon("pro_icon.ico");
+                        else
+                            _notifyIcon.Icon = System.Drawing.SystemIcons.Application;
+                    }
+                    catch
+                    {
+                        _notifyIcon.Icon = System.Drawing.SystemIcons.Application;
+                    }
+                }
+
+                _notifyIcon.Text = "PromptMaster v5";
+                _notifyIcon.Visible = true;
+
+                // 添加托盘菜单
+                var contextMenu = new System.Windows.Forms.ContextMenuStrip();
+                contextMenu.Items.Add("显示/隐藏窗口", null, (s, e) => ToggleWindowVisibility());
+                contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+                contextMenu.Items.Add("退出", null, (s, e) =>
+                {
+                    _isExiting = true;
+                    this.Close();
+                });
+
+                _notifyIcon.ContextMenuStrip = contextMenu;
+
+                // 单击托盘图标显示/隐藏窗口
+                _notifyIcon.Click += (s, e) =>
+                {
+                    if (e is System.Windows.Forms.MouseEventArgs mouseArgs && mouseArgs.Button == System.Windows.Forms.MouseButtons.Left)
+                    {
+                        ToggleWindowVisibility();
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"托盘图标初始化失败: {ex.Message}");
+            }
         }
 
         private void ToggleWindowVisibility()

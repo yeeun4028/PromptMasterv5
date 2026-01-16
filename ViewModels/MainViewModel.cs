@@ -569,10 +569,17 @@ namespace PromptMasterv5.ViewModels
         [ObservableProperty]
         private bool _isRestoreConfirmVisible;
 
+        [ObservableProperty]
+        private string _restoreStatus = "";
+
+        [ObservableProperty]
+        private string _restoreStatusColor = "#666666"; // Default gray
+
         [RelayCommand]
         private void ShowRestoreConfirm()
         {
             IsRestoreConfirmVisible = true;
+            RestoreStatus = ""; // Reset status when opening confirm
         }
 
         [RelayCommand]
@@ -587,11 +594,33 @@ namespace PromptMasterv5.ViewModels
             // 无论结果如何，先关闭确认面板
             IsRestoreConfirmVisible = false;
 
+            // 1. 验证 WebDAV 配置
+            if (string.IsNullOrWhiteSpace(Config.WebDavUrl) ||
+                string.IsNullOrWhiteSpace(Config.UserName) ||
+                string.IsNullOrWhiteSpace(Config.Password))
+            {
+                RestoreStatus = "❌ 失败: 请先填写完整的 WebDAV 配置";
+                RestoreStatusColor = "#E53935";
+                return;
+            }
+
             SyncTimeDisplay = "恢复中...";
+            RestoreStatus = "🔄 正在恢复...";
+            RestoreStatusColor = "#666666";
 
             try
             {
+                // 2. 尝试从云端加载数据
+                // 如果配置错误，LoadAsync 应该抛出异常或返回空数据（取决于 DataService 的实现）
                 var data = await _dataService.LoadAsync();
+
+                // 3. 检查数据有效性
+                // 假设云端至少应该返回一个 PromptData 对象
+                // 如果 DataService 在失败时返回空对象而非抛出异常，我们需要在这里判断
+                if (data == null)
+                {
+                    throw new Exception("无法从云端获取数据，请检查网络或配置");
+                }
 
                 SelectedFile = null;
                 SelectedFolder = null;
@@ -608,12 +637,21 @@ namespace PromptMasterv5.ViewModels
                 _lastSyncTime = DateTime.Now;
                 UpdateTimeDisplay();
 
-                MessageBox.Show("数据恢复成功！", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
+                RestoreStatus = "✅ 恢复成功";
+                RestoreStatusColor = "#43A047";
+
+                // 3秒后清除成功消息
+                _ = Task.Delay(3000).ContinueWith(_ => 
+                {
+                    if (RestoreStatus == "✅ 恢复成功")
+                        RestoreStatus = "";
+                }, TaskScheduler.FromCurrentSynchronizationContext());
             }
             catch (Exception e)
             {
                 SyncTimeDisplay = "恢复失败";
-                MessageBox.Show($"恢复失败: {e.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                RestoreStatus = $"❌ 失败: {e.Message}";
+                RestoreStatusColor = "#E53935";
             }
         }
 
@@ -763,56 +801,64 @@ namespace PromptMasterv5.ViewModels
         // ★★★ 方案A：初始化与智能恢复逻辑 ★★★
         private async Task InitializeAsync()
         {
-            // 1. 尝试加载云端数据 (主要数据源)
-            var data = await _dataService.LoadAsync();
-
-            // 2. 加载本地热备份数据 (次要数据源，用于灾难恢复)
-            var localData = await _localDataService.LoadAsync();
-
-            if (localData.Files.Count > 0 || localData.Folders.Count > 0)
+            try
             {
-                var cloudTime = data.Files.Any() ? data.Files.Max(f => f.LastModified) : DateTime.MinValue;
-                var localTime = localData.Files.Any() ? localData.Files.Max(f => f.LastModified) : DateTime.MinValue;
+                // 1. 尝试加载云端数据 (主要数据源)
+                var data = await _dataService.LoadAsync();
 
-                // 简单判定：如果本地备份的时间比云端更新，说明上次可能发生了数据丢失或未同步
-                if (localTime > cloudTime)
+                // 2. 加载本地热备份数据 (次要数据源，用于灾难恢复)
+                var localData = await _localDataService.LoadAsync();
+
+                if (localData.Files.Count > 0 || localData.Folders.Count > 0)
                 {
-                    var result = MessageBox.Show(
-                        $"检测到本地热备份数据 (最后修改: {localTime:MM-dd HH:mm}) 比云端数据 (最后修改: {cloudTime:MM-dd HH:mm}) 更新。\n\n这通常是因为上次软件未正常退出或网络同步失败。\n\n是否加载本地备份数据？",
-                        "发现未保存的数据",
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Question);
+                    var cloudTime = data.Files.Any() ? data.Files.Max(f => f.LastModified) : DateTime.MinValue;
+                    var localTime = localData.Files.Any() ? localData.Files.Max(f => f.LastModified) : DateTime.MinValue;
 
-                    if (result == MessageBoxResult.Yes)
+                    // 简单判定：如果本地备份的时间比云端更新，说明上次可能发生了数据丢失或未同步
+                    if (localTime > cloudTime)
                     {
-                        data = localData;
-                        // 既然加载了本地未上传的数据，标记为 Dirty 以便用户后续手动同步到云端
-                        IsDirty = true;
+                        var result = MessageBox.Show(
+                            $"检测到本地热备份数据 (最后修改: {localTime:MM-dd HH:mm}) 比云端数据 (最后修改: {cloudTime:MM-dd HH:mm}) 更新。\n\n这通常是因为上次软件未正常退出或网络同步失败。\n\n是否加载本地备份数据？",
+                            "发现未保存的数据",
+                            MessageBoxButton.YesNo,
+                            MessageBoxImage.Question);
+
+                        if (result == MessageBoxResult.Yes)
+                        {
+                            data = localData;
+                            // 既然加载了本地未上传的数据，标记为 Dirty 以便用户后续手动同步到云端
+                            IsDirty = true;
+                        }
                     }
                 }
+
+                if (data.Folders.Count == 0) data.Folders.Add(new FolderItem { Name = "我的提示词" });
+                Folders = new ObservableCollection<FolderItem>(data.Folders);
+                Files = new ObservableCollection<PromptItem>(data.Files);
+
+                if (Folders.Count > 0)
+                {
+                    var fid = Folders.First().Id;
+                    foreach (var f in Files) if (string.IsNullOrEmpty(f.FolderId)) f.FolderId = fid;
+                }
+
+                var v = CollectionViewSource.GetDefaultView(Files);
+
+                if (v != null) v.Filter = FilterFiles;
+                FilesView = v;
+
+                Files.CollectionChanged += (s, e) => RequestSave();
+                SelectedFolder = Folders.FirstOrDefault();
+                IsFullMode = true;
+
+                // 如果不是从本地恢复的脏数据，则重置为 Clean
+                if (!IsDirty) IsDirty = false;
             }
-
-            if (data.Folders.Count == 0) data.Folders.Add(new FolderItem { Name = "我的提示词" });
-            Folders = new ObservableCollection<FolderItem>(data.Folders);
-            Files = new ObservableCollection<PromptItem>(data.Files);
-
-            if (Folders.Count > 0)
+            catch (Exception ex)
             {
-                var fid = Folders.First().Id;
-                foreach (var f in Files) if (string.IsNullOrEmpty(f.FolderId)) f.FolderId = fid;
+                // 捕获所有初始化异常，防止崩溃
+                System.Diagnostics.Debug.WriteLine($"初始化数据失败: {ex.Message}");
             }
-
-            var v = CollectionViewSource.GetDefaultView(Files);
-
-            if (v != null) v.Filter = FilterFiles;
-            FilesView = v;
-
-            Files.CollectionChanged += (s, e) => RequestSave();
-            SelectedFolder = Folders.FirstOrDefault();
-            IsFullMode = true;
-
-            // 如果不是从本地恢复的脏数据，则重置为 Clean
-            if (!IsDirty) IsDirty = false;
         }
     }
 }

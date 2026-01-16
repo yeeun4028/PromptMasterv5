@@ -68,8 +68,8 @@
                         <Grid Margin="0,0,5,5">
                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="2" Padding="8,4">
                                 <Border.Effect>
-                                    <DropShadowEffect Color="Black" Opacity="0.2" ShadowDepth="2" Direction="315" BlurRadius="4"/>
-                                </Border.Effect>
+                                <DropShadowEffect Color="#000000" Opacity="0.2" ShadowDepth="2" Direction="315" BlurRadius="4"/>
+                            </Border.Effect>
                                 <ContentPresenter />
                             </Border>
                         </Grid>
