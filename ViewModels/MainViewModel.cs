@@ -226,23 +226,46 @@ namespace PromptMasterv5.ViewModels
         [SupportedOSPlatform("windows")]
         public void UpdateGlobalHotkey()
         {
+            // 1. Register Combo Hotkey
             try
             {
                 string hotkeyStr = Config.GlobalHotkey;
-                if (string.IsNullOrEmpty(hotkeyStr)) return;
-                ModifierKeys modifiers = ModifierKeys.None;
-                if (hotkeyStr.Contains("Ctrl")) modifiers |= ModifierKeys.Control;
-                if (hotkeyStr.Contains("Alt")) modifiers |= ModifierKeys.Alt;
-                if (hotkeyStr.Contains("Shift")) modifiers |= ModifierKeys.Shift;
-                if (hotkeyStr.Contains("Win")) modifiers |= ModifierKeys.Windows;
-                string keyStr = hotkeyStr.Split('+').Last().Trim();
-                if (Enum.TryParse(keyStr, out Key key))
+                if (!string.IsNullOrEmpty(hotkeyStr))
+                {
+                    ModifierKeys modifiers = ModifierKeys.None;
+                    if (hotkeyStr.Contains("Ctrl")) modifiers |= ModifierKeys.Control;
+                    if (hotkeyStr.Contains("Alt")) modifiers |= ModifierKeys.Alt;
+                    if (hotkeyStr.Contains("Shift")) modifiers |= ModifierKeys.Shift;
+                    if (hotkeyStr.Contains("Win")) modifiers |= ModifierKeys.Windows;
+                    string keyStr = hotkeyStr.Split('+').Last().Trim();
+                    if (Enum.TryParse(keyStr, out Key key))
+                    {
+                        try { HotkeyManager.Current.Remove("ToggleWindow"); } catch { }
+                        HotkeyManager.Current.AddOrReplace("ToggleWindow", key, modifiers, OnGlobalHotkeyTriggered);
+                    }
+                }
+                else
                 {
                     try { HotkeyManager.Current.Remove("ToggleWindow"); } catch { }
-                    HotkeyManager.Current.AddOrReplace("ToggleWindow", key, modifiers, OnGlobalHotkeyTriggered);
                 }
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"热键注册失败: {ex.Message}"); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"组合热键注册失败: {ex.Message}"); }
+
+            // 2. Register Single Hotkey
+            try
+            {
+                string singleKeyStr = Config.SingleHotkey;
+                if (!string.IsNullOrEmpty(singleKeyStr) && Enum.TryParse(singleKeyStr, out Key singleKey))
+                {
+                    try { HotkeyManager.Current.Remove("ToggleWindowSingle"); } catch { }
+                    HotkeyManager.Current.AddOrReplace("ToggleWindowSingle", singleKey, ModifierKeys.None, OnGlobalHotkeyTriggered);
+                }
+                else
+                {
+                    try { HotkeyManager.Current.Remove("ToggleWindowSingle"); } catch { }
+                }
+            }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"单键热键注册失败: {ex.Message}"); }
         }
 
         private void OnGlobalHotkeyTriggered(object? sender, HotkeyEventArgs e) => ToggleMainWindow();

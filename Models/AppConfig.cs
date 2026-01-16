@@ -18,6 +18,9 @@ namespace PromptMasterv5.Models
         private string globalHotkey = "Alt+Space";
 
         [ObservableProperty]
+        private string singleHotkey = "";
+
+        [ObservableProperty]
         private bool enableDoubleCtrl = true;
 
         // ★★★ 新增：AI 配置项 ★★★

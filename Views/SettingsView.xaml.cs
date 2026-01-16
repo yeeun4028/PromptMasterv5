@@ -60,6 +60,17 @@ namespace PromptMasterv5.Views
             if (ViewModel == null) return;
 
             Key key = (e.Key == Key.System ? e.SystemKey : e.Key);
+
+            // Delete to clear
+            if (key == Key.Delete || key == Key.Back)
+            {
+                e.Handled = true;
+                ViewModel.Config.GlobalHotkey = "";
+                (sender as TextBox)?.GetBindingExpression(TextBox.TextProperty)?.UpdateTarget();
+                ViewModel.UpdateGlobalHotkey();
+                return;
+            }
+
             if (key == Key.LeftCtrl || key == Key.RightCtrl || key == Key.LeftAlt || key == Key.RightAlt || key == Key.LeftShift || key == Key.RightShift || key == Key.LWin || key == Key.RWin) return;
             e.Handled = true;
             var sb = new StringBuilder();
@@ -73,6 +84,39 @@ namespace PromptMasterv5.Views
             {
                 ViewModel.Config.GlobalHotkey = sb.ToString();
                 tb.GetBindingExpression(TextBox.TextProperty)?.UpdateTarget();
+                ViewModel.UpdateGlobalHotkey();
+            }
+        }
+
+        private void SingleHotkeyTextBox_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (ViewModel == null) return;
+
+            Key key = (e.Key == Key.System ? e.SystemKey : e.Key);
+
+            // Delete to clear
+            if (key == Key.Delete || key == Key.Back)
+            {
+                e.Handled = true;
+                ViewModel.Config.SingleHotkey = "";
+                (sender as TextBox)?.GetBindingExpression(TextBox.TextProperty)?.UpdateTarget();
+                ViewModel.UpdateGlobalHotkey();
+                return;
+            }
+
+            // Block modifiers
+            if (key == Key.LeftCtrl || key == Key.RightCtrl || key == Key.LeftAlt || key == Key.RightAlt || key == Key.LeftShift || key == Key.RightShift || key == Key.LWin || key == Key.RWin) return;
+
+            // Block combos
+            if (Keyboard.Modifiers != ModifierKeys.None) return;
+
+            e.Handled = true;
+
+            if (sender is TextBox tb)
+            {
+                ViewModel.Config.SingleHotkey = key.ToString();
+                tb.GetBindingExpression(TextBox.TextProperty)?.UpdateTarget();
+                ViewModel.UpdateGlobalHotkey();
             }
         }
 

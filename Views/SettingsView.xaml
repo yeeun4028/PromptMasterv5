@@ -228,6 +228,41 @@
             </Setter>
         </Style>
 
+        <Style x:Key="ToggleSwitchStyle" TargetType="CheckBox">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid Background="Transparent">
+                            <Border x:Name="Border"
+                                    Width="40" Height="22"
+                                    CornerRadius="11"
+                                    Background="#E0E0E0"
+                                    BorderBrush="#D0D0D0"
+                                    BorderThickness="1">
+                                <Ellipse x:Name="Dot"
+                                         Width="16" Height="16"
+                                         Fill="White"
+                                         HorizontalAlignment="Left"
+                                         Margin="2,0,0,0">
+                                    <Ellipse.Effect>
+                                        <DropShadowEffect Color="Black" Opacity="0.1" BlurRadius="2" ShadowDepth="1"/>
+                                    </Ellipse.Effect>
+                                </Ellipse>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource AccentColor}"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource AccentColor}"/>
+                                <Setter TargetName="Dot" Property="HorizontalAlignment" Value="Right"/>
+                                <Setter TargetName="Dot" Property="Margin" Value="0,0,2,0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Primary Button Style -->
         <Style x:Key="PrimaryButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="{StaticResource AccentColor}"/>
@@ -283,7 +318,9 @@
                                     </Style>
                                 </Button.Style>
                                 <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource IconShortcut}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Stretch="Uniform" Width="16" Height="16" VerticalAlignment="Center" Margin="0,1,12,1"/>
+                                    <Viewbox Width="16" Height="16" Margin="0,1,12,1">
+                                        <Path Data="{StaticResource IconShortcut}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Stretch="Uniform"/>
+                                    </Viewbox>
                                     <TextBlock Text="快捷键" FontSize="14" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
@@ -299,7 +336,9 @@
                                     </Style>
                                 </Button.Style>
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="⚡" FontSize="16" Width="16" TextAlignment="Center" Margin="0,1,12,1" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                    <Viewbox Width="16" Height="16" Margin="0,1,12,1">
+                                        <TextBlock Text="⚡" FontSize="16" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                    </Viewbox>
                                     <TextBlock Text="自动化" FontSize="14" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
@@ -315,7 +354,9 @@
                                     </Style>
                                 </Button.Style>
                                 <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource IconModel}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Stretch="Uniform" Width="16" Height="16" VerticalAlignment="Center" Margin="0,1,12,1"/>
+                                    <Viewbox Width="16" Height="16" Margin="0,1,12,1">
+                                        <Path Data="{StaticResource IconModel}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Stretch="Uniform"/>
+                                    </Viewbox>
                                     <TextBlock Text="模型" FontSize="14" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
@@ -331,7 +372,9 @@
                                     </Style>
                                 </Button.Style>
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="☁️" FontSize="16" Width="16" TextAlignment="Center" Margin="0,1,12,1" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                    <Viewbox Width="16" Height="16" Margin="0,1,12,1">
+                                        <TextBlock Text="☁️" FontSize="16" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                    </Viewbox>
                                     <TextBlock Text="同步" FontSize="14" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
@@ -347,7 +390,9 @@
                                     </Style>
                                 </Button.Style>
                                 <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource IconMiniWindow}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Stretch="Uniform" Width="16" Height="16" VerticalAlignment="Center" Margin="0,1,12,1"/>
+                                    <Viewbox Width="16" Height="16" Margin="0,1,12,1">
+                                        <Path Data="{StaticResource IconMiniWindow}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Stretch="Uniform"/>
+                                    </Viewbox>
                                     <TextBlock Text="极简窗口" FontSize="14" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
@@ -393,22 +438,59 @@
                                             </Style.Triggers>
                                         </Style>
                                     </StackPanel.Style>
-                                    <StackPanel Margin="0,0,0,14">
-                                        <CheckBox IsChecked="{Binding Config.EnableDoubleCtrl}" Cursor="Hand">
-                                            <CheckBox.Content>
-                                                <TextBlock Text="双击 Ctrl 键唤醒/隐藏窗口" FontSize="14" Foreground="{StaticResource TextPrimary}" Margin="5,-1,0,0"/>
-                                            </CheckBox.Content>
-                                        </CheckBox>
-                                    </StackPanel>
+                                    
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
 
-                                    <StackPanel Margin="0,0,0,14">
-                                        <TextBlock Text="全局唤醒热键" Style="{StaticResource FieldLabelTextStyle}"/>
-                                        <TextBox Text="{Binding Config.GlobalHotkey}"
+                                        <!-- Row 1: Double Ctrl -->
+                                        <StackPanel Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
+                                            <TextBlock Text="双击 Ctrl 键唤醒" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,4"/>
+                                            <TextBlock Text="即使窗口最小化，也能立即唤醒。" Style="{StaticResource HintTextStyle}"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Row="0" Grid.Column="1" 
+                                                  IsChecked="{Binding Config.EnableDoubleCtrl}" 
+                                                  Style="{StaticResource ToggleSwitchStyle}"
+                                                  Cursor="Hand"
+                                                  VerticalAlignment="Center"/>
+
+                                        <!-- Row 2: Single Key -->
+                                        <StackPanel Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
+                                            <TextBlock Text="单键唤醒" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,4"/>
+                                            <TextBlock Text="推荐使用 F1-F12 功能键。" Style="{StaticResource HintTextStyle}"/>
+                                        </StackPanel>
+                                        <TextBox Grid.Row="1" Grid.Column="1" 
+                                                 Text="{Binding Config.SingleHotkey}" 
                                                  Style="{StaticResource ModernTextBoxStyle}"
+                                                 Width="140"
                                                  IsReadOnly="True"
                                                  Cursor="IBeam"
-                                                 PreviewKeyDown="HotkeyTextBox_PreviewKeyDown"/>
-                                    </StackPanel>
+                                                 VerticalAlignment="Center"
+                                                 PreviewKeyDown="SingleHotkeyTextBox_PreviewKeyDown"
+                                                 ToolTip="点击按下按键设置，按 Delete 清除"/>
+
+                                        <!-- Row 3: Combo Key -->
+                                        <StackPanel Grid.Row="2" Grid.Column="0" VerticalAlignment="Center">
+                                            <TextBlock Text="组合键唤醒" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,4"/>
+                                            <TextBlock Text="需要包含 Ctrl/Alt/Shift/Win 修饰键。" Style="{StaticResource HintTextStyle}"/>
+                                        </StackPanel>
+                                        <TextBox Grid.Row="2" Grid.Column="1" 
+                                                 Text="{Binding Config.GlobalHotkey}"
+                                                 Style="{StaticResource ModernTextBoxStyle}"
+                                                 Width="140"
+                                                 IsReadOnly="True"
+                                                 Cursor="IBeam"
+                                                 VerticalAlignment="Center"
+                                                 PreviewKeyDown="HotkeyTextBox_PreviewKeyDown"
+                                                 ToolTip="点击按下组合键设置，按 Delete 清除"/>
+                                    </Grid>
                                 </StackPanel>
 
                                 <!-- Tab 1: Automation -->
