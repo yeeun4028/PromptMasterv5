@@ -584,9 +584,8 @@ namespace PromptMasterv5.ViewModels
                 _lastSyncTime = DateTime.Now;
                 UpdateTimeDisplay();
                 
-                // ★★★ 成功后清除脏数据标记 ★★★
-                IsDirty = false; 
-                MessageBox.Show("云端备份成功！", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
+// ★★★ 成功后清除脏数据标记 ★★★
+                IsDirty = false;
             }
             catch (Exception e)
             {
