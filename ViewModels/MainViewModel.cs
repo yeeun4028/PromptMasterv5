@@ -726,6 +726,9 @@ namespace PromptMasterv5.ViewModels
             Files.CollectionChanged += (s, e) => RequestSave();
             SelectedFolder = Folders.FirstOrDefault();
             IsFullMode = true;
+            
+            // ★★★ 初始化完成后重置脏数据状态 ★★★
+            IsDirty = false;
         }
 
         private bool FilterFiles(object o) => o is PromptItem f && SelectedFolder != null && f.FolderId == SelectedFolder.Id;
