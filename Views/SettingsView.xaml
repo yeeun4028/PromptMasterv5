@@ -17,6 +17,9 @@
         <SolidColorBrush x:Key="TextPrimary" Color="#333333"/>
         <SolidColorBrush x:Key="TextSecondary" Color="#666666"/>
         <SolidColorBrush x:Key="DividerColor" Color="#E5E5E5"/>
+        <SolidColorBrush x:Key="HintBrush" Color="#999999"/>
+        <SolidColorBrush x:Key="DangerBrush" Color="#E53935"/>
+        <SolidColorBrush x:Key="DangerHoverBrush" Color="#C62828"/>
 
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <utils:InverseBoolConverter x:Key="InverseBoolConverter"/>
@@ -127,6 +130,104 @@
                                         <DropShadowEffect Color="{StaticResource AccentColorValue}" Opacity="0.2" BlurRadius="4" ShadowDepth="0"/>
                                     </Setter.Value>
                                 </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ModernPasswordBoxStyle" TargetType="PasswordBox">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Background" Value="#FAFAFA"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ScrollViewer x:Name="PART_ContentHost"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#F0F0F0"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentColor}"/>
+                                <Setter TargetName="border" Property="Background" Value="White"/>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="{StaticResource AccentColorValue}" Opacity="0.2" BlurRadius="4" ShadowDepth="0"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="FieldLabelTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+
+        <Style x:Key="HintTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource HintBrush}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <Style x:Key="TextLinkButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Foreground" Value="{StaticResource AccentColor}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <TextBlock x:Name="LinkText"
+                                   Text="{TemplateBinding Content}"
+                                   Foreground="{TemplateBinding Foreground}"
+                                   FontSize="13"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="LinkText" Property="TextDecorations" Value="Underline"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="LinkText" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DangerLinkButtonStyle" TargetType="Button" BasedOn="{StaticResource TextLinkButtonStyle}">
+            <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <TextBlock x:Name="LinkText"
+                                   Text="{TemplateBinding Content}"
+                                   Foreground="{TemplateBinding Foreground}"
+                                   FontSize="13"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="LinkText" Property="TextDecorations" Value="Underline"/>
+                                <Setter TargetName="LinkText" Property="Foreground" Value="{StaticResource DangerHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="LinkText" Property="Opacity" Value="0.5"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -520,48 +621,34 @@
                                     </StackPanel.Style>
                                     
                                     <StackPanel>
-                                        <!-- 移除了 WebDAV 配置标题 -->
-                                        
-                                        <TextBlock Text="WebDAV 网址" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,5"/>
-                                        <TextBox Text="{Binding Config.WebDavUrl}" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,15"/>
+                                        <StackPanel Margin="0,0,0,12">
+                                            <TextBlock Text="WebDAV 网址" Style="{StaticResource FieldLabelTextStyle}"/>
+                                            <TextBox Text="{Binding Config.WebDavUrl}" Style="{StaticResource ModernTextBoxStyle}" ToolTip="例如：https://example.com/remote.php/dav/files/yourname/"/>
+                                        </StackPanel>
 
-                                        <TextBlock Text="账号 (邮箱)" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,5"/>
-                                        <TextBox Text="{Binding Config.UserName}" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,15"/>
+                                        <StackPanel Margin="0,0,0,12">
+                                            <TextBlock Text="账号 (邮箱)" Style="{StaticResource FieldLabelTextStyle}"/>
+                                            <TextBox Text="{Binding Config.UserName}" Style="{StaticResource ModernTextBoxStyle}"/>
+                                        </StackPanel>
 
-                                        <TextBlock Text="应用密码" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,5"/>
-                                        <PasswordBox x:Name="WebDavPasswordBox"
-                                                     PasswordChar="●"
-                                                     Padding="10,8"
-                                                     Margin="0,0,0,20"
-                                                     Background="#FAFAFA"
-                                                     BorderBrush="#E0E0E0"
-                                                     BorderThickness="1"
-                                                     PasswordChanged="WebDavPasswordBox_PasswordChanged"
-                                                     Loaded="WebDavPasswordBox_Loaded">
-                                            <PasswordBox.Resources>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="CornerRadius" Value="4"/>
-                                                </Style>
-                                            </PasswordBox.Resources>
-                                        </PasswordBox>
+                                        <StackPanel Margin="0,0,0,12">
+                                            <TextBlock Text="应用密码" Style="{StaticResource FieldLabelTextStyle}"/>
+                                            <PasswordBox x:Name="WebDavPasswordBox"
+                                                         PasswordChar="●"
+                                                         Style="{StaticResource ModernPasswordBoxStyle}"
+                                                         ToolTip="建议使用应用专用密码（不是网页登录密码）"
+                                                         PasswordChanged="WebDavPasswordBox_PasswordChanged"
+                                                         Loaded="WebDavPasswordBox_Loaded"/>
+                                        </StackPanel>
 
-                                        <!-- 初始按钮：点击后隐藏，并显示确认区 -->
-                                        <Button Command="{Binding ShowRestoreConfirmCommand}"
-                                                Background="Transparent" 
-                                                HorizontalAlignment="Left"
-                                                ToolTip="注意：此操作将使用云端数据覆盖本地所有数据">
+                                        <Border Height="1" Background="{StaticResource DividerColor}" Margin="0,6,0,14"/>
+
+                                        <Button Content="从云端强制恢复数据"
+                                                Command="{Binding ShowRestoreConfirmCommand}"
+                                                ToolTip="注意：此操作将使用云端数据覆盖本地所有数据"
+                                                HorizontalAlignment="Left">
                                             <Button.Style>
-                                                <Style TargetType="Button">
-                                                    <Setter Property="Cursor" Value="Hand"/>
-                                                    <Setter Property="Template">
-                                                        <Setter.Value>
-                                                            <ControlTemplate TargetType="Button">
-                                                                <Border Background="Transparent">
-                                                                    <TextBlock Text="从云端强制恢复数据" Foreground="#E53935" TextDecorations="Underline"/>
-                                                                </Border>
-                                                            </ControlTemplate>
-                                                        </Setter.Value>
-                                                    </Setter>
+                                                <Style TargetType="Button" BasedOn="{StaticResource DangerLinkButtonStyle}">
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsRestoreConfirmVisible}" Value="True">
                                                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -570,11 +657,15 @@
                                                 </Style>
                                             </Button.Style>
                                         </Button>
-                                        
-                                        <!-- 内联确认区 -->
-                                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
-                                            <StackPanel.Style>
-                                                <Style TargetType="StackPanel">
+
+                                        <Border Margin="0,10,0,0"
+                                                Background="#FFF7F7"
+                                                BorderBrush="#F2C7C7"
+                                                BorderThickness="1"
+                                                CornerRadius="6"
+                                                Padding="10,8">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
                                                     <Setter Property="Visibility" Value="Collapsed"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsRestoreConfirmVisible}" Value="True">
@@ -582,38 +673,27 @@
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
-                                            </StackPanel.Style>
-                                            
-                                            <TextBlock Text="确定要覆盖吗？" Foreground="#E53935" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                            
-                                            <Button Content="取消" Command="{Binding CancelRestoreConfirmCommand}" 
-                                                    Background="Transparent" Foreground="#666" 
-                                                    Margin="0,0,10,0" Cursor="Hand">
-                                                <Button.Template>
-                                                    <ControlTemplate TargetType="Button">
-                                                        <Border Background="Transparent">
-                                                            <TextBlock Text="取消" TextDecorations="Underline"/>
-                                                        </Border>
-                                                    </ControlTemplate>
-                                                </Button.Template>
-                                            </Button>
-                                            
-                                            <Button Content="确认覆盖" Command="{Binding ManualRestoreCommand}" 
-                                                    Background="Transparent" Foreground="#E53935" FontWeight="Bold"
-                                                    Cursor="Hand">
-                                                <Button.Template>
-                                                    <ControlTemplate TargetType="Button">
-                                                        <Border Background="Transparent">
-                                                            <TextBlock Text="确认覆盖" TextDecorations="Underline"/>
-                                                        </Border>
-                                                    </ControlTemplate>
-                                                </Button.Template>
-                                            </Button>
-                                        </StackPanel>
+                                            </Border.Style>
+                                            <DockPanel LastChildFill="False">
+                                                <TextBlock Text="确定要覆盖吗？" Foreground="{StaticResource DangerBrush}" VerticalAlignment="Center" DockPanel.Dock="Left"/>
+                                                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                                                    <Button Content="取消"
+                                                            Command="{Binding CancelRestoreConfirmCommand}"
+                                                            Style="{StaticResource TextLinkButtonStyle}"
+                                                            Foreground="{StaticResource TextSecondary}"
+                                                            Margin="14,0,0,0"/>
+                                                    <Button Content="确认覆盖"
+                                                            Command="{Binding ManualRestoreCommand}"
+                                                            Style="{StaticResource DangerLinkButtonStyle}"
+                                                            Margin="14,0,0,0"/>
+                                                </StackPanel>
+                                            </DockPanel>
+                                        </Border>
 
-                                        <TextBlock Text="* 恢复操作会完全覆盖本地文件，请谨慎操作。" Foreground="#999" FontSize="12" Margin="0,8,0,0">
+                                        <TextBlock Text="恢复操作会完全覆盖本地文件，请谨慎操作。"
+                                                   Margin="0,10,0,0">
                                             <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
+                                                <Style TargetType="TextBlock" BasedOn="{StaticResource HintTextStyle}">
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsRestoreConfirmVisible}" Value="True">
                                                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -623,11 +703,31 @@
                                             </TextBlock.Style>
                                         </TextBlock>
 
-                                        <!-- 恢复状态显示 -->
-                                        <TextBlock Text="{Binding RestoreStatus}" 
-                                                   Foreground="{Binding RestoreStatusColor}" 
-                                                   FontSize="14" FontWeight="SemiBold" 
-                                                   Margin="0,10,0,0" TextWrapping="Wrap"/>
+                                        <Border Background="#FFFFFF"
+                                                BorderBrush="{StaticResource DividerColor}"
+                                                BorderThickness="1"
+                                                CornerRadius="6"
+                                                Padding="10,8"
+                                                Margin="0,12,0,0">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding RestoreStatus}" Value="">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding RestoreStatus}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding RestoreStatus}"
+                                                       Foreground="{Binding RestoreStatusColor}"
+                                                       FontSize="13"
+                                                       FontWeight="SemiBold"
+                                                       TextWrapping="Wrap"/>
+                                        </Border>
                                     </StackPanel>
                                 </StackPanel>
 
