@@ -402,28 +402,25 @@
                                             </Style.Triggers>
                                         </Style>
                                     </StackPanel.Style>
-                                    <Border Style="{StaticResource CardStyle}">
-                                        <StackPanel>
-                                            <CheckBox IsChecked="{Binding Config.EnableDoubleCtrl}" Cursor="Hand" Margin="0,0,0,10">
-                                                <CheckBox.Content>
-                                                    <TextBlock Text="双击 Ctrl 键唤醒/隐藏窗口" FontSize="15" Foreground="{StaticResource TextPrimary}" Margin="5,-1,0,0"/>
-                                                </CheckBox.Content>
-                                            </CheckBox>
-                                            <TextBlock Text="即使窗口最小化，按下此快捷键也能立即唤醒/隐藏程序。" Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap" Margin="24,0,0,0" FontSize="13"/>
-                                        </StackPanel>
-                                    </Border>
+                                    <StackPanel Margin="0,0,0,14">
+                                        <CheckBox IsChecked="{Binding Config.EnableDoubleCtrl}" Cursor="Hand">
+                                            <CheckBox.Content>
+                                                <TextBlock Text="双击 Ctrl 键唤醒/隐藏窗口" FontSize="14" Foreground="{StaticResource TextPrimary}" Margin="5,-1,0,0"/>
+                                            </CheckBox.Content>
+                                        </CheckBox>
+                                        <TextBlock Text="即使窗口最小化，按下此快捷键也能立即唤醒/隐藏程序。"
+                                                   Style="{StaticResource HintTextStyle}"
+                                                   Margin="24,6,0,0"/>
+                                    </StackPanel>
 
-                                    <Border Style="{StaticResource CardStyle}">
-                                        <StackPanel>
-                                            <TextBlock Text="全局唤醒热键" FontWeight="SemiBold" Margin="0,0,0,10" Foreground="{StaticResource TextPrimary}"/>
-                                            <TextBox Text="{Binding Config.GlobalHotkey}"
-                                                     Style="{StaticResource ModernTextBoxStyle}"
-                                                     IsReadOnly="True"
-                                                     Cursor="IBeam"
-                                                     PreviewKeyDown="HotkeyTextBox_PreviewKeyDown"
-                                                     ToolTip="点击此处并按下键盘组合键来修改"/>
-                                        </StackPanel>
-                                    </Border>
+                                    <StackPanel Margin="0,0,0,14">
+                                        <TextBlock Text="全局唤醒热键" Style="{StaticResource FieldLabelTextStyle}"/>
+                                        <TextBox Text="{Binding Config.GlobalHotkey}"
+                                                 Style="{StaticResource ModernTextBoxStyle}"
+                                                 IsReadOnly="True"
+                                                 Cursor="IBeam"
+                                                 PreviewKeyDown="HotkeyTextBox_PreviewKeyDown"/>
+                                    </StackPanel>
                                 </StackPanel>
 
                                 <!-- Tab 1: Automation -->
@@ -438,64 +435,66 @@
                                             </Style.Triggers>
                                         </Style>
                                     </StackPanel.Style>
-                                    <TextBlock Text="输入发送模式" Foreground="{StaticResource TextPrimary}" FontWeight="Bold" FontSize="16" Margin="0,0,0,15"/>
-                                    
-                                    <Border Style="{StaticResource CardStyle}">
-                                        <StackPanel>
-                                            <RadioButton GroupName="InputMode"
-                                                         IsChecked="{Binding LocalConfig.Mode, Converter={models:EnumToBoolConverter}, ConverterParameter=SmartFocus}"
-                                                         Content="智能回退模式 (推荐)"
-                                                         FontSize="14" FontWeight="SemiBold" Cursor="Hand" Margin="0,0,0,5" VerticalContentAlignment="Center"/>
-                                            <TextBlock Text="软件隐藏后，自动将焦点还给上一个活动的窗口 (如浏览器输入框)，然后发送内容。"
-                                                       Foreground="{StaticResource TextSecondary}" FontSize="12" Margin="20,0,0,15" TextWrapping="Wrap"/>
+                                    <StackPanel Margin="0,0,0,14">
+                                        <TextBlock Text="输入发送模式" Style="{StaticResource FieldLabelTextStyle}"/>
 
-                                            <Separator Background="{StaticResource DividerColor}" Margin="0,0,0,15"/>
+                                        <RadioButton GroupName="InputMode"
+                                                     IsChecked="{Binding LocalConfig.Mode, Converter={models:EnumToBoolConverter}, ConverterParameter=SmartFocus}"
+                                                     Content="智能回退模式 (推荐)"
+                                                     FontSize="14" Cursor="Hand" Margin="0,0,0,5" VerticalContentAlignment="Center"/>
+                                        <TextBlock Text="软件隐藏后，自动将焦点还给上一个活动的窗口 (如浏览器输入框)，然后发送内容。"
+                                                   Style="{StaticResource HintTextStyle}" Margin="20,0,0,12"/>
 
-                                            <RadioButton GroupName="InputMode"
-                                                         IsChecked="{Binding LocalConfig.Mode, Converter={models:EnumToBoolConverter}, ConverterParameter=CoordinateClick}"
-                                                         Content="坐标点击模式"
-                                                         FontSize="14" FontWeight="SemiBold" Cursor="Hand" Margin="0,0,0,5" VerticalContentAlignment="Center"/>
-                                            <TextBlock Text="软件隐藏后，强制点击屏幕上的指定位置来激活输入框。"
-                                                       Foreground="{StaticResource TextSecondary}" FontSize="12" Margin="20,0,0,10" TextWrapping="Wrap"/>
+                                        <Border Height="1" Background="{StaticResource DividerColor}" Margin="0,4,0,12"/>
 
-                                            <!-- Coordinate Settings -->
-                                            <StackPanel Margin="20,10,0,0">
-                                                <StackPanel.Style>
-                                                    <Style TargetType="StackPanel">
-                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding LocalConfig.Mode}" Value="CoordinateClick">
-                                                                <Setter Property="Visibility" Value="Visible"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </StackPanel.Style>
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                        <ColumnDefinition Width="15"/>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                    </Grid.ColumnDefinitions>
+                                        <RadioButton GroupName="InputMode"
+                                                     IsChecked="{Binding LocalConfig.Mode, Converter={models:EnumToBoolConverter}, ConverterParameter=CoordinateClick}"
+                                                     Content="坐标点击模式"
+                                                     FontSize="14" Cursor="Hand" Margin="0,0,0,5" VerticalContentAlignment="Center"/>
+                                        <TextBlock Text="软件隐藏后，强制点击屏幕上的指定位置来激活输入框。"
+                                                   Style="{StaticResource HintTextStyle}" Margin="20,0,0,10"/>
 
-                                                    <StackPanel>
-                                                        <TextBlock Text="X 坐标" Foreground="{StaticResource TextSecondary}" FontSize="12" Margin="0,0,0,5"/>
-                                                        <TextBox Text="{Binding LocalConfig.ClickX}" Width="80" Style="{StaticResource ModernTextBoxStyle}"/>
-                                                    </StackPanel>
+                                        <StackPanel Margin="20,6,0,0">
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding LocalConfig.Mode}" Value="CoordinateClick">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="15"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
 
-                                                    <StackPanel Grid.Column="2">
-                                                        <TextBlock Text="Y 坐标" Foreground="{StaticResource TextSecondary}" FontSize="12" Margin="0,0,0,5"/>
-                                                        <TextBox Text="{Binding LocalConfig.ClickY}" Width="80" Style="{StaticResource ModernTextBoxStyle}"/>
-                                                    </StackPanel>
+                                                <StackPanel>
+                                                    <TextBlock Text="X 坐标" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                    <TextBox Text="{Binding LocalConfig.ClickX}" Width="80" Style="{StaticResource ModernTextBoxStyle}"/>
+                                                </StackPanel>
 
-                                                    <Button Grid.Column="4" Content="⏱️ 3秒后拾取" Click="PickCoordinate_Click"
-                                                            Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom"/>
-                                                </Grid>
-                                                <TextBlock Text="* 点击按钮后请迅速移动鼠标到目标位置，等待3秒自动记录。" Foreground="#999" FontSize="11" Margin="0,10,0,0"/>
-                                            </StackPanel>
+                                                <StackPanel Grid.Column="2">
+                                                    <TextBlock Text="Y 坐标" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                    <TextBox Text="{Binding LocalConfig.ClickY}" Width="80" Style="{StaticResource ModernTextBoxStyle}"/>
+                                                </StackPanel>
+
+                                                <Button Grid.Column="4"
+                                                        Content="⏱️ 3秒后拾取"
+                                                        Click="PickCoordinate_Click"
+                                                        Style="{StaticResource TextLinkButtonStyle}"
+                                                        VerticalAlignment="Bottom"/>
+                                            </Grid>
+                                            <TextBlock Text="* 点击按钮后请迅速移动鼠标到目标位置，等待3秒自动记录。"
+                                                       Style="{StaticResource HintTextStyle}"
+                                                       Margin="0,10,0,0"/>
                                         </StackPanel>
-                                    </Border>
+                                    </StackPanel>
                                 </StackPanel>
 
                                 <!-- Tab 2: AI Models -->
@@ -510,41 +509,34 @@
                                             </Style.Triggers>
                                         </Style>
                                     </StackPanel.Style>
-                                    <Border Style="{StaticResource CardStyle}">
-                                        <StackPanel>
-                                            <TextBlock Text="API 设置" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource TextPrimary}"/>
-                                            
-                                            <TextBlock Text="API 地址 (Base URL)" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,5"/>
-                                            <TextBox Text="{Binding Config.AiBaseUrl}" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,15" ToolTip="例如: https://api.deepseek.com"/>
-
-                                            <TextBlock Text="API Key" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,5"/>
-                                            <TextBox Text="{Binding Config.AiApiKey}" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,15"/>
-
-                                            <TextBlock Text="模型名称" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,5"/>
-                                            <TextBox Text="{Binding Config.AiModel}" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,15" ToolTip="例如: deepseek-chat, qwen-turbo"/>
-
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                                <TextBlock x:Name="TestStatusText" Text="" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="{StaticResource TextSecondary}"/>
-                                                <Button Content="测试连接" Click="TestAiConnection_Click" Background="#E0E0E0" Foreground="{StaticResource TextPrimary}" Padding="15,6" Margin="0,0,10,0" Cursor="Hand">
-                                                    <Button.Template>
-                                                        <ControlTemplate TargetType="Button">
-                                                            <Border Background="{TemplateBinding Background}" CornerRadius="4">
-                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                            </Border>
-                                                            <ControlTemplate.Triggers>
-                                                                <Trigger Property="IsMouseOver" Value="True">
-                                                                    <Setter Property="Opacity" Value="0.9"/>
-                                                                </Trigger>
-                                                            </ControlTemplate.Triggers>
-                                                        </ControlTemplate>
-                                                    </Button.Template>
-                                                </Button>
-                                                <Button Content="保存模型" Command="{Binding AddAiModelCommand}" Style="{StaticResource PrimaryButtonStyle}"/>
-                                            </StackPanel>
+                                    <StackPanel Margin="0,0,0,14">
+                                        <StackPanel Margin="0,0,0,12">
+                                            <TextBlock Text="API 地址 (Base URL)" Style="{StaticResource FieldLabelTextStyle}"/>
+                                            <TextBox Text="{Binding Config.AiBaseUrl}" Style="{StaticResource ModernTextBoxStyle}"/>
                                         </StackPanel>
-                                    </Border>
 
-                                    <TextBlock Text="已保存的模型" FontWeight="Bold" Margin="0,10,0,10" Foreground="{StaticResource TextPrimary}"/>
+                                        <StackPanel Margin="0,0,0,12">
+                                            <TextBlock Text="API Key" Style="{StaticResource FieldLabelTextStyle}"/>
+                                            <TextBox Text="{Binding Config.AiApiKey}" Style="{StaticResource ModernTextBoxStyle}"/>
+                                        </StackPanel>
+
+                                        <StackPanel Margin="0,0,0,12">
+                                            <TextBlock Text="模型名称" Style="{StaticResource FieldLabelTextStyle}"/>
+                                            <TextBox Text="{Binding Config.AiModel}" Style="{StaticResource ModernTextBoxStyle}"/>
+                                        </StackPanel>
+
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                            <TextBlock x:Name="TestStatusText"
+                                                       Text=""
+                                                       VerticalAlignment="Center"
+                                                       Margin="0,0,10,0"
+                                                       Style="{StaticResource HintTextStyle}"/>
+                                            <Button Content="测试连接" Click="TestAiConnection_Click" Style="{StaticResource TextLinkButtonStyle}" Margin="0,0,14,0"/>
+                                            <Button Content="保存模型" Command="{Binding AddAiModelCommand}" Style="{StaticResource TextLinkButtonStyle}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <TextBlock Text="已保存的模型" Style="{StaticResource FieldLabelTextStyle}" Margin="0,6,0,10"/>
                                     
                                     <ListBox ItemsSource="{Binding Config.SavedModels}"
                                              SelectedValue="{Binding Config.ActiveModelId}"
@@ -564,15 +556,15 @@
                                                 <Setter Property="Template">
                                                     <Setter.Value>
                                                         <ControlTemplate TargetType="ListBoxItem">
-                                                            <Border Background="{StaticResource CardBackground}" 
-                                                                    CornerRadius="8" 
-                                                                    Padding="15,12" 
+                                                            <Border x:Name="Chip"
+                                                                    Background="#FAFAFA"
+                                                                    BorderBrush="#E0E0E0"
+                                                                    BorderThickness="1"
+                                                                    CornerRadius="6"
+                                                                    Padding="12,10"
                                                                     Margin="0,0,10,10"
                                                                     Width="180"
                                                                     Cursor="Hand">
-                                                                <Border.Effect>
-                                                                    <DropShadowEffect Color="#000000" Opacity="0.03" BlurRadius="5" ShadowDepth="1" Direction="270"/>
-                                                                </Border.Effect>
                                                                 <Grid>
                                                                     <Grid.ColumnDefinitions>
                                                                         <ColumnDefinition Width="Auto"/>
@@ -593,10 +585,11 @@
                                                             <ControlTemplate.Triggers>
                                                                 <Trigger Property="IsSelected" Value="True">
                                                                     <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
-                                                                    <Setter Property="Foreground" Value="{StaticResource AccentColor}"/>
+                                                                    <Setter TargetName="Chip" Property="Background" Value="#E6EEF5"/>
+                                                                    <Setter TargetName="Chip" Property="BorderBrush" Value="{StaticResource AccentColor}"/>
                                                                 </Trigger>
                                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                                    <Setter Property="Opacity" Value="0.8"/>
+                                                                    <Setter TargetName="Chip" Property="Background" Value="#F0F0F0"/>
                                                                 </Trigger>
                                                             </ControlTemplate.Triggers>
                                                         </ControlTemplate>
@@ -623,7 +616,7 @@
                                     <StackPanel>
                                         <StackPanel Margin="0,0,0,12">
                                             <TextBlock Text="WebDAV 网址" Style="{StaticResource FieldLabelTextStyle}"/>
-                                            <TextBox Text="{Binding Config.WebDavUrl}" Style="{StaticResource ModernTextBoxStyle}" ToolTip="例如：https://example.com/remote.php/dav/files/yourname/"/>
+                                            <TextBox Text="{Binding Config.WebDavUrl}" Style="{StaticResource ModernTextBoxStyle}"/>
                                         </StackPanel>
 
                                         <StackPanel Margin="0,0,0,12">
@@ -636,7 +629,6 @@
                                             <PasswordBox x:Name="WebDavPasswordBox"
                                                          PasswordChar="●"
                                                          Style="{StaticResource ModernPasswordBoxStyle}"
-                                                         ToolTip="建议使用应用专用密码（不是网页登录密码）"
                                                          PasswordChanged="WebDavPasswordBox_PasswordChanged"
                                                          Loaded="WebDavPasswordBox_Loaded"/>
                                         </StackPanel>
@@ -743,34 +735,31 @@
                                             </Style.Triggers>
                                         </Style>
                                     </StackPanel.Style>
-                                    <Border Style="{StaticResource CardStyle}">
-                                        <StackPanel>
-                                            <TextBlock Text="AI 助手行为" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource TextPrimary}"/>
-                                            
-                                            <CheckBox IsChecked="{Binding LocalConfig.MiniWindowUseAi}" Cursor="Hand" Margin="0,0,0,15">
-                                                <CheckBox.Content>
-                                                    <StackPanel>
-                                                        <TextBlock Text="极简窗口默认使用 AI 查询" FontSize="14" Foreground="{StaticResource TextPrimary}" Margin="5,-1,0,0"/>
-                                                        <TextBlock Text="勾选后，无需使用 &quot;ai&quot; 前缀，直接输入即可" FontSize="12" Foreground="{StaticResource TextSecondary}" Margin="5,2,0,0"/>
-                                                    </StackPanel>
-                                                </CheckBox.Content>
-                                            </CheckBox>
+                                    <StackPanel Margin="0,0,0,14">
+                                        <CheckBox IsChecked="{Binding LocalConfig.MiniWindowUseAi}" Cursor="Hand">
+                                            <CheckBox.Content>
+                                                <TextBlock Text="极简窗口默认使用 AI 查询" FontSize="14" Foreground="{StaticResource TextPrimary}" Margin="5,-1,0,0"/>
+                                            </CheckBox.Content>
+                                        </CheckBox>
+                                        <TextBlock Text="勾选后，无需使用 &quot;ai&quot; 前缀，直接输入即可"
+                                                   Style="{StaticResource HintTextStyle}"
+                                                   Margin="24,6,0,0"/>
+                                    </StackPanel>
 
-                                            <Separator Background="{StaticResource DividerColor}" Margin="0,0,0,15"/>
+                                    <Border Height="1" Background="{StaticResource DividerColor}" Margin="0,4,0,14"/>
 
-                                            <TextBlock Text="回车键 (Enter) 行为" FontWeight="SemiBold" Margin="0,0,0,10" Foreground="{StaticResource TextPrimary}"/>
-                                            
-                                            <RadioButton GroupName="MiniEnterMode"
-                                                         IsChecked="{Binding LocalConfig.MiniEnterForAi}"
-                                                         Content="Enter = AI 查询"
-                                                         FontSize="14" Margin="0,0,0,8" Cursor="Hand" VerticalContentAlignment="Center"/>
-                                            
-                                            <RadioButton GroupName="MiniEnterMode"
-                                                         IsChecked="{Binding LocalConfig.MiniEnterForAi, Converter={StaticResource InverseBoolConverter}}"
-                                                         Content="Enter = 普通发送"
-                                                         FontSize="14" Cursor="Hand" VerticalContentAlignment="Center"/>
-                                        </StackPanel>
-                                    </Border>
+                                    <StackPanel Margin="0,0,0,14">
+                                        <TextBlock Text="回车键 (Enter) 行为" Style="{StaticResource FieldLabelTextStyle}"/>
+                                        <RadioButton GroupName="MiniEnterMode"
+                                                     IsChecked="{Binding LocalConfig.MiniEnterForAi}"
+                                                     Content="Enter = AI 查询"
+                                                     FontSize="14" Margin="0,0,0,8" Cursor="Hand" VerticalContentAlignment="Center"/>
+
+                                        <RadioButton GroupName="MiniEnterMode"
+                                                     IsChecked="{Binding LocalConfig.MiniEnterForAi, Converter={StaticResource InverseBoolConverter}}"
+                                                     Content="Enter = 普通发送"
+                                                     FontSize="14" Cursor="Hand" VerticalContentAlignment="Center"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </Grid>
                         </ScrollViewer>
