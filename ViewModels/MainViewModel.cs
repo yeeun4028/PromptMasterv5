@@ -729,7 +729,7 @@ namespace PromptMasterv5.ViewModels
         }
 
         private bool FilterFiles(object o) => o is PromptItem f && SelectedFolder != null && f.FolderId == SelectedFolder.Id;
-        private async void RequestSave() { if (!string.IsNullOrEmpty(Config.UserName)) await SaveDataAsync(); }
+        private void RequestSave() { if (!IsDirty) IsDirty = true; }
         private async Task SaveDataAsync() { try { await _dataService.SaveAsync(Folders, Files); _lastSyncTime = DateTime.Now; UpdateTimeDisplay(); } catch { SyncTimeDisplay = "Err"; } }
         private void UpdateTimeDisplay() { var s = DateTime.Now - _lastSyncTime; SyncTimeDisplay = s.TotalSeconds < 60 ? $"{(int)s.TotalSeconds}s" : $"{(int)s.TotalMinutes}m"; }
     }
