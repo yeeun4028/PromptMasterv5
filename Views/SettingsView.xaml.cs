@@ -20,6 +20,8 @@ namespace PromptMasterv5.Views
 {
     public partial class SettingsView : System.Windows.Controls.UserControl
     {
+        private int _activeCoordinateRuleIndex = 0;
+
         public SettingsView()
         {
             InitializeComponent();
@@ -137,10 +139,48 @@ namespace PromptMasterv5.Views
                 var pt = WinFormsCursor.Position;
                 ViewModel.LocalConfig.ClickX = pt.X;
                 ViewModel.LocalConfig.ClickY = pt.Y;
+
+                var rules = ViewModel.LocalConfig.CoordinateRules;
+                if (rules != null && rules.Count > 0)
+                {
+                    if (_activeCoordinateRuleIndex < 0) _activeCoordinateRuleIndex = 0;
+                    if (_activeCoordinateRuleIndex >= rules.Count) _activeCoordinateRuleIndex = rules.Count - 1;
+
+                    rules[_activeCoordinateRuleIndex].X = pt.X;
+                    rules[_activeCoordinateRuleIndex].Y = pt.Y;
+                }
                 btn.Content = "已获取!";
                 await Task.Delay(1000);
             }
             finally { btn.Content = org; btn.IsEnabled = true; }
+        }
+
+        private void CoordinateRuleField_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe)
+            {
+                if (fe.Tag is int idx)
+                {
+                    _activeCoordinateRuleIndex = idx;
+                }
+                else if (fe.Tag is string s && int.TryParse(s, out int parsed))
+                {
+                    _activeCoordinateRuleIndex = parsed;
+                }
+            }
+        }
+
+        private void AddCoordinateRule_Click(object sender, RoutedEventArgs e)
+        {
+            if (ViewModel == null) return;
+
+            if (ViewModel.LocalConfig.CoordinateRules == null)
+            {
+                ViewModel.LocalConfig.CoordinateRules = new();
+            }
+
+            ViewModel.LocalConfig.CoordinateRules.Add(new CoordinateRule());
+            _activeCoordinateRuleIndex = ViewModel.LocalConfig.CoordinateRules.Count - 1;
         }
 
         private async void TestAiConnection_Click(object sender, RoutedEventArgs e)

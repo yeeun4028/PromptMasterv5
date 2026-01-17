@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 
 namespace PromptMasterv5.Models
@@ -25,6 +26,9 @@ namespace PromptMasterv5.Models
 
         [ObservableProperty]
         private int clickY = 0;
+
+        [ObservableProperty]
+        private ObservableCollection<CoordinateRule> coordinateRules = new() { new CoordinateRule() };
 
         // --- 新增配置项 ---
 

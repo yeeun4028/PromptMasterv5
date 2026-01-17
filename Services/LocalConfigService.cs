@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text.Json;
 using PromptMasterv5.Models;
@@ -27,7 +27,24 @@ namespace PromptMasterv5.Services
             try
             {
                 string json = File.ReadAllText(ConfigPath);
-                return JsonSerializer.Deserialize<LocalSettings>(json) ?? new LocalSettings();
+                var settings = JsonSerializer.Deserialize<LocalSettings>(json) ?? new LocalSettings();
+
+                if (settings.CoordinateRules == null)
+                {
+                    settings.CoordinateRules = new();
+                }
+
+                if (settings.CoordinateRules.Count == 0)
+                {
+                    settings.CoordinateRules.Add(new CoordinateRule
+                    {
+                        X = settings.ClickX,
+                        Y = settings.ClickY,
+                        UrlContains = ""
+                    });
+                }
+
+                return settings;
             }
             catch
             {

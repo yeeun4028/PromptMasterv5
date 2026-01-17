@@ -527,32 +527,61 @@
                                                     </Style.Triggers>
                                                 </Style>
                                             </StackPanel.Style>
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="15"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
+                                            <ItemsControl ItemsSource="{Binding LocalConfig.CoordinateRules}" AlternationCount="1000">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="0,0,0,12">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="15"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="15"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
 
-                                                <StackPanel>
-                                                    <TextBlock Text="X 坐标" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBox Text="{Binding LocalConfig.ClickX}" Width="80" Style="{StaticResource ModernTextBoxStyle}"/>
-                                                </StackPanel>
+                                                            <StackPanel>
+                                                                <TextBlock Text="X 坐标" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                                <TextBox Text="{Binding X}"
+                                                                         Width="80"
+                                                                         Style="{StaticResource ModernTextBoxStyle}"
+                                                                         Tag="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}, Path=(ItemsControl.AlternationIndex)}"
+                                                                         GotFocus="CoordinateRuleField_GotFocus"/>
+                                                            </StackPanel>
 
-                                                <StackPanel Grid.Column="2">
-                                                    <TextBlock Text="Y 坐标" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBox Text="{Binding LocalConfig.ClickY}" Width="80" Style="{StaticResource ModernTextBoxStyle}"/>
-                                                </StackPanel>
+                                                            <StackPanel Grid.Column="2">
+                                                                <TextBlock Text="Y 坐标" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                                <TextBox Text="{Binding Y}"
+                                                                         Width="80"
+                                                                         Style="{StaticResource ModernTextBoxStyle}"
+                                                                         Tag="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}, Path=(ItemsControl.AlternationIndex)}"
+                                                                         GotFocus="CoordinateRuleField_GotFocus"/>
+                                                            </StackPanel>
 
-                                                <Button Grid.Column="4"
-                                                        Content="⏱️ 3秒后拾取"
-                                                        Click="PickCoordinate_Click"
-                                                        Style="{StaticResource TextLinkButtonStyle}"
-                                                        VerticalAlignment="Bottom"/>
-                                            </Grid>
-                                            <TextBlock Text="* 点击按钮后请迅速移动鼠标到目标位置，等待3秒自动记录。"
+                                                            <StackPanel Grid.Column="4">
+                                                                <TextBlock Text="网址包含关键字" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                                <TextBox Text="{Binding UrlContains}"
+                                                                         Style="{StaticResource ModernTextBoxStyle}"
+                                                                         Tag="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}, Path=(ItemsControl.AlternationIndex)}"
+                                                                         GotFocus="CoordinateRuleField_GotFocus"/>
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+
+                                            <StackPanel Orientation="Horizontal" Margin="0,2,0,6">
+                                                <Button Content="+" Click="AddCoordinateRule_Click" Style="{StaticResource TextLinkButtonStyle}" VerticalAlignment="Center"/>
+                                                <TextBlock Text="新增一行坐标规则（网址包含关键字为空时表示通用坐标）"
+                                                           Style="{StaticResource HintTextStyle}"
+                                                           Margin="10,0,0,0"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+
+                                            <Button Content="⏱️ 3秒后拾取"
+                                                    Click="PickCoordinate_Click"
+                                                    Style="{StaticResource TextLinkButtonStyle}"
+                                                    HorizontalAlignment="Left"/>
+                                            <TextBlock Text="* 点击拾取后请迅速移动鼠标到目标位置，等待3秒自动记录到当前焦点所在行。"
                                                        Style="{StaticResource HintTextStyle}"
                                                        Margin="0,10,0,0"/>
                                         </StackPanel>

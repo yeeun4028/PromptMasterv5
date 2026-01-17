@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using PromptMasterv5.Models;
+using System.Windows.Automation;
 
 // 解决引用冲突
 using Clipboard = System.Windows.Clipboard;
@@ -10,6 +11,67 @@ namespace PromptMasterv5.Services
 {
     public class InputSender
     {
+        private static (int x, int y) ResolveClickPoint(LocalSettings settings, IntPtr previousWindowHandle)
+        {
+            try
+            {
+                string url = TryGetBrowserUrl(previousWindowHandle);
+
+                if (settings.CoordinateRules != null && settings.CoordinateRules.Count > 0)
+                {
+                    if (!string.IsNullOrWhiteSpace(url))
+                    {
+                        foreach (var rule in settings.CoordinateRules)
+                        {
+                            if (string.IsNullOrWhiteSpace(rule.UrlContains)) continue;
+                            if (url.Contains(rule.UrlContains.Trim(), StringComparison.OrdinalIgnoreCase))
+                            {
+                                return (rule.X, rule.Y);
+                            }
+                        }
+                    }
+
+                    foreach (var rule in settings.CoordinateRules)
+                    {
+                        if (string.IsNullOrWhiteSpace(rule.UrlContains))
+                        {
+                            return (rule.X, rule.Y);
+                        }
+                    }
+
+                    var first = settings.CoordinateRules[0];
+                    return (first.X, first.Y);
+                }
+            }
+            catch { }
+
+            return (settings.ClickX, settings.ClickY);
+        }
+
+        private static string TryGetBrowserUrl(IntPtr hwnd)
+        {
+            if (hwnd == IntPtr.Zero) return "";
+            try
+            {
+                var root = AutomationElement.FromHandle(hwnd);
+                if (root == null) return "";
+
+                var editCondition = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Edit);
+                var elementCollection = root.FindAll(TreeScope.Descendants, editCondition);
+                foreach (AutomationElement element in elementCollection)
+                {
+                    if (element.TryGetCurrentPattern(ValuePattern.Pattern, out object patternObj))
+                    {
+                        var valuePattern = (ValuePattern)patternObj;
+                        string value = valuePattern.Current.Value;
+                        if (!string.IsNullOrWhiteSpace(value)) return value;
+                    }
+                }
+            }
+            catch { }
+            return "";
+        }
+
         // ★★★ 修改：新增 targetMode 参数，不再依赖 settings.Mode ★★★
         public static async Task SendAsync(string text, InputMode targetMode, LocalSettings settings, IntPtr previousWindowHandle)
         {
@@ -53,8 +115,8 @@ namespace PromptMasterv5.Services
             else
             {
                 // === 坐标点击模式 (双击 Enter) ===
-                // 使用 settings 中的坐标数据
-                NativeMethods.SetCursorPos(settings.ClickX, settings.ClickY);
+                var (x, y) = ResolveClickPoint(settings, previousWindowHandle);
+                NativeMethods.SetCursorPos(x, y);
                 await Task.Delay(50);
 
                 NativeMethods.mouse_event(NativeMethods.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
