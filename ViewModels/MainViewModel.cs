@@ -80,6 +80,9 @@ namespace PromptMasterv5.ViewModels
 
         [ObservableProperty] private bool isDirty = false;
 
+        public ObservableCollection<PromptItem> MiniPinnedPrompts { get; } = new();
+        public IDropTarget MiniPinnedPromptDropHandler { get; private set; }
+
         public MainViewModel()
         {
             // 1. 初始化配置
@@ -111,6 +114,7 @@ namespace PromptMasterv5.ViewModels
 
             // 3. 初始化拖拽处理器
             FolderDropHandler = new FolderDropHandler(this);
+            MiniPinnedPromptDropHandler = new PinnedPromptDropHandler(this);
 
             // 4. 初始化定时器
             _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -161,7 +165,11 @@ namespace PromptMasterv5.ViewModels
                         MiniInputText = cleaned;
                     }
                 }
-                mainWindow.MiniInputBox.CaretIndex = mainWindow.MiniInputBox.Text.Length;
+                if (mainWindow.MiniInputBox.Document != null)
+                {
+                    mainWindow.MiniInputBox.CaretPosition = mainWindow.MiniInputBox.Document.ContentEnd;
+                    mainWindow.MiniInputBox.ScrollToEnd();
+                }
             });
 
             _keyService.AlwaysOnTopSequence = LocalConfig.MiniAlwaysOnTopHotkeyPrefix;
@@ -187,6 +195,89 @@ namespace PromptMasterv5.ViewModels
             if (Config.EnableDoubleCtrl) try { _keyService.Start(); } catch { }
 
             _ = InitializeAsync();
+        }
+
+        public void AddMiniPinnedPromptFromCandidate()
+        {
+            var id = LocalConfig.MiniPinnedPromptCandidateId ?? "";
+            if (string.IsNullOrWhiteSpace(id)) return;
+            if (LocalConfig.MiniPinnedPromptIds.Contains(id)) return;
+
+            var prompt = Files.FirstOrDefault(f => f.Id == id);
+            if (prompt == null) return;
+
+            LocalConfig.MiniPinnedPromptIds.Add(id);
+            MiniPinnedPrompts.Add(prompt);
+        }
+
+        [RelayCommand]
+        private void RemoveMiniPinnedPrompt(PromptItem? prompt)
+        {
+            if (prompt == null) return;
+            RemoveMiniPinnedPromptById(prompt.Id);
+        }
+
+        public void RemoveMiniPinnedPromptById(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id)) return;
+
+            for (int i = MiniPinnedPrompts.Count - 1; i >= 0; i--)
+            {
+                if (MiniPinnedPrompts[i].Id == id) MiniPinnedPrompts.RemoveAt(i);
+            }
+
+            for (int i = LocalConfig.MiniPinnedPromptIds.Count - 1; i >= 0; i--)
+            {
+                if (LocalConfig.MiniPinnedPromptIds[i] == id) LocalConfig.MiniPinnedPromptIds.RemoveAt(i);
+            }
+
+            if (LocalConfig.MiniSelectedPinnedPromptId == id)
+            {
+                LocalConfig.MiniSelectedPinnedPromptId = "";
+            }
+        }
+
+        public void ReorderMiniPinnedPrompts(int oldIndex, int newIndex)
+        {
+            if (oldIndex < 0 || oldIndex >= MiniPinnedPrompts.Count) return;
+            if (newIndex < 0 || newIndex >= MiniPinnedPrompts.Count) return;
+            if (oldIndex == newIndex) return;
+
+            var moved = MiniPinnedPrompts[oldIndex];
+            MiniPinnedPrompts.Move(oldIndex, newIndex);
+
+            var id = moved.Id;
+            var oldIdIndex = LocalConfig.MiniPinnedPromptIds.IndexOf(id);
+            if (oldIdIndex < 0) return;
+            LocalConfig.MiniPinnedPromptIds.RemoveAt(oldIdIndex);
+            LocalConfig.MiniPinnedPromptIds.Insert(newIndex, id);
+        }
+
+        private void SyncMiniPinnedPrompts()
+        {
+            if (LocalConfig.MiniPinnedPromptIds == null)
+            {
+                LocalConfig.MiniPinnedPromptIds = new();
+            }
+
+            var validIds = LocalConfig.MiniPinnedPromptIds.Where(id => Files.Any(f => f.Id == id)).ToList();
+            if (validIds.Count != LocalConfig.MiniPinnedPromptIds.Count)
+            {
+                LocalConfig.MiniPinnedPromptIds.Clear();
+                foreach (var id in validIds) LocalConfig.MiniPinnedPromptIds.Add(id);
+            }
+
+            MiniPinnedPrompts.Clear();
+            foreach (var id in LocalConfig.MiniPinnedPromptIds)
+            {
+                var p = Files.FirstOrDefault(f => f.Id == id);
+                if (p != null) MiniPinnedPrompts.Add(p);
+            }
+
+            if (!string.IsNullOrWhiteSpace(LocalConfig.MiniSelectedPinnedPromptId) && !LocalConfig.MiniPinnedPromptIds.Contains(LocalConfig.MiniSelectedPinnedPromptId))
+            {
+                LocalConfig.MiniSelectedPinnedPromptId = "";
+            }
         }
 
         [RelayCommand]
@@ -552,9 +643,9 @@ namespace PromptMasterv5.ViewModels
             else
             {
                 finalContent = MiniInputText;
-                if (!LocalConfig.MiniPinnedPromptClickShowsFullContent && !string.IsNullOrWhiteSpace(LocalConfig.MiniPinnedPromptId))
+                if (!LocalConfig.MiniPinnedPromptClickShowsFullContent && !string.IsNullOrWhiteSpace(LocalConfig.MiniSelectedPinnedPromptId))
                 {
-                    var pinned = Files.FirstOrDefault(f => f.Id == LocalConfig.MiniPinnedPromptId);
+                    var pinned = Files.FirstOrDefault(f => f.Id == LocalConfig.MiniSelectedPinnedPromptId);
                     var pinnedContent = pinned?.Content ?? "";
                     if (!string.IsNullOrWhiteSpace(pinnedContent))
                     {
@@ -1188,7 +1279,12 @@ namespace PromptMasterv5.ViewModels
                 if (v != null) v.Filter = FilterFiles;
                 FilesView = v;
 
-                Files.CollectionChanged += (s, e) => RequestSave();
+                SyncMiniPinnedPrompts();
+                Files.CollectionChanged += (s, e) =>
+                {
+                    RequestSave();
+                    SyncMiniPinnedPrompts();
+                };
                 SelectedFolder = Folders.FirstOrDefault();
                 IsFullMode = true;
 

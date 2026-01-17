@@ -16,12 +16,15 @@ using System.Windows.Threading;
 using System.Linq; // 新增引用，用于查询子窗口状态
 using System.Windows.Controls.Primitives;
 using System.Windows.Shapes;
+using System.Windows.Documents;
 
 // 引用自定义枚举和控件别名，解决命名冲突
 using InputMode = PromptMasterv5.Models.InputMode;
 using Button = System.Windows.Controls.Button;
 using TextBox = System.Windows.Controls.TextBox;
 using ListBox = System.Windows.Controls.ListBox;
+using RichTextBox = System.Windows.Controls.RichTextBox;
+using WpfControl = System.Windows.Controls.Control;
 using WinFormsCursor = System.Windows.Forms.Cursor;
 using MessageBox = System.Windows.MessageBox;
 using Application = System.Windows.Application;
@@ -54,6 +57,7 @@ namespace PromptMasterv5
         private double? _miniBottomAnchor;
         private DispatcherTimer? _miniAutoResizeTimer;
         private bool _isApplyingMiniAutoResize = false;
+        private bool _isUpdatingMiniInputDocument = false;
 
         private double GetMiniDefaultWidth()
         {
@@ -72,6 +76,126 @@ namespace PromptMasterv5
             var min = GetMiniDefaultWidth();
             if (w < min) w = min;
             return w;
+        }
+
+        private string GetMiniUserInputText()
+        {
+            if (MiniInputBox?.Document == null) return "";
+            var para = MiniInputBox.Document.Blocks.OfType<Paragraph>().LastOrDefault();
+            if (para == null) return "";
+            var text = new TextRange(para.ContentStart, para.ContentEnd).Text ?? "";
+            return text.TrimEnd('\r', '\n');
+        }
+
+        private PromptItem? GetMiniSelectedPrompt()
+        {
+            if (ViewModel == null) return null;
+            var id = ViewModel.LocalConfig.MiniSelectedPinnedPromptId ?? "";
+            if (string.IsNullOrWhiteSpace(id)) return null;
+            return ViewModel.Files.FirstOrDefault(f => f.Id == id);
+        }
+
+        private void RebuildMiniInputDocument(string userText, bool focusUserInput)
+        {
+            if (MiniInputBox == null) return;
+            if (ViewModel == null) return;
+
+            _isUpdatingMiniInputDocument = true;
+            try
+            {
+                var doc = new FlowDocument
+                {
+                    PagePadding = new Thickness(0),
+                    FontFamily = MiniInputBox.FontFamily,
+                    FontSize = MiniInputBox.FontSize
+                };
+
+                var selected = GetMiniSelectedPrompt();
+                if (selected != null)
+                {
+                    var chipParagraph = new Paragraph { Margin = new Thickness(0, 0, 0, 2) };
+                    var showIcons = ViewModel.LocalConfig.MiniPinnedPromptShowIcons && !string.IsNullOrWhiteSpace(selected.IconGeometry);
+
+                    if (showIcons)
+                    {
+                        Geometry? geometry = null;
+                        try { geometry = Geometry.Parse(selected.IconGeometry!); } catch { }
+
+                        if (geometry != null)
+                        {
+                            var path = new Path
+                            {
+                                Data = geometry,
+                                Width = 14,
+                                Height = 14,
+                                Stretch = Stretch.Uniform,
+                                Fill = TryFindResource("GitHubBlue") as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.White,
+                                VerticalAlignment = VerticalAlignment.Center
+                            };
+                            chipParagraph.Inlines.Add(new InlineUIContainer(path) { BaselineAlignment = BaselineAlignment.Center });
+                        }
+                        else
+                        {
+                            chipParagraph.Inlines.Add(new Run(selected.Title ?? "") { Foreground = TryFindResource("GitHubBlue") as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.White });
+                        }
+                    }
+                    else
+                    {
+                        var border = new Border
+                        {
+                            Background = System.Windows.Media.Brushes.Transparent,
+                            BorderBrush = TryFindResource("GitHubBlue") as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.White,
+                            BorderThickness = new Thickness(1),
+                            CornerRadius = new CornerRadius(4),
+                            Padding = new Thickness(8, 2, 8, 2)
+                        };
+                        border.Child = new TextBlock
+                        {
+                            Text = selected.Title ?? "",
+                            Foreground = TryFindResource("GitHubBlue") as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.White,
+                            FontSize = Math.Max(10, MiniInputBox.FontSize - 2),
+                            FontWeight = FontWeights.SemiBold
+                        };
+                        chipParagraph.Inlines.Add(new InlineUIContainer(border) { BaselineAlignment = BaselineAlignment.Center });
+                    }
+
+                    doc.Blocks.Add(chipParagraph);
+                }
+
+                var userParagraph = new Paragraph { Margin = new Thickness(0) };
+                userParagraph.Inlines.Add(new Run(userText ?? ""));
+                doc.Blocks.Add(userParagraph);
+
+                MiniInputBox.Document = doc;
+
+                if (focusUserInput)
+                {
+                    MiniInputBox.Focus();
+                    MiniInputBox.CaretPosition = userParagraph.ContentStart;
+                }
+            }
+            finally
+            {
+                _isUpdatingMiniInputDocument = false;
+            }
+        }
+
+        private int GetMiniVisualLineCount()
+        {
+            if (MiniInputBox?.Document == null) return 1;
+            var start = MiniInputBox.Document.ContentStart;
+            if (start == null) return 1;
+            var line = start;
+            var count = 1;
+            while (true)
+            {
+                var next = line.GetLineStartPosition(1);
+                if (next == null) break;
+                count++;
+                line = next;
+                if (count > 500) break;
+            }
+            return count;
         }
 
         public MainWindow()
@@ -283,7 +407,11 @@ namespace PromptMasterv5
                     {
                         MiniInputBox.Focus();
                         Keyboard.Focus(MiniInputBox);
-                        MiniInputBox.CaretIndex = MiniInputBox.Text.Length;
+                        if (MiniInputBox.Document != null)
+                        {
+                            MiniInputBox.CaretPosition = MiniInputBox.Document.ContentEnd;
+                            MiniInputBox.ScrollToEnd();
+                        }
                     }
                 }), System.Windows.Threading.DispatcherPriority.ContextIdle);
             }
@@ -348,6 +476,10 @@ namespace PromptMasterv5
                     {
                         ResetMiniWindowToDefaultSize();
                     }), System.Windows.Threading.DispatcherPriority.ContextIdle);
+                }
+                else if (!ViewModel.IsFullMode && !_isUpdatingMiniInputDocument && MiniInputBox != null && !MiniInputBox.IsKeyboardFocusWithin)
+                {
+                    RebuildMiniInputDocument(ViewModel.MiniInputText ?? "", focusUserInput: false);
                 }
             }
         }
@@ -419,9 +551,8 @@ namespace PromptMasterv5
                 this.Activate();
                 NativeMethods.SetForegroundWindow(new System.Windows.Interop.WindowInteropHelper(this).Handle);
 
-                _ = Dispatcher.BeginInvoke(new Action(() => MiniInputBox.Focus()), System.Windows.Threading.DispatcherPriority.Render);
                 EnsureMiniDefaultSizeMeasured();
-                UpdateMiniPinnedPromptUi();
+                RebuildMiniInputDocument(ViewModel.MiniInputText ?? "", focusUserInput: true);
             }
         }
 
@@ -454,7 +585,6 @@ namespace PromptMasterv5
                 Top = bottom - Height;
                 _miniBottomAnchor = bottom;
                 ApplyMiniScrollBarAppearance(isOverflow: false);
-                UpdateMiniPinnedPromptUi();
             }), DispatcherPriority.Loaded);
         }
 
@@ -493,7 +623,7 @@ namespace PromptMasterv5
             if (MiniInputBox == null) return;
             if (_miniDefaultHeight <= 0) return;
 
-            var lineCount = MiniInputBox.LineCount;
+            var lineCount = GetMiniVisualLineCount();
             if (lineCount < 1) lineCount = 1;
             var isOverflow = lineCount > MiniMaxAutoLines;
 
@@ -518,9 +648,16 @@ namespace PromptMasterv5
 
         private void MiniInput_TextChanged(object sender, TextChangedEventArgs e)
         {
+            if (_isUpdatingMiniInputDocument) return;
+
+            if (ViewModel != null && !ViewModel.IsFullMode)
+            {
+                ViewModel.MiniInputText = GetMiniUserInputText();
+            }
+
             if (MiniInputBox != null)
             {
-                var text = MiniInputBox.Text?.Trim() ?? "";
+                var text = GetMiniUserInputText().Trim();
                 var isUrlLike = Regex.IsMatch(text, @"^(https?://|www\.)\S+$", RegexOptions.IgnoreCase);
                 if (!isUrlLike && Uri.TryCreate(text, UriKind.Absolute, out var uri))
                 {
@@ -534,28 +671,13 @@ namespace PromptMasterv5
                 }
                 else
                 {
-                    MiniInputBox.ClearValue(TextBox.ForegroundProperty);
+                    MiniInputBox.ClearValue(WpfControl.ForegroundProperty);
                 }
             }
 
             if (ViewModel != null && !ViewModel.IsFullMode)
             {
                 ScheduleMiniAutoResize();
-                Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    var box = MiniInputBox;
-                    if (box == null) return;
-
-                    if (box.LineCount > 0)
-                    {
-                        var caretIndex = box.CaretIndex;
-                        var lineIndex = box.GetLineIndexFromCharacterIndex(caretIndex);
-                        if (lineIndex >= 0 && lineIndex < box.LineCount)
-                        {
-                            box.ScrollToLine(lineIndex);
-                        }
-                    }
-                }), System.Windows.Threading.DispatcherPriority.Render);
             }
         }
 
@@ -572,58 +694,6 @@ namespace PromptMasterv5
             return null;
         }
 
-        private void UpdateMiniHeight()
-        {
-            if (MiniInputBox == null) return;
-            double contentHeight = MiniInputBox.ExtentHeight;
-            if (contentHeight < 40) contentHeight = 40;
-            double modeBarHeight = 0;
-            if (MiniModeBar != null)
-            {
-                modeBarHeight = MiniModeBar.ActualHeight;
-            }
-            if (modeBarHeight < 18) modeBarHeight = 18;
-
-            double chromePadding = 60 + modeBarHeight;
-            double varsHeight = 0;
-            if (ViewModel.IsMiniVarsExpanded)
-            {
-                double estimatedVarsHeight = ViewModel.Variables.Count * 45 + 20;
-                if (estimatedVarsHeight > 300) estimatedVarsHeight = 300;
-                varsHeight = estimatedVarsHeight;
-            }
-            double targetHeight = contentHeight + chromePadding + varsHeight;
-            double screenHalf = SystemParameters.PrimaryScreenHeight / 2;
-            if (targetHeight > screenHalf) targetHeight = screenHalf;
-            double workAreaTop = SystemParameters.WorkArea.Top;
-            double workAreaBottom = SystemParameters.WorkArea.Bottom;
-            double currentTop = this.Top;
-            double safetyMargin = 20;
-            double predictedBottom = currentTop + targetHeight + safetyMargin;
-            if (predictedBottom > workAreaBottom)
-            {
-                double offset = predictedBottom - workAreaBottom;
-                double newTop = currentTop - offset;
-                if (newTop < workAreaTop)
-                {
-                    newTop = workAreaTop;
-                    double maxPossibleHeight = workAreaBottom - workAreaTop - safetyMargin;
-                    if (targetHeight > maxPossibleHeight) targetHeight = maxPossibleHeight;
-                }
-                this.Top = newTop;
-            }
-            this.Height = targetHeight;
-            if (MiniInputBox.IsKeyboardFocused && MiniInputBox.LineCount > 0)
-            {
-                var caretIndex = MiniInputBox.CaretIndex;
-                var lineIndex = MiniInputBox.GetLineIndexFromCharacterIndex(caretIndex);
-                if (lineIndex >= 0 && lineIndex < MiniInputBox.LineCount)
-                {
-                    MiniInputBox.ScrollToLine(lineIndex);
-                }
-            }
-        }
-
         private void EnsureWindowOnScreen()
         {
             if (this.Left < 0) this.Left = 0;
@@ -633,75 +703,32 @@ namespace PromptMasterv5
         private void MiniWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { if (e.ButtonState == MouseButtonState.Pressed) this.DragMove(); }
         private void FullWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { if (e.ButtonState == MouseButtonState.Pressed) this.DragMove(); }
 
-        private void MiniPinnedPrompt_Click(object sender, RoutedEventArgs e)
+        private void MiniPinnedPromptItem_Click(object sender, RoutedEventArgs e)
         {
             if (ViewModel == null) return;
             if (ViewModel.IsFullMode) return;
 
-            var prompt = TryGetMiniPinnedPrompt();
-            if (prompt == null) return;
+            if (sender is not Button btn) return;
+            var id = btn.Tag as string ?? "";
+            if (string.IsNullOrWhiteSpace(id)) return;
 
-            if (ViewModel.LocalConfig.MiniPinnedPromptClickShowsFullContent)
+            var userText = ViewModel.MiniInputText ?? "";
+            if (ViewModel.LocalConfig.MiniSelectedPinnedPromptId == id)
             {
-                ViewModel.MiniInputText = prompt.Content ?? "";
-                _ = Dispatcher.BeginInvoke(new Action(() => MiniInputBox?.Focus()), DispatcherPriority.Render);
+                ViewModel.LocalConfig.MiniSelectedPinnedPromptId = "";
             }
-        }
-
-        private PromptItem? TryGetMiniPinnedPrompt()
-        {
-            if (ViewModel == null) return null;
-            var id = ViewModel.LocalConfig.MiniPinnedPromptId ?? "";
-            if (string.IsNullOrWhiteSpace(id)) return null;
-            return ViewModel.Files.FirstOrDefault(f => f.Id == id);
-        }
-
-        private void UpdateMiniPinnedPromptUi()
-        {
-            var prompt = TryGetMiniPinnedPrompt();
-            if (prompt == null)
+            else
             {
-                MiniPinnedPromptChip.Visibility = Visibility.Collapsed;
-                MiniPinnedPromptFooter.Visibility = Visibility.Collapsed;
-                return;
-            }
-
-            MiniPinnedPromptChip.Visibility = Visibility.Visible;
-            MiniPinnedPromptFooter.Visibility = Visibility.Visible;
-
-            var showIcons = ViewModel.LocalConfig.MiniPinnedPromptShowIcons && !string.IsNullOrWhiteSpace(prompt.IconGeometry);
-
-            MiniPinnedPromptChipIcon.Visibility = showIcons ? Visibility.Visible : Visibility.Collapsed;
-            MiniPinnedPromptFooterIcon.Visibility = showIcons ? Visibility.Visible : Visibility.Collapsed;
-
-            MiniPinnedPromptChipTitle.Visibility = showIcons ? Visibility.Collapsed : Visibility.Visible;
-            MiniPinnedPromptFooterTitle.Visibility = showIcons ? Visibility.Collapsed : Visibility.Visible;
-
-            if (showIcons)
-            {
-                try
+                ViewModel.LocalConfig.MiniSelectedPinnedPromptId = id;
+                if (ViewModel.LocalConfig.MiniPinnedPromptClickShowsFullContent)
                 {
-                    var geo = Geometry.Parse(prompt.IconGeometry!);
-                    MiniPinnedPromptChipIcon.Data = geo;
-                    MiniPinnedPromptFooterIcon.Data = geo;
-                }
-                catch
-                {
-                    MiniPinnedPromptChipIcon.Visibility = Visibility.Collapsed;
-                    MiniPinnedPromptFooterIcon.Visibility = Visibility.Collapsed;
-                    MiniPinnedPromptChipTitle.Visibility = Visibility.Visible;
-                    MiniPinnedPromptFooterTitle.Visibility = Visibility.Visible;
-                    MiniPinnedPromptChipTitle.Text = prompt.Title ?? "";
-                    MiniPinnedPromptFooterTitle.Text = prompt.Title ?? "";
-                    return;
+                    var p = ViewModel.Files.FirstOrDefault(f => f.Id == id);
+                    userText = p?.Content ?? "";
+                    ViewModel.MiniInputText = userText;
                 }
             }
 
-            if (!showIcons)
-            {
-                MiniPinnedPromptChipTitle.Text = prompt.Title ?? "";
-                MiniPinnedPromptFooterTitle.Text = prompt.Title ?? "";
-            }
+            RebuildMiniInputDocument(userText, focusUserInput: true);
         }
 
         private void MiniResizeThumb_DragDelta(object sender, DragDeltaEventArgs e)
@@ -776,26 +803,57 @@ namespace PromptMasterv5
 
         private async void MiniInput_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            var textBox = sender as TextBox;
-            if (textBox == null) return;
+            var box = sender as RichTextBox;
+            if (box == null) return;
+
+            if (ViewModel != null && !ViewModel.IsFullMode && !_isUpdatingMiniInputDocument)
+            {
+                ViewModel.MiniInputText = GetMiniUserInputText();
+            }
 
             if (e.Key == Key.Enter && (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
             {
                 return;
             }
 
-            if (e.Key == Key.Delete && ViewModel.LocalConfig.MiniAiOnlyChatEnabled)
+            if ((e.Key == Key.Delete || e.Key == Key.Back) && ViewModel != null && !ViewModel.IsFullMode)
             {
-                ViewModel.MiniInputText = "";
-                ViewModel.IsAiResultDisplayed = false;
-                e.Handled = true;
-                return;
+                var selectedId = ViewModel.LocalConfig.MiniSelectedPinnedPromptId ?? "";
+                if (!string.IsNullOrWhiteSpace(selectedId) && box.Document != null)
+                {
+                    var userText = ViewModel.MiniInputText ?? GetMiniUserInputText();
+
+                    var caret = box.CaretPosition.GetInsertionPosition(LogicalDirection.Forward);
+                    var docStart = box.Document.ContentStart.GetInsertionPosition(LogicalDirection.Forward);
+
+                    var paragraphs = box.Document.Blocks.OfType<Paragraph>().ToList();
+                    var userPara = paragraphs.LastOrDefault();
+                    var chipPara = paragraphs.Count > 1 ? paragraphs.First() : null;
+
+                    var atDocStart = caret != null && docStart != null && caret.CompareTo(docStart) == 0;
+                    var atUserStart = userPara != null && caret != null && caret.CompareTo(userPara.ContentStart) == 0;
+                    var inChipLine = chipPara != null && caret != null && caret.CompareTo(chipPara.ContentStart) >= 0 && caret.CompareTo(chipPara.ContentEnd) <= 0;
+
+                    var shouldRemoveChip =
+                        inChipLine ||
+                        (e.Key == Key.Delete && atDocStart) ||
+                        (e.Key == Key.Back && atUserStart);
+
+                    if (shouldRemoveChip)
+                    {
+                        ViewModel.LocalConfig.MiniSelectedPinnedPromptId = "";
+                        RebuildMiniInputDocument(userText, focusUserInput: true);
+                        e.Handled = true;
+                        return;
+                    }
+                }
             }
 
-            if (e.Key == Key.Delete && ViewModel.IsAiResultDisplayed)
+            if (e.Key == Key.Delete && (ViewModel.LocalConfig.MiniAiOnlyChatEnabled || ViewModel.IsAiResultDisplayed))
             {
                 ViewModel.MiniInputText = "";
                 ViewModel.IsAiResultDisplayed = false;
+                RebuildMiniInputDocument("", focusUserInput: true);
                 e.Handled = true;
                 return;
             }
@@ -844,8 +902,7 @@ namespace PromptMasterv5
                                 }
                             }
                         }
-                        MiniInputBox.Focus();
-                        MiniInputBox.CaretIndex = MiniInputBox.Text.Length;
+                        RebuildMiniInputDocument(ViewModel.MiniInputText ?? "", focusUserInput: true);
                     }), System.Windows.Threading.DispatcherPriority.ContextIdle);
                     return;
                 }
@@ -858,7 +915,7 @@ namespace PromptMasterv5
                 {
                     e.Handled = true;
                     _miniEnterSequence++;
-                    await TriggerSendProcess(textBox, InputMode.SmartFocus);
+                    await TriggerSendProcess(InputMode.SmartFocus);
                     return;
                 }
 
@@ -866,7 +923,7 @@ namespace PromptMasterv5
                 {
                     e.Handled = true;
                     _miniEnterSequence++;
-                    await TriggerSendProcess(textBox, ViewModel.LocalConfig.Mode);
+                    await TriggerSendProcess(ViewModel.LocalConfig.Mode);
                     return;
                 }
 
@@ -875,7 +932,7 @@ namespace PromptMasterv5
                     e.Handled = true;
                     _lastMiniEnterTime = DateTime.MinValue;
                     _miniEnterSequence++;
-                    await TriggerSendProcess(textBox, InputMode.CoordinateClick);
+                    await TriggerSendProcess(InputMode.CoordinateClick);
                     return;
                 }
 
@@ -888,8 +945,7 @@ namespace PromptMasterv5
                     await Task.Delay(450);
                     if (_miniEnterSequence != enterSeq) return;
                     await ViewModel.ExecuteMiniAiOrPatternAsync();
-                    MiniInputBox.Focus();
-                    MiniInputBox.CaretIndex = MiniInputBox.Text.Length;
+                    RebuildMiniInputDocument(ViewModel.MiniInputText ?? "", focusUserInput: true);
                 }, System.Windows.Threading.DispatcherPriority.ContextIdle);
             }
             else if (e.Key == Key.Up && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
@@ -901,9 +957,8 @@ namespace PromptMasterv5
 
         private void SearchResult_Click(object sender, MouseButtonEventArgs e) => ViewModel.ConfirmSearchResultCommand.Execute(null);
 
-        private async Task TriggerSendProcess(TextBox sourceBox, InputMode mode)
+        private async Task TriggerSendProcess(InputMode mode)
         {
-            sourceBox?.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
             this.Hide();
             await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.Render);
             await Task.Delay(60);
@@ -911,6 +966,16 @@ namespace PromptMasterv5
                 await ViewModel.SendBySmartFocus();
             else
                 await ViewModel.SendByCoordinate();
+            if (ViewModel != null && !ViewModel.IsFullMode)
+            {
+                RebuildMiniInputDocument(ViewModel.MiniInputText ?? "", focusUserInput: true);
+            }
+        }
+
+        private async Task TriggerSendProcess(TextBox sourceBox, InputMode mode)
+        {
+            sourceBox?.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
+            await TriggerSendProcess(mode);
         }
 
         private async void TextBox_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -1065,8 +1130,11 @@ namespace PromptMasterv5
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 MiniInputBox.Focus();
-                MiniInputBox.CaretIndex = MiniInputBox.Text?.Length ?? 0;
-                MiniInputBox.ScrollToEnd();
+                if (MiniInputBox.Document != null)
+                {
+                    MiniInputBox.CaretPosition = MiniInputBox.Document.ContentEnd;
+                    MiniInputBox.ScrollToEnd();
+                }
             }), DispatcherPriority.Input);
         }
 

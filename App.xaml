@@ -87,6 +87,20 @@
                 </Setter>
             </Style>
 
+            <Style x:Key="MiniRichTextBoxStyle" TargetType="RichTextBox">
+                <Setter Property="Background" Value="#363B40"/>
+                <Setter Property="Foreground" Value="{StaticResource MiniTextBrush}"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="CaretBrush" Value="#DEDEDE"/>
+                <Setter Property="FontSize" Value="16"/>
+                <Setter Property="FontFamily" Value="Segoe UI, Microsoft YaHei UI"/>
+                <Setter Property="Padding" Value="4"/>
+                <Setter Property="TextBlock.LineHeight" Value="25.6"/>
+                <Setter Property="TextBlock.LineStackingStrategy" Value="BlockLineHeight"/>
+                <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Hidden"/>
+                <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+            </Style>
+
             <Style x:Key="MiniModeButtonStyle" TargetType="Button">
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="BorderThickness" Value="0"/>

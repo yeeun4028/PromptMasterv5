@@ -51,6 +51,7 @@
 
         <!-- 转换器 -->
         <utils:InverseBoolConverter x:Key="InverseBoolConverter"/>
+        <utils:SelectedIdToBrushConverter x:Key="SelectedIdToBrushConverter"/>
 
         <!-- 加载动画图标（旋转圆环） -->
         <Geometry x:Key="IconLoading">M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2M12 4A8 8 0 1 1 4 12A8 8 0 0 1 12 4Z</Geometry>
@@ -447,53 +448,14 @@
                             </Grid.RowDefinitions>
 
                             <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <Button x:Name="MiniPinnedPromptChip"
-                                        Grid.Column="0"
-                                        Visibility="Collapsed"
-                                        Background="#2B2F33"
-                                        BorderBrush="#3A3E44"
-                                        BorderThickness="1"
-                                        Padding="8,4"
-                                        Margin="4,4,6,4"
-                                        HorizontalAlignment="Left"
-                                        VerticalAlignment="Top"
-                                        Cursor="Hand"
-                                        Click="MiniPinnedPrompt_Click">
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Path x:Name="MiniPinnedPromptChipIcon"
-                                              Width="14"
-                                              Height="14"
-                                              Stretch="Uniform"
-                                              Fill="#CFCFCF"
-                                              Margin="0,0,6,0"
-                                              Visibility="Collapsed"/>
-                                        <TextBlock x:Name="MiniPinnedPromptChipTitle"
-                                                   Foreground="#CFCFCF"
-                                                   FontSize="12"
-                                                   FontWeight="SemiBold"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   MaxWidth="120"
-                                                   VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
-
-                                <TextBox x:Name="MiniInputBox"
-                                         Grid.Column="1"
-                                         Text="{Binding MiniInputText, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource MiniTextBoxStyle}"
-                                         VerticalScrollBarVisibility="Hidden"  
-                                         d:Text="输入 / 搜索提示词..."
-                                         PreviewKeyDown="MiniInput_PreviewKeyDown"
-                                         TextChanged="MiniInput_TextChanged">
-                                    <TextBox.Resources>
+                                <RichTextBox x:Name="MiniInputBox"
+                                             Style="{StaticResource MiniRichTextBoxStyle}"
+                                             PreviewKeyDown="MiniInput_PreviewKeyDown"
+                                             TextChanged="MiniInput_TextChanged">
+                                    <RichTextBox.Resources>
                                         <Style TargetType="ScrollBar" BasedOn="{StaticResource MiniInvisibleScrollBarStyle}"/>
-                                    </TextBox.Resources>
-                                </TextBox>
+                                    </RichTextBox.Resources>
+                                </RichTextBox>
                             </Grid>
 
                             <Popup IsOpen="{Binding IsSearchPopupOpen}" 
@@ -555,33 +517,73 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
-                                <Button x:Name="MiniPinnedPromptFooter"
-                                        Grid.Column="0"
-                                        Visibility="Collapsed"
-                                        Background="Transparent"
-                                        BorderThickness="0"
-                                        Padding="4,0"
-                                        HorizontalAlignment="Left"
-                                        VerticalAlignment="Center"
-                                        Cursor="Hand"
-                                        Click="MiniPinnedPrompt_Click">
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Path x:Name="MiniPinnedPromptFooterIcon"
-                                              Width="12"
-                                              Height="12"
-                                              Stretch="Uniform"
-                                              Fill="#B0B0B0"
-                                              Margin="0,0,6,0"
-                                              Visibility="Collapsed"/>
-                                        <TextBlock x:Name="MiniPinnedPromptFooterTitle"
-                                                   Foreground="#B0B0B0"
-                                                   FontSize="12"
-                                                   FontWeight="SemiBold"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   MaxWidth="220"
-                                                   VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
+                                <ItemsControl x:Name="MiniPinnedPromptBar"
+                                              Grid.Column="0"
+                                              ItemsSource="{Binding MiniPinnedPrompts}"
+                                              VerticalAlignment="Center">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Margin="0,0,6,0"
+                                                    Padding="4,0"
+                                                    Tag="{Binding Id}"
+                                                    Click="MiniPinnedPromptItem_Click">
+                                                <Button.Style>
+                                                    <Style TargetType="Button" BasedOn="{StaticResource MiniModeButtonStyle}">
+                                                        <Setter Property="Foreground">
+                                                            <Setter.Value>
+                                                                <MultiBinding Converter="{StaticResource SelectedIdToBrushConverter}">
+                                                                    <Binding Path="DataContext.LocalConfig.MiniSelectedPinnedPromptId" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                                                                    <Binding Path="Id"/>
+                                                                </MultiBinding>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Style>
+                                                </Button.Style>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Path Width="12"
+                                                          Height="12"
+                                                          Stretch="Uniform"
+                                                          Data="{Binding IconGeometry}"
+                                                          Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"
+                                                          Margin="0,0,4,0">
+                                                        <Path.Style>
+                                                            <Style TargetType="Path">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding DataContext.LocalConfig.MiniPinnedPromptShowIcons, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Path.Style>
+                                                    </Path>
+                                                    <TextBlock Text="{Binding Title}"
+                                                               Foreground="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"
+                                                               FontSize="12"
+                                                               FontWeight="SemiBold"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               MaxWidth="200">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding DataContext.LocalConfig.MiniPinnedPromptShowIcons, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
 
                                 <StackPanel x:Name="MiniModeBar"
                                             Grid.Column="1"

@@ -194,6 +194,12 @@ namespace PromptMasterv5.Views
             _activeCoordinateRuleIndex = ViewModel.LocalConfig.CoordinateRules.Count - 1;
         }
 
+        private void AddMiniPinnedPrompt_Click(object sender, RoutedEventArgs e)
+        {
+            if (ViewModel == null) return;
+            ViewModel.AddMiniPinnedPromptFromCandidate();
+        }
+
         private async void TestAiConnection_Click(object sender, RoutedEventArgs e)
         {
             if (ViewModel == null) return;

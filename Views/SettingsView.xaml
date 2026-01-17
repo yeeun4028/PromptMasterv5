@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:dd="urn:gong-wpf-dragdrop"
              xmlns:models="clr-namespace:PromptMasterv5.Models"
              xmlns:utils="clr-namespace:PromptMasterv5.Utils"
              mc:Ignorable="d" 
@@ -878,6 +879,7 @@
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
@@ -934,30 +936,76 @@
                                                        Style="{StaticResource FieldLabelTextStyle}"
                                                        Margin="0,12,0,0"
                                                        VerticalAlignment="Center"/>
-                                            <ComboBox Grid.Row="3" Grid.Column="1"
-                                                      ItemsSource="{Binding FilesView}"
-                                                      SelectedValuePath="Id"
-                                                      SelectedValue="{Binding LocalConfig.MiniPinnedPromptId}"
-                                                      DisplayMemberPath="Title"
-                                                      Margin="10,12,0,0"/>
+                                            <Grid Grid.Row="3" Grid.Column="1" Margin="10,12,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <ComboBox Grid.Column="0"
+                                                          ItemsSource="{Binding FilesView}"
+                                                          SelectedValuePath="Id"
+                                                          SelectedValue="{Binding LocalConfig.MiniPinnedPromptCandidateId}"
+                                                          DisplayMemberPath="Title"/>
+                                                <Button Grid.Column="1"
+                                                        Width="34"
+                                                        Height="28"
+                                                        Margin="8,0,0,0"
+                                                        Content="+"
+                                                        Click="AddMiniPinnedPrompt_Click"/>
+                                            </Grid>
 
                                             <TextBlock Grid.Row="4" Grid.Column="0"
+                                                       Text="已添加提示词（可拖拽排序）"
+                                                       Style="{StaticResource FieldLabelTextStyle}"
+                                                       Margin="0,12,0,0"
+                                                       VerticalAlignment="Top"/>
+                                            <ListBox Grid.Row="4" Grid.Column="1"
+                                                     ItemsSource="{Binding MiniPinnedPrompts}"
+                                                     Background="Transparent"
+                                                     BorderThickness="0"
+                                                     Margin="10,12,0,0"
+                                                     dd:DragDrop.IsDragSource="True"
+                                                     dd:DragDrop.IsDropTarget="True"
+                                                     dd:DragDrop.DropHandler="{Binding MiniPinnedPromptDropHandler}">
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="0,6">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Grid.Column="0"
+                                                                       Text="{Binding Title}"
+                                                                       Foreground="{DynamicResource TextPrimary}"
+                                                                       FontSize="13"
+                                                                       TextTrimming="CharacterEllipsis"/>
+                                                            <Button Grid.Column="1"
+                                                                    Content="删除"
+                                                                    Margin="10,0,0,0"
+                                                                    Command="{Binding DataContext.RemoveMiniPinnedPromptCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                    CommandParameter="{Binding}"/>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+
+                                            <TextBlock Grid.Row="5" Grid.Column="0"
                                                        Text="迷你窗口底部显示提示词方式"
                                                        Style="{StaticResource FieldLabelTextStyle}"
                                                        Margin="0,12,0,0"
                                                        VerticalAlignment="Center"/>
-                                            <CheckBox Grid.Row="4" Grid.Column="1"
+                                            <CheckBox Grid.Row="5" Grid.Column="1"
                                                       IsChecked="{Binding LocalConfig.MiniPinnedPromptShowIcons}"
                                                       Content="显示图标（关闭则显示名称）"
                                                       Margin="10,12,0,0"
                                                       Cursor="Hand"/>
 
-                                            <TextBlock Grid.Row="5" Grid.Column="0"
+                                            <TextBlock Grid.Row="6" Grid.Column="0"
                                                        Text="点击提示词展示"
                                                        Style="{StaticResource FieldLabelTextStyle}"
                                                        Margin="0,12,0,0"
                                                        VerticalAlignment="Center"/>
-                                            <CheckBox Grid.Row="5" Grid.Column="1"
+                                            <CheckBox Grid.Row="6" Grid.Column="1"
                                                       IsChecked="{Binding LocalConfig.MiniPinnedPromptClickShowsFullContent}"
                                                       Content="点击后填入完整内容（关闭则组合发送）"
                                                       Margin="10,12,0,0"

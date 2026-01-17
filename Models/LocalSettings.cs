@@ -71,6 +71,10 @@ namespace PromptMasterv5.Models
         public double MiniExpandedWidth { get; set; } = 800;
 
         public string MiniPinnedPromptId { get; set; } = "";
+        public string MiniPinnedPromptCandidateId { get; set; } = "";
+        public ObservableCollection<string> MiniPinnedPromptIds { get; set; } = new();
+        [JsonIgnore]
+        public string MiniSelectedPinnedPromptId { get; set; } = "";
         public bool MiniPinnedPromptShowIcons { get; set; } = false;
         public bool MiniPinnedPromptClickShowsFullContent { get; set; } = true;
 

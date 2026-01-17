@@ -44,6 +44,16 @@ namespace PromptMasterv5.Services
                     });
                 }
 
+                if (settings.MiniPinnedPromptIds == null)
+                {
+                    settings.MiniPinnedPromptIds = new();
+                }
+
+                if (settings.MiniPinnedPromptIds.Count == 0 && !string.IsNullOrWhiteSpace(settings.MiniPinnedPromptId))
+                {
+                    settings.MiniPinnedPromptIds.Add(settings.MiniPinnedPromptId);
+                }
+
                 return settings;
             }
             catch
