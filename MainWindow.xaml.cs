@@ -46,6 +46,16 @@ namespace PromptMasterv5
         private DispatcherTimer? _hideTimer;
         private DispatcherTimer? _miniPersistTimer;
 
+        private const double MiniDefaultWidth = 500;
+        private const double MiniExpandedWidth = 800;
+        private const int MiniMaxAutoLines = 23;
+
+        private double _miniDefaultHeight = 0;
+        private double _miniLineHeight = 25.6;
+        private double? _miniBottomAnchor;
+        private DispatcherTimer? _miniAutoResizeTimer;
+        private bool _isApplyingMiniAutoResize = false;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -92,6 +102,7 @@ namespace PromptMasterv5
 
             ViewModel.LocalConfig.MiniWindowLeft = Left;
             ViewModel.LocalConfig.MiniWindowTop = Top;
+            _miniBottomAnchor = Top + Height;
             ScheduleMiniPersist();
         }
 
@@ -101,9 +112,13 @@ namespace PromptMasterv5
             if (ViewModel.IsFullMode) return;
             if (WindowState != WindowState.Normal) return;
 
-            ViewModel.LocalConfig.MiniWindowWidth = Width;
-            ViewModel.LocalConfig.MiniWindowHeight = Height;
-            ScheduleMiniPersist();
+            _miniBottomAnchor = Top + Height;
+            if (!_isApplyingMiniAutoResize)
+            {
+                ViewModel.LocalConfig.MiniWindowWidth = Width;
+                ViewModel.LocalConfig.MiniWindowHeight = Height;
+                ScheduleMiniPersist();
+            }
         }
 
         private void InitializeTrayIcon()
@@ -300,10 +315,33 @@ namespace PromptMasterv5
             {
                 if (string.IsNullOrEmpty(ViewModel.MiniInputText) && !ViewModel.IsFullMode)
                 {
-                    _ = Dispatcher.BeginInvoke(new Action(() => {
+                    _ = Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        ResetMiniWindowToDefaultSize();
                     }), System.Windows.Threading.DispatcherPriority.ContextIdle);
                 }
             }
+        }
+
+        private void ResetMiniWindowToDefaultSize()
+        {
+            if (ViewModel.IsFullMode) return;
+            if (_miniDefaultHeight <= 0)
+            {
+                EnsureMiniDefaultSizeMeasured();
+                return;
+            }
+
+            var bottom = _miniBottomAnchor ?? (Top + Height);
+            var targetHeight = _miniDefaultHeight;
+
+            _isApplyingMiniAutoResize = true;
+            Width = MiniDefaultWidth;
+            Height = targetHeight;
+            Top = bottom - Height;
+            _isApplyingMiniAutoResize = false;
+
+            _miniBottomAnchor = bottom;
         }
 
         private void ApplyModeState()
@@ -328,11 +366,10 @@ namespace PromptMasterv5
                 _lastFullTop = this.Top;
 
                 var cfg = ViewModel.LocalConfig;
-                var shouldResetMiniHeight = cfg.MiniWindowHeight <= 0 || Math.Abs(cfg.MiniWindowHeight - 160) < 0.01;
-                if (cfg.MiniWindowWidth > 100) this.Width = cfg.MiniWindowWidth;
-                if (!shouldResetMiniHeight && cfg.MiniWindowHeight > 80) this.Height = cfg.MiniWindowHeight;
+                this.Width = MiniDefaultWidth;
                 this.Left = cfg.MiniWindowLeft;
                 this.Top = cfg.MiniWindowTop;
+                if (this.Height < 160) this.Height = 160;
 
                 this.ResizeMode = ResizeMode.NoResize;
 
@@ -343,34 +380,79 @@ namespace PromptMasterv5
                 NativeMethods.SetForegroundWindow(new System.Windows.Interop.WindowInteropHelper(this).Handle);
 
                 _ = Dispatcher.BeginInvoke(new Action(() => MiniInputBox.Focus()), System.Windows.Threading.DispatcherPriority.Render);
-
-                if (shouldResetMiniHeight)
-                {
-                    _ = Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        if (MiniInputBox == null) return;
-                        if (ViewModel.IsFullMode) return;
-
-                        var lineHeightObj = MiniInputBox.GetValue(TextBlock.LineHeightProperty);
-                        var lineHeight = lineHeightObj is double lh && lh > 0 ? lh : 22.0;
-                        var padding = MiniInputBox.Padding;
-                        var desiredTextBoxHeight = lineHeight + padding.Top + padding.Bottom;
-
-                        var modeBarHeight = MiniModeBar?.ActualHeight ?? 0;
-                        if (modeBarHeight < 12) modeBarHeight = 12;
-
-                        var overhead = ActualHeight - MiniInputBox.ActualHeight - modeBarHeight;
-                        if (overhead < 40) overhead = 40;
-
-                        var newHeight = overhead + desiredTextBoxHeight + modeBarHeight;
-                        if (newHeight < 70) newHeight = 70;
-
-                        Height = newHeight;
-                        cfg.MiniWindowHeight = newHeight;
-                        ScheduleMiniPersist();
-                    }), DispatcherPriority.Loaded);
-                }
+                EnsureMiniDefaultSizeMeasured();
             }
+        }
+
+        private void EnsureMiniDefaultSizeMeasured()
+        {
+            _ = Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (ViewModel.IsFullMode) return;
+                if (MiniInputBox == null) return;
+
+                var lineHeightObj = MiniInputBox.GetValue(TextBlock.LineHeightProperty);
+                _miniLineHeight = lineHeightObj is double lh && lh > 0 ? lh : 25.6;
+                var padding = MiniInputBox.Padding;
+
+                var modeBarHeight = MiniModeBar?.ActualHeight ?? 0;
+                if (modeBarHeight < 12) modeBarHeight = 12;
+
+                var overhead = ActualHeight - MiniInputBox.ActualHeight - modeBarHeight;
+                if (overhead < 40) overhead = 40;
+
+                _miniDefaultHeight = overhead + modeBarHeight + (_miniLineHeight + padding.Top + padding.Bottom);
+                if (_miniDefaultHeight < 70) _miniDefaultHeight = 70;
+
+                Height = _miniDefaultHeight;
+                Width = MiniDefaultWidth;
+                _miniBottomAnchor = Top + Height;
+            }), DispatcherPriority.Loaded);
+        }
+
+        private void ScheduleMiniAutoResize()
+        {
+            if (ViewModel.IsFullMode) return;
+            if (MiniInputBox == null) return;
+
+            if (_miniAutoResizeTimer == null)
+            {
+                _miniAutoResizeTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(80) };
+                _miniAutoResizeTimer.Tick += (s, e) =>
+                {
+                    _miniAutoResizeTimer.Stop();
+                    ApplyMiniAutoResize();
+                };
+            }
+
+            _miniAutoResizeTimer.Stop();
+            _miniAutoResizeTimer.Start();
+        }
+
+        private void ApplyMiniAutoResize()
+        {
+            if (ViewModel.IsFullMode) return;
+            if (MiniInputBox == null) return;
+            if (_miniDefaultHeight <= 0) return;
+
+            var lineCount = MiniInputBox.LineCount;
+            if (lineCount < 1) lineCount = 1;
+
+            var targetWidth = lineCount > MiniMaxAutoLines ? MiniExpandedWidth : MiniDefaultWidth;
+            var cappedLines = Math.Min(lineCount, MiniMaxAutoLines);
+            var targetHeight = _miniDefaultHeight + (cappedLines - 1) * _miniLineHeight;
+
+            var bottom = _miniBottomAnchor ?? (Top + Height);
+            var workAreaTop = SystemParameters.WorkArea.Top;
+            var maxHeightByScreen = bottom - workAreaTop;
+            if (targetHeight > maxHeightByScreen) targetHeight = maxHeightByScreen;
+            if (targetHeight < _miniDefaultHeight) targetHeight = _miniDefaultHeight;
+
+            _isApplyingMiniAutoResize = true;
+            Width = targetWidth;
+            Height = targetHeight;
+            Top = bottom - Height;
+            _isApplyingMiniAutoResize = false;
         }
 
         private void MiniInput_TextChanged(object sender, TextChangedEventArgs e)
@@ -397,6 +479,7 @@ namespace PromptMasterv5
 
             if (ViewModel != null && !ViewModel.IsFullMode)
             {
+                ScheduleMiniAutoResize();
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
                     var box = MiniInputBox;

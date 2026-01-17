@@ -60,7 +60,7 @@ namespace PromptMasterv5.Models
         // 极简模式窗口位置记忆
         public double MiniWindowTop { get; set; } = 100;
         public double MiniWindowLeft { get; set; } = 100;
-        public double MiniWindowWidth { get; set; } = 600;
+        public double MiniWindowWidth { get; set; } = 500;
         public double MiniWindowHeight { get; set; } = 0;
 
         // 完整模式窗口位置记忆
