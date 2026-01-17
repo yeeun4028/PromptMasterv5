@@ -84,7 +84,7 @@ namespace PromptMasterv5
             if (ViewModel == null) return 160;
             var h = ViewModel.LocalConfig.MiniDefaultHeight;
             if (h <= 0) h = ViewModel.LocalConfig.MiniWindowHeight;
-            if (h <= 0) h = 160;
+            if (h <= 0) h = 118;
             if (h < 90) h = 90;
             return h;
         }
