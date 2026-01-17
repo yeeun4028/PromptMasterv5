@@ -8,16 +8,8 @@
              mc:Ignorable="d" 
              d:DesignHeight="500" d:DesignWidth="750">
     <UserControl.Resources>
-        <!-- Colors -->
-        <SolidColorBrush x:Key="AppBackground" Color="#F1F1EF"/>
-        <SolidColorBrush x:Key="SidebarBackground" Color="#F7F7F7"/>
-        <SolidColorBrush x:Key="CardBackground" Color="#FFFFFF"/>
         <Color x:Key="AccentColorValue">#4183C4</Color>
         <SolidColorBrush x:Key="AccentColor" Color="{StaticResource AccentColorValue}"/>
-        <SolidColorBrush x:Key="TextPrimary" Color="#333333"/>
-        <SolidColorBrush x:Key="TextSecondary" Color="#666666"/>
-        <SolidColorBrush x:Key="DividerColor" Color="#E5E5E5"/>
-        <SolidColorBrush x:Key="HintBrush" Color="#999999"/>
         <SolidColorBrush x:Key="DangerBrush" Color="#E53935"/>
         <SolidColorBrush x:Key="DangerHoverBrush" Color="#C62828"/>
 
@@ -36,7 +28,7 @@
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Height" Value="42"/>
             <Setter Property="Margin" Value="0,2"/>
-            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -45,12 +37,12 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#EAEAEA"/>
-                                <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ListItemHoverBackgroundBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
                             </Trigger>
                             <Trigger Property="Tag" Value="Selected">
-                                <Setter TargetName="border" Property="Background" Value="#E0E0E0"/>
-                                <Setter Property="Foreground" Value="#333333"/>
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ListItemSelectedBackgroundBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -60,7 +52,7 @@
 
         <!-- Card Style -->
         <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource CardBackground}"/>
+            <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="20"/>
             <Setter Property="Margin" Value="0,0,0,15"/>
@@ -99,8 +91,8 @@
         <!-- Modern TextBox Style -->
         <Style x:Key="ModernTextBoxStyle" TargetType="TextBox">
             <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="Background" Value="#FAFAFA"/>
-            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="Background" Value="{DynamicResource ShellBackground}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource DividerBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -113,11 +105,11 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#F0F0F0"/>
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ListItemHoverBackgroundBrush}"/>
                             </Trigger>
                             <Trigger Property="IsFocused" Value="True">
                                 <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentColor}"/>
-                                <Setter TargetName="border" Property="Background" Value="White"/>
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource InputFocusBackgroundBrush}"/>
                                 <Setter TargetName="border" Property="Effect">
                                     <Setter.Value>
                                         <DropShadowEffect Color="{StaticResource AccentColorValue}" Opacity="0.2" BlurRadius="4" ShadowDepth="0"/>
@@ -132,8 +124,8 @@
 
         <Style x:Key="ModernPasswordBoxStyle" TargetType="PasswordBox">
             <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="Background" Value="#FAFAFA"/>
-            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="Background" Value="{DynamicResource ShellBackground}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource DividerBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -147,11 +139,11 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#F0F0F0"/>
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ListItemHoverBackgroundBrush}"/>
                             </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
                                 <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentColor}"/>
-                                <Setter TargetName="border" Property="Background" Value="White"/>
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource InputFocusBackgroundBrush}"/>
                                 <Setter TargetName="border" Property="Effect">
                                     <Setter.Value>
                                         <DropShadowEffect Color="{StaticResource AccentColorValue}" Opacity="0.2" BlurRadius="4" ShadowDepth="0"/>
@@ -168,13 +160,13 @@
         </Style>
 
         <Style x:Key="FieldLabelTextStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Margin" Value="0,0,0,6"/>
         </Style>
 
         <Style x:Key="HintTextStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource HintBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource HintBrush}"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
@@ -236,8 +228,8 @@
                             <Border x:Name="Border"
                                     Width="40" Height="22"
                                     CornerRadius="11"
-                                    Background="#E0E0E0"
-                                    BorderBrush="#D0D0D0"
+                                    Background="{DynamicResource DividerBrush}"
+                                    BorderBrush="{DynamicResource DividerBrush}"
                                     BorderThickness="1">
                                 <Ellipse x:Name="Dot"
                                          Width="16" Height="16"
@@ -292,7 +284,7 @@
         <!-- Modal Overlay -->
         <Border Background="#66000000">
             <!-- Main Settings Window -->
-            <Border Width="750" Height="500" Background="{StaticResource AppBackground}" CornerRadius="12" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <Border Width="750" Height="500" Background="{DynamicResource AppBackground}" CornerRadius="12" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Border.Effect>
                     <DropShadowEffect Color="#000000" Opacity="0.15" BlurRadius="25" ShadowDepth="0"/>
                 </Border.Effect>
@@ -304,7 +296,7 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Left Sidebar -->
-                    <Border Background="{StaticResource SidebarBackground}" CornerRadius="12,0,0,12" BorderBrush="{StaticResource DividerColor}" BorderThickness="0,0,1,0">
+                    <Border Background="{DynamicResource SidebarBackground}" CornerRadius="12,0,0,12" BorderBrush="{DynamicResource DividerColor}" BorderThickness="0,0,1,0">
                         <StackPanel Margin="15,25">
                             <!-- Tab Buttons -->
                             <Button Command="{Binding SelectSettingsTabCommand}" CommandParameter="0">
@@ -408,7 +400,7 @@
 
                         <!-- Header with Close Button -->
                         <Grid Grid.Row="0" Margin="0,0,0,20">
-                            <TextBlock Text="{Binding SelectedSettingsTabName}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding SelectedSettingsTabName}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
                             <Button Command="{Binding SaveSettingsCommand}" 
                                     Content="✕" FontSize="18" Foreground="#999"
                                     HorizontalAlignment="Right" VerticalAlignment="Top"
@@ -515,7 +507,7 @@
                                         <TextBlock Text="软件隐藏后，自动将焦点还给上一个活动的窗口 (如浏览器输入框)，然后发送内容。"
                                                    Style="{StaticResource HintTextStyle}" Margin="20,0,0,12"/>
 
-                                        <Border Height="1" Background="{StaticResource DividerColor}" Margin="0,4,0,12"/>
+                                        <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,4,0,12"/>
 
                                         <RadioButton GroupName="InputMode"
                                                      IsChecked="{Binding LocalConfig.Mode, Converter={models:EnumToBoolConverter}, ConverterParameter=CoordinateClick}"
@@ -601,8 +593,8 @@
                                                        VerticalAlignment="Center"
                                                        Margin="0,0,10,0"
                                                        Style="{StaticResource HintTextStyle}"/>
-                                             <Button Content="测试连接" Click="TestAiConnection_Click" Style="{StaticResource TextLinkButtonStyle}" Foreground="{StaticResource TextSecondary}" Margin="0,0,14,0"/>
-                                             <Button Content="保存模型" Command="{Binding AddAiModelCommand}" Style="{StaticResource TextLinkButtonStyle}" Foreground="{StaticResource TextSecondary}"/>
+                                             <Button Content="测试连接" Click="TestAiConnection_Click" Style="{StaticResource TextLinkButtonStyle}" Foreground="{DynamicResource TextSecondary}" Margin="0,0,14,0"/>
+                                             <Button Content="保存模型" Command="{Binding AddAiModelCommand}" Style="{StaticResource TextLinkButtonStyle}" Foreground="{DynamicResource TextSecondary}"/>
                                         </StackPanel>
                                     </StackPanel>
 
@@ -627,8 +619,8 @@
                                                     <Setter.Value>
                                                         <ControlTemplate TargetType="ListBoxItem">
                                                             <Border x:Name="Chip"
-                                                                    Background="#FAFAFA"
-                                                                    BorderBrush="#E0E0E0"
+                                                                    Background="{DynamicResource ShellBackground}"
+                                                                    BorderBrush="{DynamicResource DividerBrush}"
                                                                     BorderThickness="1"
                                                                     CornerRadius="6"
                                                                     Padding="12,10"
@@ -640,10 +632,10 @@
                                                                         <ColumnDefinition Width="Auto"/>
                                                                         <ColumnDefinition Width="*"/>
                                                                     </Grid.ColumnDefinitions>
-                                                                    <Border Width="16" Height="16" CornerRadius="8" BorderThickness="1" BorderBrush="{StaticResource DividerColor}" Margin="0,0,10,0" VerticalAlignment="Center">
+                                                                    <Border Width="16" Height="16" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource DividerColor}" Margin="0,0,10,0" VerticalAlignment="Center">
                                                                          <Path x:Name="CheckMark" Data="M2,5 L5,8 L10,2" Stroke="{StaticResource AccentColor}" StrokeThickness="2" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                                     </Border>
-                                                                     <TextBlock Grid.Column="1" Text="{Binding ModelName}" FontSize="14" Foreground="{StaticResource TextSecondary}" TextTrimming="CharacterEllipsis"/>
+                                                                     <TextBlock Grid.Column="1" Text="{Binding ModelName}" FontSize="14" Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis"/>
                                                                 </Grid>
                                                                 
                                                                 <Border.ContextMenu>
@@ -655,10 +647,10 @@
                                                             <ControlTemplate.Triggers>
                                                                  <Trigger Property="IsSelected" Value="True">
                                                                       <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
-                                                                      <Setter TargetName="Chip" Property="Background" Value="#E0E0E0"/>
+                                                                      <Setter TargetName="Chip" Property="Background" Value="{DynamicResource ListItemSelectedBackgroundBrush}"/>
                                                                   </Trigger>
                                                                  <Trigger Property="IsMouseOver" Value="True">
-                                                                     <Setter TargetName="Chip" Property="Background" Value="#EAEAEA"/>
+                                                                     <Setter TargetName="Chip" Property="Background" Value="{DynamicResource ListItemHoverBackgroundBrush}"/>
                                                                  </Trigger>
                                                             </ControlTemplate.Triggers>
                                                         </ControlTemplate>
@@ -702,7 +694,7 @@
                                                          Loaded="WebDavPasswordBox_Loaded"/>
                                         </StackPanel>
 
-                                        <Border Height="1" Background="{StaticResource DividerColor}" Margin="0,6,0,14"/>
+                                        <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,6,0,14"/>
 
                                         <Button Content="从云端强制恢复数据"
                                                 Command="{Binding ShowRestoreConfirmCommand}"
@@ -741,7 +733,7 @@
                                                     <Button Content="取消"
                                                             Command="{Binding CancelRestoreConfirmCommand}"
                                                             Style="{StaticResource TextLinkButtonStyle}"
-                                                            Foreground="{StaticResource TextSecondary}"
+                                                            Foreground="{DynamicResource TextSecondary}"
                                                             Margin="14,0,0,0"/>
                                                     <Button Content="确认覆盖"
                                                             Command="{Binding ManualRestoreCommand}"
@@ -764,8 +756,8 @@
                                             </TextBlock.Style>
                                         </TextBlock>
 
-                                        <Border Background="#FFFFFF"
-                                                BorderBrush="{StaticResource DividerColor}"
+                                        <Border Background="{DynamicResource CardBackground}"
+                                                BorderBrush="{DynamicResource DividerColor}"
                                                 BorderThickness="1"
                                                 CornerRadius="6"
                                                 Padding="10,8"
@@ -807,7 +799,7 @@
                                     <StackPanel Margin="0,0,0,14">
                                         <CheckBox IsChecked="{Binding LocalConfig.MiniWindowUseAi}" Cursor="Hand">
                                             <CheckBox.Content>
-                                                <TextBlock Text="极简窗口默认使用 AI 查询" FontSize="14" Foreground="{StaticResource TextPrimary}" Margin="5,-1,0,0"/>
+                                                <TextBlock Text="极简窗口默认使用 AI 查询" FontSize="14" Foreground="{DynamicResource TextPrimary}" Margin="5,-1,0,0"/>
                                             </CheckBox.Content>
                                         </CheckBox>
                                         <TextBlock Text="勾选后，无需使用 &quot;ai&quot; 前缀，直接输入即可"
@@ -815,7 +807,7 @@
                                                    Margin="24,6,0,0"/>
                                     </StackPanel>
 
-                                    <Border Height="1" Background="{StaticResource DividerColor}" Margin="0,4,0,14"/>
+                                    <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,4,0,14"/>
 
                                     <StackPanel Margin="0,0,0,14">
                                         <TextBlock Text="回车键 (Enter) 行为" Style="{StaticResource FieldLabelTextStyle}"/>

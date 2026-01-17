@@ -49,6 +49,14 @@
             <SolidColorBrush x:Key="ListItemHoverBackgroundBrush" Color="#EAEAEA"/>
             <SolidColorBrush x:Key="ListItemSelectedBackgroundBrush" Color="#E0E0E0"/>
 
+            <SolidColorBrush x:Key="AppBackground" Color="#F1F1EF"/>
+            <SolidColorBrush x:Key="SidebarBackground" Color="#F7F7F7"/>
+            <SolidColorBrush x:Key="CardBackground" Color="#FFFFFF"/>
+            <SolidColorBrush x:Key="TextPrimary" Color="#333333"/>
+            <SolidColorBrush x:Key="TextSecondary" Color="#666666"/>
+            <SolidColorBrush x:Key="DividerColor" Color="#E5E5E5"/>
+            <SolidColorBrush x:Key="HintBrush" Color="#999999"/>
+
             <Style x:Key="MiniTextBoxStyle" TargetType="TextBox">
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="Foreground" Value="{StaticResource MiniTextBrush}"/>

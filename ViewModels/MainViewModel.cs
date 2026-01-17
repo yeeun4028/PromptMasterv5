@@ -185,51 +185,72 @@ namespace PromptMasterv5.ViewModels
             static System.Windows.Media.Color ParseColor(string value) =>
                 (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(value);
 
+            static void SetBrush(ResourceDictionary resources, string key, string color)
+            {
+                resources[key] = new System.Windows.Media.SolidColorBrush(ParseColor(color));
+            }
+
             if (theme == ThemeType.Dark)
             {
-                resources["ShellBackground"] = new System.Windows.Media.SolidColorBrush(ParseColor("#2E3033"));
-                resources["Block1Background"] = new System.Windows.Media.SolidColorBrush(ParseColor("#2E3033"));
-                resources["Block2Background"] = new System.Windows.Media.SolidColorBrush(ParseColor("#2E3033"));
-                resources["Block3Background"] = new System.Windows.Media.SolidColorBrush(ParseColor("#363B40"));
-                resources["Block4Background"] = new System.Windows.Media.SolidColorBrush(ParseColor("#363B40"));
+                SetBrush(resources, "ShellBackground", "#2E3033");
+                SetBrush(resources, "Block1Background", "#2E3033");
+                SetBrush(resources, "Block2Background", "#2E3033");
+                SetBrush(resources, "Block3Background", "#363B40");
+                SetBrush(resources, "Block4Background", "#363B40");
 
-                resources["PrimaryTextBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#E6E8EA"));
-                resources["SecondaryTextBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#B0B4B8"));
-                resources["PlaceholderTextBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#8A8F96"));
+                SetBrush(resources, "PrimaryTextBrush", "#E6E8EA");
+                SetBrush(resources, "SecondaryTextBrush", "#B0B4B8");
+                SetBrush(resources, "PlaceholderTextBrush", "#8A8F96");
 
-                resources["DividerBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#4A4F55"));
+                SetBrush(resources, "DividerBrush", "#4A4F55");
 
-                resources["ActionIconBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#B0B4B8"));
-                resources["ActionIconHoverBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#FFFFFF"));
-                resources["HeaderIconBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#B0B4B8"));
-                resources["HeaderIconHoverBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#FFFFFF"));
+                SetBrush(resources, "ActionIconBrush", "#B0B4B8");
+                SetBrush(resources, "ActionIconHoverBrush", "#FFFFFF");
+                SetBrush(resources, "HeaderIconBrush", "#B0B4B8");
+                SetBrush(resources, "HeaderIconHoverBrush", "#FFFFFF");
 
-                resources["InputFocusBackgroundBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#2E3033"));
-                resources["ListItemHoverBackgroundBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#3A3F45"));
-                resources["ListItemSelectedBackgroundBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#444A52"));
+                SetBrush(resources, "InputFocusBackgroundBrush", "#2E3033");
+                SetBrush(resources, "ListItemHoverBackgroundBrush", "#3A3F45");
+                SetBrush(resources, "ListItemSelectedBackgroundBrush", "#444A52");
+
+                SetBrush(resources, "AppBackground", "#2E3033");
+                SetBrush(resources, "SidebarBackground", "#363B40");
+                SetBrush(resources, "CardBackground", "#2E3033");
+                SetBrush(resources, "TextPrimary", "#E6E8EA");
+                SetBrush(resources, "TextSecondary", "#B0B4B8");
+                SetBrush(resources, "DividerColor", "#4A4F55");
+                SetBrush(resources, "HintBrush", "#8A8F96");
             }
             else
             {
-                resources["ShellBackground"] = new System.Windows.Media.SolidColorBrush(ParseColor("#FAFAFA"));
-                resources["Block1Background"] = new System.Windows.Media.SolidColorBrush(ParseColor("#F1F1EF"));
-                resources["Block2Background"] = new System.Windows.Media.SolidColorBrush(ParseColor("#F1F1EF"));
-                resources["Block3Background"] = new System.Windows.Media.SolidColorBrush(ParseColor("#FAFAFA"));
-                resources["Block4Background"] = new System.Windows.Media.SolidColorBrush(ParseColor("#FAFAFA"));
+                SetBrush(resources, "ShellBackground", "#FAFAFA");
+                SetBrush(resources, "Block1Background", "#F1F1EF");
+                SetBrush(resources, "Block2Background", "#F1F1EF");
+                SetBrush(resources, "Block3Background", "#FAFAFA");
+                SetBrush(resources, "Block4Background", "#FAFAFA");
 
-                resources["PrimaryTextBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#333333"));
-                resources["SecondaryTextBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#666666"));
-                resources["PlaceholderTextBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#999999"));
+                SetBrush(resources, "PrimaryTextBrush", "#333333");
+                SetBrush(resources, "SecondaryTextBrush", "#666666");
+                SetBrush(resources, "PlaceholderTextBrush", "#999999");
 
-                resources["DividerBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#E0E0E0"));
+                SetBrush(resources, "DividerBrush", "#E0E0E0");
 
-                resources["ActionIconBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#898888"));
-                resources["ActionIconHoverBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#000000"));
-                resources["HeaderIconBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#666666"));
-                resources["HeaderIconHoverBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#333333"));
+                SetBrush(resources, "ActionIconBrush", "#898888");
+                SetBrush(resources, "ActionIconHoverBrush", "#000000");
+                SetBrush(resources, "HeaderIconBrush", "#666666");
+                SetBrush(resources, "HeaderIconHoverBrush", "#333333");
 
-                resources["InputFocusBackgroundBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#FFFFFF"));
-                resources["ListItemHoverBackgroundBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#EAEAEA"));
-                resources["ListItemSelectedBackgroundBrush"] = new System.Windows.Media.SolidColorBrush(ParseColor("#E0E0E0"));
+                SetBrush(resources, "InputFocusBackgroundBrush", "#FFFFFF");
+                SetBrush(resources, "ListItemHoverBackgroundBrush", "#EAEAEA");
+                SetBrush(resources, "ListItemSelectedBackgroundBrush", "#E0E0E0");
+
+                SetBrush(resources, "AppBackground", "#F1F1EF");
+                SetBrush(resources, "SidebarBackground", "#F7F7F7");
+                SetBrush(resources, "CardBackground", "#FFFFFF");
+                SetBrush(resources, "TextPrimary", "#333333");
+                SetBrush(resources, "TextSecondary", "#666666");
+                SetBrush(resources, "DividerColor", "#E5E5E5");
+                SetBrush(resources, "HintBrush", "#999999");
             }
         }
 

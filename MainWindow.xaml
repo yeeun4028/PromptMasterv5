@@ -760,7 +760,7 @@
                                                             <Style TargetType="Path">
                                                                 <Setter Property="Stroke" Value="{DynamicResource HeaderIconBrush}"/>
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding DataContext.LocalConfig.Theme, RelativeSource={RelativeSource AncestorType=Window}}" Value="Dark">
+                                                                    <DataTrigger Binding="{Binding DataContext.LocalConfig.Theme, RelativeSource={RelativeSource AncestorType=Window}}" Value="{x:Static models:ThemeType.Dark}">
                                                                         <Setter Property="Data" Value="{StaticResource IconSunThin}"/>
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Button}}" Value="True">
