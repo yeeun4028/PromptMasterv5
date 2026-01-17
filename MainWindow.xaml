@@ -23,7 +23,7 @@
         Deactivated="Window_Deactivated">
 
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="0" ResizeBorderThickness="8" GlassFrameThickness="0" CornerRadius="0"/>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="0" GlassFrameThickness="0" CornerRadius="0"/>
     </WindowChrome.WindowChrome>
 
     <!-- (Window.Resources 保持不变) ... -->
@@ -311,6 +311,21 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="MiniResizeThumbStyle" TargetType="Thumb">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="Transparent"
+                                BorderThickness="0"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -320,7 +335,7 @@
 
             <Border Margin="10"
                     Background="#363B40"
-                    BorderBrush="#656565"
+                    BorderBrush="#393A3E"
                     BorderThickness="1"
                     CornerRadius="8"
                     Effect="{StaticResource EffectShadow2}"
@@ -331,6 +346,84 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
+
+                    <Thumb Width="6"
+                           Grid.RowSpan="3"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Stretch"
+                           Style="{StaticResource MiniResizeThumbStyle}"
+                           Cursor="SizeWE"
+                           Tag="Left"
+                           DragDelta="MiniResizeThumb_DragDelta"
+                           Panel.ZIndex="10"/>
+                    <Thumb Width="6"
+                           Grid.RowSpan="3"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Stretch"
+                           Style="{StaticResource MiniResizeThumbStyle}"
+                           Cursor="SizeWE"
+                           Tag="Right"
+                           DragDelta="MiniResizeThumb_DragDelta"
+                           Panel.ZIndex="10"/>
+                    <Thumb Height="6"
+                           Grid.RowSpan="3"
+                           HorizontalAlignment="Stretch"
+                           VerticalAlignment="Top"
+                           Style="{StaticResource MiniResizeThumbStyle}"
+                           Cursor="SizeNS"
+                           Tag="Top"
+                           DragDelta="MiniResizeThumb_DragDelta"
+                           Panel.ZIndex="10"/>
+                    <Thumb Height="6"
+                           Grid.RowSpan="3"
+                           HorizontalAlignment="Stretch"
+                           VerticalAlignment="Bottom"
+                           Style="{StaticResource MiniResizeThumbStyle}"
+                           Cursor="SizeNS"
+                           Tag="Bottom"
+                           DragDelta="MiniResizeThumb_DragDelta"
+                           Panel.ZIndex="10"/>
+
+                    <Thumb Width="12"
+                           Height="12"
+                           Grid.RowSpan="3"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Top"
+                           Style="{StaticResource MiniResizeThumbStyle}"
+                           Cursor="SizeNWSE"
+                           Tag="TopLeft"
+                           DragDelta="MiniResizeThumb_DragDelta"
+                           Panel.ZIndex="10"/>
+                    <Thumb Width="12"
+                           Height="12"
+                           Grid.RowSpan="3"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Top"
+                           Style="{StaticResource MiniResizeThumbStyle}"
+                           Cursor="SizeNESW"
+                           Tag="TopRight"
+                           DragDelta="MiniResizeThumb_DragDelta"
+                           Panel.ZIndex="10"/>
+                    <Thumb Width="12"
+                           Height="12"
+                           Grid.RowSpan="3"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Bottom"
+                           Style="{StaticResource MiniResizeThumbStyle}"
+                           Cursor="SizeNESW"
+                           Tag="BottomLeft"
+                           DragDelta="MiniResizeThumb_DragDelta"
+                           Panel.ZIndex="10"/>
+                    <Thumb Width="12"
+                           Height="12"
+                           Grid.RowSpan="3"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Bottom"
+                           Style="{StaticResource MiniResizeThumbStyle}"
+                           Cursor="SizeNWSE"
+                           Tag="BottomRight"
+                           DragDelta="MiniResizeThumb_DragDelta"
+                           Panel.ZIndex="10"/>
 
                     <Grid Grid.Row="0"
                           Background="Transparent"

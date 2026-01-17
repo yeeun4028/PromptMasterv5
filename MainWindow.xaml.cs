@@ -14,6 +14,7 @@ using PromptMasterv5.Services;
 using System.Windows.Forms;
 using System.Windows.Threading;
 using System.Linq; // 新增引用，用于查询子窗口状态
+using System.Windows.Controls.Primitives;
 
 // 引用自定义枚举和控件别名，解决命名冲突
 using InputMode = PromptMasterv5.Models.InputMode;
@@ -333,7 +334,7 @@ namespace PromptMasterv5
                 this.Left = cfg.MiniWindowLeft;
                 this.Top = cfg.MiniWindowTop;
 
-                this.ResizeMode = ResizeMode.CanResize;
+                this.ResizeMode = ResizeMode.NoResize;
 
                 // 切换模式时，确保重置Topmost并激活
                 this.Topmost = true;
@@ -487,6 +488,76 @@ namespace PromptMasterv5
 
         private void MiniWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { if (e.ButtonState == MouseButtonState.Pressed) this.DragMove(); }
         private void FullWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { if (e.ButtonState == MouseButtonState.Pressed) this.DragMove(); }
+
+        private void MiniResizeThumb_DragDelta(object sender, DragDeltaEventArgs e)
+        {
+            if (ViewModel == null) return;
+            if (ViewModel.IsFullMode) return;
+            if (WindowState != WindowState.Normal) return;
+            if (sender is not FrameworkElement fe) return;
+            if (fe.Tag is not string tag) return;
+
+            const double minWidth = 260;
+            const double minHeight = 90;
+
+            double newLeft = Left;
+            double newTop = Top;
+            double newWidth = Width;
+            double newHeight = Height;
+
+            bool resizeLeft = tag.Contains("Left", StringComparison.OrdinalIgnoreCase) && !tag.Equals("Top", StringComparison.OrdinalIgnoreCase) && !tag.Equals("Bottom", StringComparison.OrdinalIgnoreCase);
+            bool resizeRight = tag.Contains("Right", StringComparison.OrdinalIgnoreCase);
+            bool resizeTop = tag.Contains("Top", StringComparison.OrdinalIgnoreCase);
+            bool resizeBottom = tag.Contains("Bottom", StringComparison.OrdinalIgnoreCase) && !tag.Equals("Top", StringComparison.OrdinalIgnoreCase);
+
+            if (tag == "Left") { resizeLeft = true; resizeTop = false; resizeBottom = false; resizeRight = false; }
+            if (tag == "Right") { resizeRight = true; resizeTop = false; resizeBottom = false; resizeLeft = false; }
+            if (tag == "Top") { resizeTop = true; resizeLeft = false; resizeRight = false; resizeBottom = false; }
+            if (tag == "Bottom") { resizeBottom = true; resizeLeft = false; resizeRight = false; resizeTop = false; }
+
+            if (resizeLeft)
+            {
+                double proposedWidth = newWidth - e.HorizontalChange;
+                if (proposedWidth >= minWidth)
+                {
+                    newWidth = proposedWidth;
+                    newLeft += e.HorizontalChange;
+                }
+                else
+                {
+                    newLeft += newWidth - minWidth;
+                    newWidth = minWidth;
+                }
+            }
+            else if (resizeRight)
+            {
+                newWidth = Math.Max(minWidth, newWidth + e.HorizontalChange);
+            }
+
+            if (resizeTop)
+            {
+                double proposedHeight = newHeight - e.VerticalChange;
+                if (proposedHeight >= minHeight)
+                {
+                    newHeight = proposedHeight;
+                    newTop += e.VerticalChange;
+                }
+                else
+                {
+                    newTop += newHeight - minHeight;
+                    newHeight = minHeight;
+                }
+            }
+            else if (resizeBottom)
+            {
+                newHeight = Math.Max(minHeight, newHeight + e.VerticalChange);
+            }
+
+            Left = newLeft;
+            Top = newTop;
+            Width = newWidth;
+            Height = newHeight;
+        }
 
         private async void MiniInput_PreviewKeyDown(object sender, KeyEventArgs e)
         {
