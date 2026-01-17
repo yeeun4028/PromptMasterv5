@@ -68,6 +68,7 @@ namespace PromptMasterv5.Models
         public double MiniDefaultBottom { get; set; } = 600;
 
         public double MiniDefaultWidth { get; set; } = 500;
+        public double MiniDefaultHeight { get; set; } = 0;
         public double MiniExpandedWidth { get; set; } = 800;
 
         public string MiniPinnedPromptId { get; set; } = "";

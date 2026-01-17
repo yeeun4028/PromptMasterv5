@@ -79,19 +79,33 @@ namespace PromptMasterv5
             return w;
         }
 
+        private double GetMiniDefaultHeight()
+        {
+            if (ViewModel == null) return 160;
+            var h = ViewModel.LocalConfig.MiniDefaultHeight;
+            if (h <= 0) h = ViewModel.LocalConfig.MiniWindowHeight;
+            if (h <= 0) h = 160;
+            if (h < 90) h = 90;
+            return h;
+        }
+
         private string GetMiniUserInputText()
         {
             if (MiniInputBox?.Document == null) return "";
-            var paragraphs = MiniInputBox.Document.Blocks.OfType<Paragraph>().ToList();
-            if (paragraphs.Count == 0) return "";
-
-            var selected = GetMiniSelectedPrompt();
-            var startIndex = (selected != null && paragraphs.Count >= 2) ? 1 : 0;
-
             var sb = new StringBuilder();
-            for (int i = startIndex; i < paragraphs.Count; i++)
+            var hasChip = GetMiniSelectedPrompt() != null && MiniInputBox.Document.Blocks.FirstBlock is BlockUIContainer;
+            var isFirst = true;
+
+            foreach (var block in MiniInputBox.Document.Blocks)
             {
-                var p = paragraphs[i];
+                if (isFirst && hasChip)
+                {
+                    isFirst = false;
+                    continue;
+                }
+                isFirst = false;
+
+                if (block is not Paragraph p) continue;
                 var segment = new TextRange(p.ContentStart, p.ContentEnd).Text ?? "";
                 segment = segment.TrimEnd('\r', '\n');
 
@@ -139,9 +153,9 @@ namespace PromptMasterv5
                 var selected = GetMiniSelectedPrompt();
                 if (selected != null)
                 {
-                    var chipParagraph = new Paragraph { Margin = new Thickness(0, 2, 0, 3) };
                     var showIcons = ViewModel.LocalConfig.MiniPinnedPromptShowIcons && !string.IsNullOrWhiteSpace(selected.IconGeometry);
 
+                    Border chipBorder;
                     if (showIcons)
                     {
                         Geometry? geometry = null;
@@ -158,60 +172,72 @@ namespace PromptMasterv5
                                 Fill = TryFindResource("MiniModeBtnActiveBrush") as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.White,
                                 VerticalAlignment = VerticalAlignment.Center
                             };
-                            var border = new Border
+                            chipBorder = new Border
                             {
                                 Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x33, 0x33, 0x33)),
                                 BorderBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x65, 0x65, 0x65)),
                                 BorderThickness = new Thickness(1),
                                 CornerRadius = new CornerRadius(3),
-                                Padding = new Thickness(1.5)
+                                Padding = new Thickness(1),
+                                HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+                                SnapsToDevicePixels = true
                             };
-                            border.Child = path;
-                            chipParagraph.Inlines.Add(new InlineUIContainer(border) { BaselineAlignment = BaselineAlignment.Center });
+                            chipBorder.Child = path;
                         }
                         else
                         {
-                            var border = new Border
+                            chipBorder = new Border
                             {
                                 Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x33, 0x33, 0x33)),
                                 BorderBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x65, 0x65, 0x65)),
                                 BorderThickness = new Thickness(1),
                                 CornerRadius = new CornerRadius(3),
-                                Padding = new Thickness(1.5)
+                                Padding = new Thickness(1),
+                                HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+                                SnapsToDevicePixels = true
                             };
-                            border.Child = new TextBlock
+                            chipBorder.Child = new TextBlock
                             {
                                 Text = selected.Title ?? "",
                                 Foreground = TryFindResource("MiniModeBtnActiveBrush") as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.White,
                                 FontFamily = new System.Windows.Media.FontFamily("Segoe UI, Microsoft YaHei UI, Microsoft YaHei"),
-                                FontSize = 14,
-                                FontWeight = FontWeights.Normal
+                                FontSize = 10,
+                                FontWeight = FontWeights.Normal,
+                                LineHeight = double.NaN,
+                                LineStackingStrategy = LineStackingStrategy.MaxHeight
                             };
-                            chipParagraph.Inlines.Add(new InlineUIContainer(border) { BaselineAlignment = BaselineAlignment.Center });
                         }
                     }
                     else
                     {
-                        var border = new Border
+                        chipBorder = new Border
                         {
                             Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x33, 0x33, 0x33)),
                             BorderBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x65, 0x65, 0x65)),
                             BorderThickness = new Thickness(1),
                             CornerRadius = new CornerRadius(3),
-                            Padding = new Thickness(1.5)
+                            Padding = new Thickness(1),
+                            HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+                            SnapsToDevicePixels = true
                         };
-                        border.Child = new TextBlock
+                        chipBorder.Child = new TextBlock
                         {
                             Text = selected.Title ?? "",
                             Foreground = TryFindResource("MiniModeBtnActiveBrush") as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.White,
                             FontFamily = new System.Windows.Media.FontFamily("Segoe UI, Microsoft YaHei UI, Microsoft YaHei"),
-                            FontSize = 14,
-                            FontWeight = FontWeights.Normal
+                            FontSize = 10,
+                            FontWeight = FontWeights.Normal,
+                            LineHeight = double.NaN,
+                            LineStackingStrategy = LineStackingStrategy.MaxHeight
                         };
-                        chipParagraph.Inlines.Add(new InlineUIContainer(border) { BaselineAlignment = BaselineAlignment.Center });
                     }
 
-                    doc.Blocks.Add(chipParagraph);
+                    var chipBlock = new BlockUIContainer
+                    {
+                        Child = chipBorder,
+                        Margin = new Thickness(0, 0, 0, 3)
+                    };
+                    doc.Blocks.Add(chipBlock);
                 }
 
                 Paragraph? firstUserParagraph = null;
@@ -570,6 +596,10 @@ namespace PromptMasterv5
             if (ViewModel.IsFullMode) return;
             if (_miniDefaultHeight <= 0)
             {
+                _miniDefaultHeight = GetMiniDefaultHeight();
+            }
+            if (_miniDefaultHeight <= 0)
+            {
                 EnsureMiniDefaultSizeMeasured();
                 return;
             }
@@ -610,6 +640,8 @@ namespace PromptMasterv5
 
                 var cfg = ViewModel.LocalConfig;
                 this.Width = GetMiniDefaultWidth();
+                this.Height = GetMiniDefaultHeight();
+                _miniDefaultHeight = this.Height;
                 if (cfg.MiniUseDefaultPosition)
                 {
                     this.Left = cfg.MiniDefaultLeft;
@@ -621,8 +653,9 @@ namespace PromptMasterv5
                     this.Left = cfg.MiniWindowLeft;
                     this.Top = cfg.MiniWindowTop;
                 }
-                if (this.Height < 160) this.Height = 160;
+                if (this.Height < 90) this.Height = 90;
                 if (cfg.MiniUseDefaultPosition && _miniBottomAnchor.HasValue) this.Top = _miniBottomAnchor.Value - this.Height;
+                _miniBottomAnchor ??= Top + Height;
 
                 this.ResizeMode = ResizeMode.NoResize;
 
@@ -634,19 +667,30 @@ namespace PromptMasterv5
 
                 EnsureMiniDefaultSizeMeasured();
                 RebuildMiniInputDocument(ViewModel.MiniInputText ?? "", focusUserInput: true);
+                ApplyMiniScrollBarAppearance(isOverflow: false);
             }
         }
 
         private void EnsureMiniDefaultSizeMeasured()
         {
+            if (ViewModel == null) return;
+            if (ViewModel.IsFullMode) return;
+
+            var cfg = ViewModel.LocalConfig;
+            if (cfg.MiniDefaultHeight > 0)
+            {
+                _miniDefaultHeight = GetMiniDefaultHeight();
+                return;
+            }
+
             _ = Dispatcher.BeginInvoke(new Action(() =>
             {
+                if (ViewModel == null) return;
                 if (ViewModel.IsFullMode) return;
                 if (MiniInputBox == null) return;
 
                 var lineHeightObj = MiniInputBox.GetValue(TextBlock.LineHeightProperty);
                 _miniLineHeight = lineHeightObj is double lh && lh > 0 ? lh : 25.6;
-                var padding = MiniInputBox.Padding;
 
                 var modeBarHeight = MiniModeBar?.ActualHeight ?? 0;
                 if (modeBarHeight < 12) modeBarHeight = 12;
@@ -654,18 +698,8 @@ namespace PromptMasterv5
                 var overhead = ActualHeight - MiniInputBox.ActualHeight - modeBarHeight;
                 if (overhead < 40) overhead = 40;
 
-                _miniDefaultHeight = overhead + modeBarHeight + (_miniLineHeight + padding.Top + padding.Bottom);
-                if (_miniDefaultHeight < 70) _miniDefaultHeight = 70;
-
-                var cfg = ViewModel.LocalConfig;
-                var bottom = _miniBottomAnchor ?? (Top + Height);
-                if (cfg.MiniUseDefaultPosition && cfg.MiniDefaultBottom > 0) bottom = cfg.MiniDefaultBottom;
-
-                Height = _miniDefaultHeight;
-                Width = GetMiniDefaultWidth();
-                Top = bottom - Height;
-                _miniBottomAnchor = bottom;
-                ApplyMiniScrollBarAppearance(isOverflow: false);
+                _miniDefaultHeight = overhead + modeBarHeight + _miniLineHeight;
+                if (_miniDefaultHeight < 90) _miniDefaultHeight = 90;
             }), DispatcherPriority.Loaded);
         }
 
@@ -954,6 +988,42 @@ namespace PromptMasterv5
 
             if (e.Key == Key.Enter && (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
             {
+                var paragraph = box.CaretPosition?.Paragraph;
+                if (paragraph != null)
+                {
+                    var selected = GetMiniSelectedPrompt();
+                    var chipParagraph = selected != null ? box.Document?.Blocks.FirstBlock as Paragraph : null;
+                    var inChip = chipParagraph != null && ReferenceEquals(paragraph, chipParagraph);
+
+                    if (!inChip)
+                    {
+                        var full = new TextRange(paragraph.ContentStart, paragraph.ContentEnd).Text ?? "";
+                        full = full.TrimEnd('\r', '\n');
+                        var m = Regex.Match(full, @"^\s*(\d+)\.\s");
+                        if (m.Success && int.TryParse(m.Groups[1].Value, out var n))
+                        {
+                            e.Handled = true;
+                            EditingCommands.EnterParagraphBreak.Execute(null, box);
+                            var prefix = $"{n + 1}. ";
+                            var newParagraph = box.CaretPosition?.Paragraph;
+                            if (newParagraph != null)
+                            {
+                                var run = new Run(prefix);
+                                var firstInline = newParagraph.Inlines.FirstInline;
+                                if (firstInline != null)
+                                {
+                                    newParagraph.Inlines.InsertBefore(firstInline, run);
+                                }
+                                else
+                                {
+                                    newParagraph.Inlines.Add(run);
+                                }
+                                box.CaretPosition = run.ContentEnd;
+                            }
+                            return;
+                        }
+                    }
+                }
                 return;
             }
 
@@ -967,19 +1037,16 @@ namespace PromptMasterv5
                     var caret = box.CaretPosition.GetInsertionPosition(LogicalDirection.Forward);
                     var docStart = box.Document.ContentStart.GetInsertionPosition(LogicalDirection.Forward);
 
-                    var paragraphs = box.Document.Blocks.OfType<Paragraph>().ToList();
-                    var chipPara = paragraphs.Count > 1 ? paragraphs.First() : null;
-                    var userParas = paragraphs.Skip(chipPara != null ? 1 : 0).ToList();
-                    var firstUserPara = userParas.FirstOrDefault();
+                    var hasChip = box.Document.Blocks.FirstBlock is BlockUIContainer;
+                    var firstUserPara = box.Document.Blocks.OfType<Paragraph>().FirstOrDefault();
 
                     var atDocStart = caret != null && docStart != null && caret.CompareTo(docStart) == 0;
                     var atUserStart = firstUserPara != null && caret != null && caret.CompareTo(firstUserPara.ContentStart) == 0;
-                    var inChipLine = chipPara != null && caret != null && caret.CompareTo(chipPara.ContentStart) >= 0 && caret.CompareTo(chipPara.ContentEnd) <= 0;
 
                     var shouldRemoveChip =
-                        inChipLine ||
-                        (e.Key == Key.Delete && atDocStart) ||
-                        (e.Key == Key.Back && atUserStart);
+                        hasChip &&
+                        ((e.Key == Key.Delete && atDocStart) ||
+                         (e.Key == Key.Back && atUserStart));
 
                     if (shouldRemoveChip)
                     {
@@ -1095,31 +1162,6 @@ namespace PromptMasterv5
                 ViewModel.EnterFullModeCommand.Execute(null);
                 e.Handled = true;
             }
-        }
-
-        private void MiniInput_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        {
-            if (ViewModel == null) return;
-            if (ViewModel.IsFullMode) return;
-            if (MiniInputBox == null) return;
-            if (e.Text != " ") return;
-
-            var caret = MiniInputBox.CaretPosition;
-            var currentParagraph = caret.Paragraph;
-            if (currentParagraph == null) return;
-
-            var selected = GetMiniSelectedPrompt();
-            var isChipParagraph = selected != null && ReferenceEquals(currentParagraph, MiniInputBox.Document?.Blocks.FirstBlock);
-            if (isChipParagraph) return;
-
-            var toCaretText = new TextRange(currentParagraph.ContentStart, caret).Text ?? "";
-            toCaretText = toCaretText.Trim();
-
-            if (!Regex.IsMatch(toCaretText, @"^\d+\.$")) return;
-
-            new TextRange(currentParagraph.ContentStart, caret).Text = "";
-            EditingCommands.ToggleNumbering.Execute(null, MiniInputBox);
-            e.Handled = true;
         }
 
         private void SearchResult_Click(object sender, MouseButtonEventArgs e) => ViewModel.ConfirmSearchResultCommand.Execute(null);
@@ -1312,8 +1354,8 @@ namespace PromptMasterv5
                 if (ViewModel != null)
                 {
                     ViewModel.LocalConfig.IsMiniTopmostLocked = false;
+                    ViewModel.ExitFullModeCommand.Execute(null);
                 }
-                ViewModel.ExitFullModeCommand.Execute(null);
                 e.Handled = true;
             }
         }
