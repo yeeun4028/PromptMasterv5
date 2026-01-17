@@ -338,7 +338,8 @@
     <Grid>
         <Grid x:Name="MiniModeContainer" 
               Visibility="{Binding IsFullMode, Converter={StaticResource InverseBoolToVis}}"
-              Background="Transparent">
+              Background="Transparent"
+              PreviewMouseLeftButtonDown="MiniModeContainer_PreviewMouseLeftButtonDown">
 
             <Border Margin="10"
                     Background="#363B40"
@@ -432,15 +433,13 @@
                            Panel.ZIndex="10"/>
 
                     <Grid Grid.Row="0"
-                          Background="Transparent"
-                          Cursor="SizeAll"
-                          MouseLeftButtonDown="MiniWindow_MouseLeftButtonDown">
+                          Background="Transparent">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <Grid Grid.Column="0" VerticalAlignment="Stretch" Margin="5,5,5,2">
+                        <Grid Grid.Column="0" VerticalAlignment="Stretch">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="Auto"/>
@@ -449,6 +448,8 @@
                             <Grid>
                                 <RichTextBox x:Name="MiniInputBox"
                                              Style="{StaticResource MiniRichTextBoxStyle}"
+                                             Margin="5,5,5,2"
+                                             PreviewTextInput="MiniInput_PreviewTextInput"
                                              PreviewKeyDown="MiniInput_PreviewKeyDown"
                                              TextChanged="MiniInput_TextChanged">
                                     <RichTextBox.Resources>
@@ -510,11 +511,23 @@
                                 </Border>
                             </Popup>
 
-                            <Grid Grid.Row="1" Margin="0,1,6,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
+                            <Border Grid.Row="1"
+                                    Margin="0"
+                                    Background="Transparent">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="1"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Border Grid.Row="0"
+                                            Height="1"
+                                            Background="#656565"/>
+
+                                    <Grid Grid.Row="1" Margin="0,1,0,1">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
 
                                 <ItemsControl x:Name="MiniPinnedPromptBar"
                                               Grid.Column="0"
@@ -587,7 +600,8 @@
                                 <StackPanel x:Name="MiniModeBar"
                                             Grid.Column="1"
                                             Orientation="Horizontal"
-                                            HorizontalAlignment="Right">
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center">
                                 <Grid Width="12"
                                       Height="12"
                                       Margin="0,0,8,0"
@@ -650,7 +664,9 @@
                                     </Button.Style>
                                 </Button>
                                 </StackPanel>
-                            </Grid>
+                                    </Grid>
+                                </Grid>
+                            </Border>
                         </Grid>
                     </Grid>
 

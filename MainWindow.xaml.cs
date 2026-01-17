@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Text.RegularExpressions;
 using PromptMasterv5.ViewModels;
 using System.Text;
 using System.Windows.Media;
@@ -17,6 +16,8 @@ using System.Linq; // 新增引用，用于查询子窗口状态
 using System.Windows.Controls.Primitives;
 using System.Windows.Shapes;
 using System.Windows.Documents;
+using System.Text.RegularExpressions;
+using System.Windows.Media.Media3D;
 
 // 引用自定义枚举和控件别名，解决命名冲突
 using InputMode = PromptMasterv5.Models.InputMode;
@@ -126,6 +127,14 @@ namespace PromptMasterv5
                     LineStackingStrategy = LineStackingStrategy.BlockLineHeight,
                     Background = System.Windows.Media.Brushes.Transparent
                 };
+                var paragraphSpacing = MiniInputBox.FontSize * 0.8;
+                doc.Resources[typeof(Paragraph)] = new Style(typeof(Paragraph))
+                {
+                    Setters =
+                    {
+                        new Setter(Paragraph.MarginProperty, new Thickness(0, 0, 0, paragraphSpacing))
+                    }
+                };
 
                 var selected = GetMiniSelectedPrompt();
                 if (selected != null)
@@ -208,9 +217,11 @@ namespace PromptMasterv5
                 Paragraph? firstUserParagraph = null;
                 var normalized = (userText ?? "").Replace("\r\n", "\n").Replace("\r", "\n");
                 var lines = normalized.Split('\n');
-                foreach (var line in lines)
+                for (int i = 0; i < lines.Length; i++)
                 {
-                    var p = new Paragraph { Margin = new Thickness(0) };
+                    var line = lines[i];
+                    var isLast = i == lines.Length - 1;
+                    var p = new Paragraph { Margin = new Thickness(0, 0, 0, isLast ? 0 : paragraphSpacing) };
                     p.Inlines.Add(new Run(line));
                     doc.Blocks.Add(p);
                     firstUserParagraph ??= p;
@@ -773,6 +784,65 @@ namespace PromptMasterv5
         private void MiniWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { if (e.ButtonState == MouseButtonState.Pressed) this.DragMove(); }
         private void FullWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { if (e.ButtonState == MouseButtonState.Pressed) this.DragMove(); }
 
+        private void MiniModeContainer_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (ViewModel == null) return;
+            if (ViewModel.IsFullMode) return;
+            if (e.LeftButton != MouseButtonState.Pressed) return;
+
+            if (e.OriginalSource is not DependencyObject source) return;
+
+            if (MiniInputBox != null && IsDescendantOf(source, MiniInputBox)) return;
+            if (SearchListBox != null && IsDescendantOf(source, SearchListBox)) return;
+            if (IsDescendantOf<Button>(source)) return;
+            if (IsDescendantOf<Thumb>(source)) return;
+
+            DragMove();
+            e.Handled = true;
+        }
+
+        private static bool IsDescendantOf(DependencyObject source, DependencyObject ancestor)
+        {
+            var current = source;
+            while (current != null)
+            {
+                if (ReferenceEquals(current, ancestor)) return true;
+                current = GetParentObject(current);
+            }
+            return false;
+        }
+
+        private static bool IsDescendantOf<T>(DependencyObject source) where T : DependencyObject
+        {
+            var current = source;
+            while (current != null)
+            {
+                if (current is T) return true;
+                current = GetParentObject(current);
+            }
+            return false;
+        }
+
+        private static DependencyObject? GetParentObject(DependencyObject current)
+        {
+            if (current is Visual || current is Visual3D)
+            {
+                return VisualTreeHelper.GetParent(current);
+            }
+
+            if (current is FrameworkContentElement fce)
+            {
+                return fce.Parent;
+            }
+
+            if (current is ContentElement ce)
+            {
+                return ContentOperations.GetParent(ce) ?? (ce as FrameworkContentElement)?.Parent;
+            }
+
+            return LogicalTreeHelper.GetParent(current);
+        }
+
         private void MiniPinnedPromptItem_Click(object sender, RoutedEventArgs e)
         {
             if (ViewModel == null) return;
@@ -875,8 +945,9 @@ namespace PromptMasterv5
         {
             var box = sender as RichTextBox;
             if (box == null) return;
+            if (ViewModel == null) return;
 
-            if (ViewModel != null && !ViewModel.IsFullMode && !_isUpdatingMiniInputDocument)
+            if (!ViewModel.IsFullMode && !_isUpdatingMiniInputDocument)
             {
                 ViewModel.MiniInputText = GetMiniUserInputText();
             }
@@ -886,7 +957,7 @@ namespace PromptMasterv5
                 return;
             }
 
-            if ((e.Key == Key.Delete || e.Key == Key.Back) && ViewModel != null && !ViewModel.IsFullMode)
+            if ((e.Key == Key.Delete || e.Key == Key.Back) && !ViewModel.IsFullMode)
             {
                 var selectedId = ViewModel.LocalConfig.MiniSelectedPinnedPromptId ?? "";
                 if (!string.IsNullOrWhiteSpace(selectedId) && box.Document != null)
@@ -1024,6 +1095,31 @@ namespace PromptMasterv5
                 ViewModel.EnterFullModeCommand.Execute(null);
                 e.Handled = true;
             }
+        }
+
+        private void MiniInput_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (ViewModel == null) return;
+            if (ViewModel.IsFullMode) return;
+            if (MiniInputBox == null) return;
+            if (e.Text != " ") return;
+
+            var caret = MiniInputBox.CaretPosition;
+            var currentParagraph = caret.Paragraph;
+            if (currentParagraph == null) return;
+
+            var selected = GetMiniSelectedPrompt();
+            var isChipParagraph = selected != null && ReferenceEquals(currentParagraph, MiniInputBox.Document?.Blocks.FirstBlock);
+            if (isChipParagraph) return;
+
+            var toCaretText = new TextRange(currentParagraph.ContentStart, caret).Text ?? "";
+            toCaretText = toCaretText.Trim();
+
+            if (!Regex.IsMatch(toCaretText, @"^\d+\.$")) return;
+
+            new TextRange(currentParagraph.ContentStart, caret).Text = "";
+            EditingCommands.ToggleNumbering.Execute(null, MiniInputBox);
+            e.Handled = true;
         }
 
         private void SearchResult_Click(object sender, MouseButtonEventArgs e) => ViewModel.ConfirmSearchResultCommand.Execute(null);
