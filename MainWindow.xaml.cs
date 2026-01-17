@@ -536,14 +536,15 @@ namespace PromptMasterv5
                 if (lineIndex >= 0)
                 {
                     string lineText = textBox.GetLineText(lineIndex);
-                    var match = Regex.Match(lineText, @"^(\s*)(\d+)\.(\s+)");
+                    var match = Regex.Match(lineText, @"^(\s*)(\d+)([.)])(\s+)");
                     if (match.Success)
                     {
                         string indentation = match.Groups[1].Value;
                         int currentNumber = int.Parse(match.Groups[2].Value);
-                        string spacing = match.Groups[3].Value;
+                        string delimiter = match.Groups[3].Value;
+                        string spacing = match.Groups[4].Value;
                         int nextNumber = currentNumber + 1;
-                        string insertText = $"\n{indentation}{nextNumber}.{spacing}";
+                        string insertText = $"\n{indentation}{nextNumber}{delimiter}{spacing}";
                         textBox.SelectedText = insertText;
                         textBox.CaretIndex += insertText.Length;
                         e.Handled = true;

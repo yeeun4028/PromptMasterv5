@@ -23,7 +23,7 @@
             <DropShadowEffect x:Key="EffectShadow2" Color="#000000" Direction="270" ShadowDepth="4" BlurRadius="10" Opacity="0.4"/>
 
             <SolidColorBrush x:Key="MiniBackgroundBrush" Color="#1E1E1E"/>
-            <SolidColorBrush x:Key="MiniTextBrush" Color="#E0E0E0"/>
+            <SolidColorBrush x:Key="MiniTextBrush" Color="#DEDEDE"/>
             <SolidColorBrush x:Key="MiniSearchBackgroundBrush" Color="#252526"/>
             <SolidColorBrush x:Key="MiniHighlightBrush" Color="#3C3C3C"/>
             <SolidColorBrush x:Key="AccentBrush" Color="#4183C4"/>
@@ -61,7 +61,7 @@
                 <Setter Property="Background" Value="#363B40"/>
                 <Setter Property="Foreground" Value="{StaticResource MiniTextBrush}"/>
                 <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="CaretBrush" Value="White"/>
+                <Setter Property="CaretBrush" Value="#DEDEDE"/>
                 <Setter Property="FontSize" Value="16"/>
                 <Setter Property="FontFamily" Value="Segoe UI, Microsoft YaHei UI"/>
 
@@ -71,7 +71,7 @@
 
                 <Setter Property="VerticalContentAlignment" Value="Top"/>
 
-                <Setter Property="Padding" Value="30"/>
+                <Setter Property="Padding" Value="6"/>
                 <Setter Property="TextBlock.LineHeight" Value="25.6"/>
                 <Setter Property="TextBlock.LineStackingStrategy" Value="BlockLineHeight"/>
                 <Setter Property="Template">
