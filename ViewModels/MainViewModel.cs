@@ -533,61 +533,56 @@ RegisterWindowHotkey("ToggleMiniWindowHotkey", Config.MiniWindowHotkey, () => To
         } 
     } 
 
-    [RelayCommand] 
-    private async Task TriggerTranslate() 
-    { 
-        // 1. 检查配置 (使用独立的翻译配置)
-        var profile = Config.ApiProfiles.FirstOrDefault(p => p.Id == Config.TranslateProfileId);
-        if (profile == null)
+    [RelayCommand]
+    private async Task TriggerTranslate()
+    {
+        // 1. 获取 OCR 配置 (专款专用：用于文字识别)
+        var ocrProfile = Config.ApiProfiles.FirstOrDefault(p => p.Id == Config.OcrProfileId);
+        if (ocrProfile == null) ocrProfile = Config.ApiProfiles.FirstOrDefault();
+
+        // 2. 获取 翻译 配置 (专款专用：用于文本翻译)
+        var transProfile = Config.ApiProfiles.FirstOrDefault(p => p.Id == Config.TranslateProfileId);
+        if (transProfile == null) transProfile = Config.ApiProfiles.FirstOrDefault();
+
+        // 3. 校验配置完整性
+        if (ocrProfile == null || transProfile == null)
         {
-            // 尝试默认使用第一个
-            profile = Config.ApiProfiles.FirstOrDefault();
-            if (profile == null)
-            {
-                MessageBox.Show("请先在设置 -> 外部工具中添加并绑定翻译配置。", "翻译未配置");
-                return;
-            }
+            MessageBox.Show("请先在设置 -> 外部工具中添加并绑定 OCR 和 翻译 的接口信息。", "配置缺失");
+            return;
         }
 
-        // 2. 截图 (优先截图，划词逻辑复杂暂且通过截图实现) 
-        var capture = new Views.CaptureWindow(); 
-        if (capture.ShowDialog() != true || capture.CapturedImageBytes == null) return; 
+        // 4. 截图
+        var capture = new Views.CaptureWindow();
+        if (capture.ShowDialog() != true || capture.CapturedImageBytes == null) return;
 
-        // 3. 显示结果弹窗 (Loading) 
-        var popup = new Views.TranslationPopup("正在识别并翻译..."); 
-        popup.Show(); 
+        // 5. 显示结果弹窗 (Loading)
+        var popup = new Views.TranslationPopup("正在识别并翻译...");
+        popup.Show();
 
-        try 
-        { 
-            // 4. 先 OCR 
-            string ocrText = await _baiduService.OcrAsync(profile.Key1, profile.Key2, capture.CapturedImageBytes); 
-            
-            if (string.IsNullOrWhiteSpace(ocrText) || ocrText.StartsWith("错误") || ocrText.StartsWith("异常")) 
-            { 
-                popup.UpdateText($"识别失败: {ocrText}"); 
-                return; 
-            } 
+        try
+        {
+            // 6. 调用 OCR (使用 ocrProfile)
+            string ocrText = await _baiduService.OcrAsync(ocrProfile.Key1, ocrProfile.Key2, capture.CapturedImageBytes);
 
-            // 5. 再翻译 
-            popup.UpdateText($"识别成功:\n{ocrText}\n\n正在翻译..."); 
-            string transResult = await _baiduService.TranslateAsync(profile.Key1, profile.Key2, ocrText); // 注意：百度翻译Key也是复用 Key1/Key2，实际使用建议分开配置或使用同一个App的Key 
-            // *注：百度 OCR 使用 APIKey/SecretKey，百度翻译使用 AppID/SecretKey。 
-            // 这里的 ApiProfile 只有两个 Key 字段。如果是同一个百度账号，这两种Key是不同的。 
-            // 建议：用户在配置里填两套，或者我们简单假设用户只用其中一个功能，或者提示用户填对 Key。 
-            // 这里假设用户填的是 OCR 的 Key，那么翻译可能会失败。 
-            // *修正方案*：为了简化，我们假设 ApiProfile 存储的是 【通用文字识别】的 AK/SK。 
-            // 百度翻译需要 AppID/SK。 
-            // 既然结构已定，且需求是 "百度翻译 API" 和 "百度 OCR API"，通常这是两个独立的应用/服务。 
-            // 我们在 ApiProfile 增加 ProviderType 区分？或者让用户建立两个 Profile，一个叫"OCR用", 一个叫"翻译用"。 
-            // 这里简化逻辑：TranslateAsync 使用 Key1(AppID) Key2(Secret)。 
-            
-            popup.UpdateText($"【原文】\n{ocrText}\n\n【译文】\n{transResult}"); 
-        } 
-        catch (Exception ex) 
-        { 
-            popup.UpdateText($"错误: {ex.Message}"); 
-        } 
-    } 
+            if (string.IsNullOrWhiteSpace(ocrText) || ocrText.StartsWith("错误") || ocrText.StartsWith("异常"))
+            {
+                popup.UpdateText($"识别失败: {ocrText}");
+                return;
+            }
+
+            popup.UpdateText($"识别成功:\n{ocrText}\n\n正在翻译...");
+
+            // 7. 调用 翻译 (使用 transProfile)
+            // 修正点：这里传入的是 transProfile 的 Key1 (即 AppID) 和 Key2 (即 密钥)
+            string transResult = await _baiduService.TranslateAsync(transProfile.Key1, transProfile.Key2, ocrText);
+
+            popup.UpdateText($"【原文】\n{ocrText}\n\n【译文】\n{transResult}");
+        }
+        catch (Exception ex)
+        {
+            popup.UpdateText($"错误: {ex.Message}");
+        }
+    }
 
     [RelayCommand]
     private void AddApiProfile()
