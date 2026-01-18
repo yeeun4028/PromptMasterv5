@@ -229,8 +229,7 @@ namespace PromptMasterv5.Views
                 statusText.Foreground = new SolidColorBrush(Color.FromRgb(102, 102, 102));
                 btn.IsEnabled = false;
 
-                var aiService = new Infrastructure.Services.AiService();
-                (bool success, string message) = await aiService.TestConnectionAsync(ViewModel.Config);
+                (bool success, string message) = await ViewModel.TestAiConnectionAsync();
 
                 if (success)
                 {

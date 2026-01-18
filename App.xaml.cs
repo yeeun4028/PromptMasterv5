@@ -1,6 +1,10 @@
 using System;
 using System.Windows;
 using System.Windows.Threading;
+using Microsoft.Extensions.DependencyInjection;
+using PromptMasterv5.Core.Interfaces;
+using PromptMasterv5.Infrastructure.Services;
+using PromptMasterv5.ViewModels;
 using MessageBox = System.Windows.MessageBox; // 明确指定使用 WPF 的 MessageBox
 
 namespace PromptMasterv5
@@ -8,6 +12,8 @@ namespace PromptMasterv5
     // 修改这一行，显式继承 System.Windows.Application
     public partial class App : System.Windows.Application
     {
+        private ServiceProvider? _serviceProvider;
+
         public App()
         {
             // 注册全局异常捕获事件
@@ -22,8 +28,11 @@ namespace PromptMasterv5
 
             try
             {
-                // 手动初始化并显示主窗口，捕获构造函数中的异常
-                MainWindow = new MainWindow();
+                var services = new ServiceCollection();
+                ConfigureServices(services);
+                _serviceProvider = services.BuildServiceProvider();
+
+                MainWindow = _serviceProvider.GetRequiredService<MainWindow>();
                 MainWindow.Show();
             }
             catch (Exception ex)
@@ -31,6 +40,26 @@ namespace PromptMasterv5
                 MessageBox.Show($"应用程序启动严重错误:\n{ex.Message}\n\n{ex.StackTrace}", "启动失败", MessageBoxButton.OK, MessageBoxImage.Error);
                 Shutdown();
             }
+        }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            _serviceProvider?.Dispose();
+            base.OnExit(e);
+        }
+
+        private static void ConfigureServices(IServiceCollection services)
+        {
+            services.AddSingleton<MainViewModel>();
+            services.AddSingleton<MainWindow>();
+
+            services.AddSingleton<IAiService, AiService>();
+            services.AddSingleton<WebDavDataService>();
+            services.AddSingleton<FileDataService>();
+            services.AddSingleton<BrowserAutomationService>();
+            services.AddSingleton<GlobalKeyService>();
+            services.AddSingleton<FabricService>();
+            services.AddSingleton<BaiduService>();
         }
 
         private void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)

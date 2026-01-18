@@ -315,14 +315,14 @@ namespace PromptMasterv5
             return count;
         }
 
-        public MainWindow()
+        public MainWindow(MainViewModel viewModel)
         {
             InitializeComponent();
 
             // 设置窗口不在任务栏显示
             this.ShowInTaskbar = false;
 
-            ViewModel = new MainViewModel();
+            ViewModel = viewModel;
             this.DataContext = ViewModel;
 
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
@@ -1370,50 +1370,6 @@ namespace PromptMasterv5
             }
             finally { btn.Content = org; btn.IsEnabled = true; }
         }
-
-
-        private async void TestAiConnection_Click(object sender, RoutedEventArgs e)
-        {
-            var btn = sender as Button;
-            if (btn == null) return;
-
-            var statusText = this.FindName("TestStatusText") as TextBlock;
-            if (statusText == null) return;
-
-            try
-            {
-                statusText.Text = "🔄 测试中...";
-                statusText.Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
-                btn.IsEnabled = false;
-
-                var aiService = new Infrastructure.Services.AiService();
-                (bool success, string message) = await aiService.TestConnectionAsync(ViewModel.Config);
-
-                if (success)
-                {
-                    statusText.Text = "✅ 成功连通";
-                    statusText.Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(67, 160, 71));
-
-                    await Task.Delay(3000);
-                    statusText.Text = "";
-                }
-                else
-                {
-                    statusText.Text = "❌ 连通失败";
-                    statusText.Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(229, 57, 53));
-                }
-            }
-            catch (Exception)
-            {
-                statusText.Text = "❌ 连接异常";
-                statusText.Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(229, 57, 53));
-            }
-            finally
-            {
-                btn.IsEnabled = true;
-            }
-        }
-
         private void AiModelList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             var listBox = sender as ListBox;

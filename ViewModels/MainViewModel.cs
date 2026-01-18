@@ -39,7 +39,7 @@ namespace PromptMasterv5.ViewModels
         private readonly BrowserAutomationService _browserService;
         private readonly IAiService _aiService;
         private readonly FabricService _fabricService;
-        private readonly BaiduService _baiduService = new BaiduService();
+        private readonly BaiduService _baiduService;
 
         private bool _isCreatingFile = false;
         private DispatcherTimer _timer;
@@ -85,7 +85,14 @@ namespace PromptMasterv5.ViewModels
 public ObservableCollection<PromptItem> MiniPinnedPrompts { get; } = new();
         public IDropTarget MiniPinnedPromptDropHandler { get; private set; }
 
-        public MainViewModel()
+        public MainViewModel(
+            IAiService aiService,
+            WebDavDataService dataService,
+            FileDataService localDataService,
+            GlobalKeyService keyService,
+            BrowserAutomationService browserService,
+            FabricService fabricService,
+            BaiduService baiduService)
         {
             // 1. 初始化配置
             Config = ConfigService.Load();
@@ -94,13 +101,11 @@ public ObservableCollection<PromptItem> MiniPinnedPrompts { get; } = new();
             UpdateWindowHotkeys();
 
             // 2. 初始化所有服务
-            _dataService = new Infrastructure.Services.WebDavDataService(); // 默认使用 WebDav (云端主存储)
-
-            // ★★★ 方案A：初始化本地服务 (本地副存储) ★★★
-            _localDataService = new Infrastructure.Services.FileDataService();
-
-            _aiService = new Infrastructure.Services.AiService();
-            _fabricService = new FabricService();
+            _dataService = dataService;
+            _localDataService = localDataService;
+            _aiService = aiService;
+            _fabricService = fabricService;
+            _baiduService = baiduService;
 
             // ★★★ 方案A：初始化本地热备份定时器 (2秒防抖) ★★★
             _localBackupTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
@@ -110,7 +115,7 @@ public ObservableCollection<PromptItem> MiniPinnedPrompts { get; } = new();
                 await PerformLocalBackup();
             };
 
-            _browserService = new BrowserAutomationService();
+            _browserService = browserService;
             _browserService.OnTargetSiteMatched += BrowserService_OnTargetSiteMatched;
             _browserService.Start();
 
@@ -124,7 +129,7 @@ public ObservableCollection<PromptItem> MiniPinnedPrompts { get; } = new();
             _timer.Start();
 
             // 5. 初始化按键监听服务
-            _keyService = new GlobalKeyService();
+            _keyService = keyService;
             _keyService.OnDoubleCtrlDetected += (s, e) => Application.Current.Dispatcher.Invoke(() => ToggleMainWindow());
 
             _keyService.OnDoubleSemiColonDetected += (s, e) => Application.Current.Dispatcher.Invoke(async () =>
@@ -605,6 +610,11 @@ RegisterWindowHotkey("ToggleMiniWindowHotkey", Config.MiniWindowHotkey, () => To
         if (Config.OcrProfileId == p.Id) Config.OcrProfileId = "";
         if (Config.TranslateProfileId == p.Id) Config.TranslateProfileId = "";
         ConfigService.Save(Config);
+    }
+
+    public Task<(bool Success, string Message)> TestAiConnectionAsync()
+    {
+        return _aiService.TestConnectionAsync(Config);
     }
 
     private void RegisterWindowHotkey(string name, string hotkeyStr, Action action)
