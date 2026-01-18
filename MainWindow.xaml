@@ -114,14 +114,14 @@
                     <Setter.Value>
                         <ContextMenu>
                             <MenuItem Header="设置图标..." 
-                                      Command="{Binding PlacementTarget.Tag.ChangeFolderIconCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                      Command="{Binding PlacementTarget.Tag.SidebarVM.ChangeFolderIconCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                       CommandParameter="{Binding}"/>
                             <MenuItem Header="重命名..." 
-                                      Command="{Binding PlacementTarget.Tag.RenameFolderCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                      Command="{Binding PlacementTarget.Tag.SidebarVM.RenameFolderCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                       CommandParameter="{Binding}"/>
                             <Separator/>
                             <MenuItem Header="删除" 
-                                      Command="{Binding PlacementTarget.Tag.DeleteFolderCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                      Command="{Binding PlacementTarget.Tag.SidebarVM.DeleteFolderCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                       CommandParameter="{Binding}">
                                 <MenuItem.Icon>
                                     <Path Data="{StaticResource IconDelete}" Fill="{DynamicResource PrimaryTextBrush}" Stretch="Uniform" Width="12"/>
@@ -459,7 +459,7 @@
                                 </RichTextBox>
                             </Border>
 
-                            <Popup IsOpen="{Binding IsSearchPopupOpen}" 
+                            <Popup IsOpen="{Binding ChatVM.IsSearchPopupOpen}" 
                                    PlacementTarget="{Binding ElementName=MiniInputBox}"
                                    Placement="Bottom"
                                    StaysOpen="False"
@@ -471,8 +471,8 @@
                                         Width="400" 
                                         MaxHeight="300">
                                     <ListBox x:Name="SearchListBox"
-                                             ItemsSource="{Binding SearchResults}" 
-                                             SelectedItem="{Binding SelectedSearchItem}"
+                                             ItemsSource="{Binding ChatVM.SearchResults}" 
+                                             SelectedItem="{Binding ChatVM.SelectedSearchItem}"
                                              Background="Transparent" 
                                              BorderThickness="0"
                                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
@@ -532,7 +532,7 @@
 
                                 <ItemsControl x:Name="MiniPinnedPromptBar"
                                               Grid.Column="0"
-                                              ItemsSource="{Binding MiniPinnedPrompts}"
+                                              ItemsSource="{Binding ChatVM.MiniPinnedPrompts}"
                                               VerticalAlignment="Center">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
@@ -607,7 +607,7 @@
                                       Height="12"
                                       Margin="0,0,8,0"
                                       VerticalAlignment="Center"
-                                      Visibility="{Binding IsAiProcessing, Converter={StaticResource BoolToVis}}">
+                                      Visibility="{Binding ChatVM.IsAiProcessing, Converter={StaticResource BoolToVis}}">
                                 <Grid x:Name="MiniSpinner" Width="12" Height="12" RenderTransformOrigin="0.5,0.5">
                                         <Grid.RenderTransform>
                                             <RotateTransform x:Name="MiniSpinnerRotate" Angle="0"/>
@@ -748,8 +748,8 @@
                             Background="{DynamicResource Block1Background}" 
                             CornerRadius="5,0,0,5">
                         <Grid>
-                            <ListBox ItemsSource="{Binding Folders}" 
-                                     SelectedItem="{Binding SelectedFolder}"
+                            <ListBox ItemsSource="{Binding SidebarVM.Folders}" 
+                                     SelectedItem="{Binding SidebarVM.SelectedFolder}"
                                      ItemContainerStyle="{StaticResource FolderListBoxItemStyle}" 
                                      Background="Transparent" 
                                      BorderThickness="0" 
@@ -758,10 +758,10 @@
                                      Margin="0,15,0,0"
                                      dd:DragDrop.IsDragSource="True" 
                                      dd:DragDrop.IsDropTarget="True"
-                                     dd:DragDrop.DropHandler="{Binding FolderDropHandler}"/>
+                                     dd:DragDrop.DropHandler="{Binding SidebarVM.FolderDropHandler}"/>
 
                             <StackPanel VerticalAlignment="Bottom" Margin="0,0,0,20">
-                                <Button Style="{StaticResource ActionBtnStyle}" Content="新建文档" Command="{Binding CreateFileCommand}">
+                                <Button Style="{StaticResource ActionBtnStyle}" Content="新建文档" Command="{Binding SidebarVM.CreateFileCommand}">
                                     <Button.ContextMenu>
                                         <ContextMenu>
                                             <MenuItem Header="设置图标..."
@@ -778,7 +778,7 @@
                                         </DataTemplate>
                                     </Button.ContentTemplate>
                                 </Button>
-                                <Button Style="{StaticResource ActionBtnStyle}" Content="新建文件夹" Command="{Binding CreateFolderCommand}">
+                                <Button Style="{StaticResource ActionBtnStyle}" Content="新建文件夹" Command="{Binding SidebarVM.CreateFolderCommand}">
                                     <Button.ContextMenu>
                                         <ContextMenu>
                                             <MenuItem Header="设置图标..."

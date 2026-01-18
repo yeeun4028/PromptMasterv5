@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using PromptMasterv5.Core.Interfaces;
 using PromptMasterv5.Core.Models;
 using PromptMasterv5.Infrastructure.Services;
@@ -8,6 +9,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using PromptMasterv5.ViewModels.Messages;
 
 namespace PromptMasterv5.ViewModels
 {
@@ -21,7 +23,6 @@ namespace PromptMasterv5.ViewModels
         public Func<IEnumerable<PromptItem>>? FilesProvider { get; set; }
         public Func<bool>? GetIsAiResultDisplayed { get; set; }
         public Action<bool>? SetIsAiResultDisplayed { get; set; }
-        public Action<string>? MiniInputTextChangedExternalHandler { get; set; }
 
         public ObservableCollection<PromptItem> MiniPinnedPrompts { get; } = new();
 
@@ -48,7 +49,7 @@ namespace PromptMasterv5.ViewModels
 
         partial void OnMiniInputTextChanged(string value)
         {
-            MiniInputTextChangedExternalHandler?.Invoke(value);
+            WeakReferenceMessenger.Default.Send(new MiniInputTextChangedMessage(value));
         }
 
         public async Task ExecuteAiQuery()
@@ -275,4 +276,3 @@ namespace PromptMasterv5.ViewModels
         }
     }
 }
-

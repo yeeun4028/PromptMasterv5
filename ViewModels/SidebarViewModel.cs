@@ -1,8 +1,10 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using GongSolutions.Wpf.DragDrop;
 using PromptMasterv5.Core.Interfaces;
 using PromptMasterv5.Core.Models;
+using PromptMasterv5.ViewModels.Messages;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -25,11 +27,11 @@ namespace PromptMasterv5.ViewModels
         private FolderItem? selectedFolder;
 
         public ObservableCollection<PromptItem>? Files { get; set; }
-        public Func<PromptItem?>? GetSelectedFile { get; set; }
-        public Action<PromptItem?>? SelectFile { get; set; }
-        public Action<bool>? SetEditMode { get; set; }
-        public Action? RequestSave { get; set; }
-        public Action<PromptItem, FolderItem>? MoveFileToFolder { get; set; }
+
+        partial void OnSelectedFolderChanged(FolderItem? value)
+        {
+            WeakReferenceMessenger.Default.Send(new FolderSelectionChangedMessage(value));
+        }
 
         public SidebarViewModel(IDataService dataService)
         {
@@ -43,7 +45,7 @@ namespace PromptMasterv5.ViewModels
             var f = new FolderItem { Name = $"新建文件夹 {Folders.Count + 1}" };
             Folders.Add(f);
             SelectedFolder = f;
-            RequestSave?.Invoke();
+            WeakReferenceMessenger.Default.Send<RequestSaveMessage>();
         }
 
         [RelayCommand]
@@ -54,9 +56,8 @@ namespace PromptMasterv5.ViewModels
 
             var f = new PromptItem { Title = "", Content = "", FolderId = SelectedFolder.Id, LastModified = DateTime.Now };
             Files.Add(f);
-            SelectFile?.Invoke(f);
-            SetEditMode?.Invoke(true);
-            RequestSave?.Invoke();
+            WeakReferenceMessenger.Default.Send(new RequestSelectFileMessage(f, EnterEditMode: true));
+            WeakReferenceMessenger.Default.Send<RequestSaveMessage>();
         }
 
         [RelayCommand]
@@ -71,13 +72,9 @@ namespace PromptMasterv5.ViewModels
             }
 
             if (SelectedFolder == folder) SelectedFolder = null;
-            var selectedFile = GetSelectedFile?.Invoke();
-            if (selectedFile != null && selectedFile.FolderId == folder.Id)
-            {
-                SelectFile?.Invoke(null);
-            }
             Folders.Remove(folder);
-            RequestSave?.Invoke();
+            WeakReferenceMessenger.Default.Send(new RequestSelectFileMessage(null, EnterEditMode: false));
+            WeakReferenceMessenger.Default.Send<RequestSaveMessage>();
         }
 
         [RelayCommand]
@@ -88,7 +85,7 @@ namespace PromptMasterv5.ViewModels
             if (dialog.ShowDialog() == true)
             {
                 f.IconGeometry = dialog.ResultGeometry;
-                RequestSave?.Invoke();
+                WeakReferenceMessenger.Default.Send<RequestSaveMessage>();
             }
         }
 
@@ -100,14 +97,14 @@ namespace PromptMasterv5.ViewModels
             if (dialog.ShowDialog() == true)
             {
                 f.Name = dialog.ResultName;
-                RequestSave?.Invoke();
+                WeakReferenceMessenger.Default.Send<RequestSaveMessage>();
             }
         }
 
         public void ReorderFolders(int o, int n)
         {
             Folders.Move(o, n);
-            RequestSave?.Invoke();
+            WeakReferenceMessenger.Default.Send<RequestSaveMessage>();
         }
 
         public async Task LoadDataAsync()
@@ -148,16 +145,7 @@ namespace PromptMasterv5.ViewModels
             {
                 if (dropInfo.Data is PromptItem file && dropInfo.TargetItem is FolderItem fileTarget)
                 {
-                    if (_vm.MoveFileToFolder != null)
-                    {
-                        _vm.MoveFileToFolder(file, fileTarget);
-                    }
-                    else
-                    {
-                        if (file.FolderId == fileTarget.Id) return;
-                        file.FolderId = fileTarget.Id;
-                        _vm.RequestSave?.Invoke();
-                    }
+                    WeakReferenceMessenger.Default.Send(new RequestMoveFileToFolderMessage(file, fileTarget));
                     return;
                 }
 

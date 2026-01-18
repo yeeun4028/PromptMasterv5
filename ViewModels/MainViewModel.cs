@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using System.Collections.ObjectModel;
 using System;
 using System.Linq;
@@ -25,6 +26,7 @@ using MessageBox = System.Windows.MessageBox;
 using Application = System.Windows.Application;
 using Clipboard = System.Windows.Clipboard;
 using IDropTarget = GongSolutions.Wpf.DragDrop.IDropTarget;
+using PromptMasterv5.ViewModels.Messages;
 
 namespace PromptMasterv5.ViewModels
 {
@@ -126,29 +128,12 @@ namespace PromptMasterv5.ViewModels
             _browserService.Start();
 
             SidebarVM.Files = Files;
-            SidebarVM.GetSelectedFile = () => SelectedFile;
-            SidebarVM.SelectFile = f => SelectedFile = f;
-            SidebarVM.SetEditMode = v => IsEditMode = v;
-            SidebarVM.RequestSave = RequestSave;
-            SidebarVM.MoveFileToFolder = MoveFileToFolder;
-
-            SidebarVM.PropertyChanged += (s, e) =>
-            {
-                if (e.PropertyName == nameof(SidebarViewModel.Folders)) OnPropertyChanged(nameof(Folders));
-                if (e.PropertyName == nameof(SidebarViewModel.SelectedFolder))
-                {
-                    OnPropertyChanged(nameof(SelectedFolder));
-                    FilesView?.Refresh();
-                    SelectedFile = null;
-                }
-            };
 
             ChatVM.ConfigProvider = () => Config;
             ChatVM.LocalConfigProvider = () => LocalConfig;
             ChatVM.FilesProvider = () => Files;
             ChatVM.GetIsAiResultDisplayed = () => IsAiResultDisplayed;
             ChatVM.SetIsAiResultDisplayed = v => IsAiResultDisplayed = v;
-            ChatVM.MiniInputTextChangedExternalHandler = HandleMiniInputTextChangedFromChat;
 
             ChatVM.PropertyChanged += (s, e) =>
             {
@@ -157,6 +142,20 @@ namespace PromptMasterv5.ViewModels
                 if (e.PropertyName == nameof(ChatViewModel.SelectedSearchItem)) OnPropertyChanged(nameof(SelectedSearchItem));
                 if (e.PropertyName == nameof(ChatViewModel.IsAiProcessing)) OnPropertyChanged(nameof(IsAiProcessing));
             };
+
+            WeakReferenceMessenger.Default.Register<MiniInputTextChangedMessage>(this, (_, m) => HandleMiniInputTextChangedFromChat(m.Value));
+            WeakReferenceMessenger.Default.Register<FolderSelectionChangedMessage>(this, (_, m) =>
+            {
+                FilesView?.Refresh();
+                SelectedFile = null;
+            });
+            WeakReferenceMessenger.Default.Register<RequestSelectFileMessage>(this, (_, m) =>
+            {
+                SelectedFile = m.File;
+                if (m.EnterEditMode) IsEditMode = true;
+            });
+            WeakReferenceMessenger.Default.Register<RequestMoveFileToFolderMessage>(this, (_, m) => MoveFileToFolder(m.File, m.TargetFolder));
+            WeakReferenceMessenger.Default.Register<RequestSaveMessage>(this, (_, m) => RequestSave());
 
             // 3. 初始化拖拽处理器
             MiniPinnedPromptDropHandler = new PinnedPromptDropHandler(this);
