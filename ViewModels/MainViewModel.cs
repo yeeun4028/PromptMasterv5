@@ -570,13 +570,13 @@ RegisterWindowHotkey("ToggleMiniWindowHotkey", Config.MiniWindowHotkey, () => To
                 return;
             }
 
-            popup.UpdateText($"识别成功:\n{ocrText}\n\n正在翻译...");
+            popup.UpdateText("正在翻译...");
 
             // 7. 调用 翻译 (使用 transProfile)
             // 修正点：这里传入的是 transProfile 的 Key1 (即 AppID) 和 Key2 (即 密钥)
             string transResult = await _baiduService.TranslateAsync(transProfile.Key1, transProfile.Key2, ocrText);
 
-            popup.UpdateText($"【原文】\n{ocrText}\n\n【译文】\n{transResult}");
+            popup.UpdateText(transResult);
         }
         catch (Exception ex)
         {

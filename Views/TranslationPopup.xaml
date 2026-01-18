@@ -1,4 +1,4 @@
-﻿<Window x:Class="PromptMasterv5.Views.TranslationPopup"
+<Window x:Class="PromptMasterv5.Views.TranslationPopup"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="翻译结果" 
@@ -25,7 +25,7 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <TextBlock Text="翻译结果" FontWeight="Bold" Foreground="#666" Margin="0,0,0,10"/>
+
 
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                 <TextBox x:Name="ResultBox"
