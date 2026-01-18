@@ -3,11 +3,10 @@ using System.IO;
 using System.Text.Json;
 using PromptMasterv5.Core.Models;
 
-namespace PromptMasterv5.Services
+namespace PromptMasterv5.Infrastructure.Services
 {
     public static class LocalConfigService
     {
-        // 文件名不同，避免冲突
         private static readonly string ConfigPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "local_settings.json");
 
         public static void Save(LocalSettings settings)
@@ -18,7 +17,7 @@ namespace PromptMasterv5.Services
                 string json = JsonSerializer.Serialize(settings, options);
                 File.WriteAllText(ConfigPath, json);
             }
-            catch { /* 忽略保存错误 */ }
+            catch { }
         }
 
         public static LocalSettings Load()

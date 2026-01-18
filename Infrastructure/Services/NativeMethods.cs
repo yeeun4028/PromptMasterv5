@@ -1,40 +1,33 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace PromptMasterv5.Services
+namespace PromptMasterv5.Infrastructure.Services
 {
     public static class NativeMethods
     {
-        // 获取当前活动窗口句柄
         [DllImport("user32.dll")]
         public static extern IntPtr GetForegroundWindow();
 
-        // 获取窗口线程进程ID
         [DllImport("user32.dll")]
         public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 
-        // 设置窗口为前台（激活窗口）
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool SetForegroundWindow(IntPtr hWnd);
 
-        // 设置鼠标位置
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool SetCursorPos(int x, int y);
 
-        // 模拟鼠标点击事件
         [DllImport("user32.dll")]
         public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, int dwExtraInfo);
 
-        // 模拟键盘事件
         [DllImport("user32.dll")]
         public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);
 
         [DllImport("user32.dll")]
         public static extern short GetAsyncKeyState(int vKey);
 
-        // --- 新增：WinEventHook 相关，用于监听窗口切换 ---
         public delegate void WinEventDelegate(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime);
 
         [DllImport("user32.dll")]
@@ -46,7 +39,6 @@ namespace PromptMasterv5.Services
         public const uint EVENT_SYSTEM_FOREGROUND = 0x0003;
         public const uint WINEVENT_OUTOFCONTEXT = 0x0000;
 
-        // --- 现有常量 ---
         public const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
         public const uint MOUSEEVENTF_LEFTUP = 0x0004;
 

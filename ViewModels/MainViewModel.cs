@@ -14,7 +14,6 @@ using GongSolutions.Wpf.DragDrop;
 using NHotkey;
 using NHotkey.Wpf;
 using PromptMasterv5.Core.Models;
-using PromptMasterv5.Services;
 using PromptMasterv5.Infrastructure.Services;
 using PromptMasterv5.Core.Interfaces;
 using System.Collections.Generic;

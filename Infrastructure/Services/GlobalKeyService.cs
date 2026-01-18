@@ -3,13 +3,12 @@ using System;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace PromptMasterv5.Services
+namespace PromptMasterv5.Infrastructure.Services
 {
     public class GlobalKeyService : IDisposable
     {
         private IKeyboardMouseEvents? _globalHook;
 
-        // Ctrl 双击相关
         private DateTime _lastCtrlPressTime = DateTime.MinValue;
         private const int DoubleClickInterval = 400;
 
@@ -42,7 +41,6 @@ namespace PromptMasterv5.Services
 
             _globalHook = Hook.GlobalEvents();
             _globalHook.KeyUp += GlobalHook_KeyUp;
-            // 订阅字符输入事件
             _globalHook.KeyPress += GlobalHook_KeyPress;
         }
 

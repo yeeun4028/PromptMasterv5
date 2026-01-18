@@ -9,7 +9,6 @@ using System.Text;
 using System.Windows.Media;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using PromptMasterv5.Core.Models;
-using PromptMasterv5.Services;
 using PromptMasterv5.Infrastructure.Services;
 using System.Windows.Forms;
 using System.Windows.Threading;

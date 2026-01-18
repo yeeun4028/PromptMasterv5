@@ -3,7 +3,7 @@ using System.IO;
 using System.Text.Json;
 using PromptMasterv5.Core.Models;
 
-namespace PromptMasterv5.Services
+namespace PromptMasterv5.Infrastructure.Services
 {
     public static class ConfigService
     {
@@ -17,7 +17,7 @@ namespace PromptMasterv5.Services
                 string json = JsonSerializer.Serialize(config, options);
                 File.WriteAllText(ConfigPath, json);
             }
-            catch { /* 忽略保存错误 */ }
+            catch { }
         }
 
         public static AppConfig Load()

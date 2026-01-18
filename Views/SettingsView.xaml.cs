@@ -6,7 +6,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using PromptMasterv5.Core.Models;
-using PromptMasterv5.Services;
 using PromptMasterv5.Infrastructure.Services;
 using PromptMasterv5.ViewModels;
 using WinFormsCursor = System.Windows.Forms.Cursor;
