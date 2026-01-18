@@ -28,12 +28,12 @@ namespace PromptMasterv5.ViewModels
         {
             if (dropInfo.Data is not PromptItem source || dropInfo.TargetItem is not PromptItem) return;
 
-            int oldIndex = _viewModel.MiniPinnedPrompts.IndexOf(source);
+            int oldIndex = _viewModel.ChatVM.MiniPinnedPrompts.IndexOf(source);
             int newIndex = dropInfo.InsertIndex;
             if (oldIndex < 0) return;
             if (oldIndex < newIndex) newIndex--;
             if (newIndex < 0) newIndex = 0;
-            if (newIndex >= _viewModel.MiniPinnedPrompts.Count) newIndex = _viewModel.MiniPinnedPrompts.Count - 1;
+            if (newIndex >= _viewModel.ChatVM.MiniPinnedPrompts.Count) newIndex = _viewModel.ChatVM.MiniPinnedPrompts.Count - 1;
             if (oldIndex == newIndex) return;
 
             _viewModel.ReorderMiniPinnedPrompts(oldIndex, newIndex);

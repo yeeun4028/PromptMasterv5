@@ -21,8 +21,6 @@ namespace PromptMasterv5.ViewModels
         public Func<AppConfig>? ConfigProvider { get; set; }
         public Func<LocalSettings>? LocalConfigProvider { get; set; }
         public Func<IEnumerable<PromptItem>>? FilesProvider { get; set; }
-        public Func<bool>? GetIsAiResultDisplayed { get; set; }
-        public Action<bool>? SetIsAiResultDisplayed { get; set; }
 
         public ObservableCollection<PromptItem> MiniPinnedPrompts { get; } = new();
 
@@ -37,6 +35,9 @@ namespace PromptMasterv5.ViewModels
 
         [ObservableProperty]
         private bool isAiProcessing = false;
+
+        [ObservableProperty]
+        private bool isAiResultDisplayed = false;
 
         [ObservableProperty]
         private bool isSearchPopupOpen = false;
@@ -89,19 +90,19 @@ namespace PromptMasterv5.ViewModels
                 {
                     string assembledPrompt = $"{patternContent}\n\n---\n\nUSER INPUT:\n{query}";
                     MiniInputText = assembledPrompt;
-                    SetIsAiResultDisplayed?.Invoke(true);
+                    IsAiResultDisplayed = true;
                 }
                 else
                 {
                     string result = await _aiService.ChatAsync(query, config);
                     MiniInputText = result;
-                    SetIsAiResultDisplayed?.Invoke(true);
+                    IsAiResultDisplayed = true;
                 }
             }
             catch (Exception ex)
             {
                 MiniInputText = $"[AI 错误] {ex.Message}";
-                SetIsAiResultDisplayed?.Invoke(true);
+                IsAiResultDisplayed = true;
             }
             finally
             {
@@ -158,18 +159,18 @@ namespace PromptMasterv5.ViewModels
                     {
                         MiniInputText = $"[提示词匹配失败] {query}";
                     }
-                    SetIsAiResultDisplayed?.Invoke(true);
+                    IsAiResultDisplayed = true;
                     return;
                 }
 
                 var result = await _aiService.ChatAsync(inputText, config);
                 MiniInputText = result;
-                SetIsAiResultDisplayed?.Invoke(true);
+                IsAiResultDisplayed = true;
             }
             catch (Exception ex)
             {
                 MiniInputText = $"[AI 错误] {ex.Message}";
-                SetIsAiResultDisplayed?.Invoke(true);
+                IsAiResultDisplayed = true;
             }
             finally
             {

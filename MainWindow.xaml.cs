@@ -326,6 +326,7 @@ namespace PromptMasterv5
             this.DataContext = ViewModel;
 
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+            ViewModel.ChatVM.PropertyChanged += ChatVM_PropertyChanged;
             InitializeTrayIcon();
             ApplyModeState();
             LocationChanged += MainWindow_LocationChanged;
@@ -606,19 +607,23 @@ namespace PromptMasterv5
             {
                 ApplyModeState();
             }
-            else if (e.PropertyName == nameof(MainViewModel.MiniInputText))
+        }
+
+        private void ChatVM_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (ViewModel == null) return;
+            if (e.PropertyName != nameof(ChatViewModel.MiniInputText)) return;
+
+            if (string.IsNullOrEmpty(ViewModel.ChatVM.MiniInputText) && !ViewModel.IsFullMode)
             {
-                if (string.IsNullOrEmpty(ViewModel.MiniInputText) && !ViewModel.IsFullMode)
+                _ = Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    _ = Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        ResetMiniWindowToDefaultSize();
-                    }), System.Windows.Threading.DispatcherPriority.ContextIdle);
-                }
-                else if (!ViewModel.IsFullMode && !_isUpdatingMiniInputDocument && MiniInputBox != null && !MiniInputBox.IsKeyboardFocusWithin)
-                {
-                    RebuildMiniInputDocument(ViewModel.MiniInputText ?? "", focusUserInput: false);
-                }
+                    ResetMiniWindowToDefaultSize();
+                }), System.Windows.Threading.DispatcherPriority.ContextIdle);
+            }
+            else if (!ViewModel.IsFullMode && !_isUpdatingMiniInputDocument && MiniInputBox != null && !MiniInputBox.IsKeyboardFocusWithin)
+            {
+                RebuildMiniInputDocument(ViewModel.ChatVM.MiniInputText ?? "", focusUserInput: false);
             }
         }
 
@@ -697,7 +702,7 @@ namespace PromptMasterv5
                 NativeMethods.SetForegroundWindow(new System.Windows.Interop.WindowInteropHelper(this).Handle);
 
                 EnsureMiniDefaultSizeMeasured();
-                RebuildMiniInputDocument(ViewModel.MiniInputText ?? "", focusUserInput: true);
+                RebuildMiniInputDocument(ViewModel.ChatVM.MiniInputText ?? "", focusUserInput: true);
                 ApplyMiniScrollBarAppearance(isOverflow: false);
             }
         }
@@ -798,7 +803,7 @@ namespace PromptMasterv5
 
             if (ViewModel != null && !ViewModel.IsFullMode)
             {
-                ViewModel.MiniInputText = GetMiniUserInputText();
+                ViewModel.ChatVM.MiniInputText = GetMiniUserInputText();
             }
 
             if (MiniInputBox != null)
@@ -832,11 +837,11 @@ namespace PromptMasterv5
             if (ViewModel == null) return;
             if (ViewModel.IsFullMode) return;
             if (MiniInputBox == null) return;
-            if (!ViewModel.IsAiResultDisplayed) return;
+            if (!ViewModel.ChatVM.IsAiResultDisplayed) return;
             if (!ViewModel.LocalConfig.MiniClearAiResultOnTyping) return;
 
-            ViewModel.IsAiResultDisplayed = false;
-            ViewModel.MiniInputText = "";
+            ViewModel.ChatVM.IsAiResultDisplayed = false;
+            ViewModel.ChatVM.MiniInputText = "";
             RebuildMiniInputDocument("", focusUserInput: true);
         }
 
@@ -845,15 +850,15 @@ namespace PromptMasterv5
             if (ViewModel == null) return;
             if (ViewModel.IsFullMode) return;
             if (MiniInputBox == null) return;
-            if (!ViewModel.IsAiResultDisplayed) return;
+            if (!ViewModel.ChatVM.IsAiResultDisplayed) return;
             if (!ViewModel.LocalConfig.MiniClearAiResultOnTyping) return;
             if (string.IsNullOrEmpty(e.Text)) return;
 
             var textToInsert = e.Text;
             e.Handled = true;
 
-            ViewModel.IsAiResultDisplayed = false;
-            ViewModel.MiniInputText = "";
+            ViewModel.ChatVM.IsAiResultDisplayed = false;
+            ViewModel.ChatVM.MiniInputText = "";
             RebuildMiniInputDocument("", focusUserInput: true);
 
             var caret = MiniInputBox.CaretPosition?.GetInsertionPosition(LogicalDirection.Forward) ?? MiniInputBox.CaretPosition;
@@ -966,7 +971,7 @@ namespace PromptMasterv5
             var id = btn.Tag as string ?? "";
             if (string.IsNullOrWhiteSpace(id)) return;
 
-            var userText = ViewModel.MiniInputText ?? "";
+            var userText = ViewModel.ChatVM.MiniInputText ?? "";
             if (ViewModel.LocalConfig.MiniSelectedPinnedPromptId == id)
             {
                 ViewModel.LocalConfig.MiniSelectedPinnedPromptId = "";
@@ -978,7 +983,7 @@ namespace PromptMasterv5
                 {
                     var p = ViewModel.Files.FirstOrDefault(f => f.Id == id);
                     userText = p?.Content ?? "";
-                    ViewModel.MiniInputText = userText;
+                    ViewModel.ChatVM.MiniInputText = userText;
                 }
             }
 
@@ -1062,19 +1067,19 @@ namespace PromptMasterv5
             if (ViewModel == null) return;
 
             if (!ViewModel.IsFullMode &&
-                ViewModel.IsAiResultDisplayed &&
+                ViewModel.ChatVM.IsAiResultDisplayed &&
                 ViewModel.LocalConfig.MiniClearAiResultOnTyping &&
                 e.Key == Key.ImeProcessed)
             {
-                ViewModel.IsAiResultDisplayed = false;
-                ViewModel.MiniInputText = "";
+                ViewModel.ChatVM.IsAiResultDisplayed = false;
+                ViewModel.ChatVM.MiniInputText = "";
                 RebuildMiniInputDocument("", focusUserInput: true);
                 return;
             }
 
             if (!ViewModel.IsFullMode && !_isUpdatingMiniInputDocument)
             {
-                ViewModel.MiniInputText = GetMiniUserInputText();
+                ViewModel.ChatVM.MiniInputText = GetMiniUserInputText();
             }
 
             if (e.Key == Key.Enter && (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
@@ -1123,7 +1128,7 @@ namespace PromptMasterv5
                 var selectedId = ViewModel.LocalConfig.MiniSelectedPinnedPromptId ?? "";
                 if (!string.IsNullOrWhiteSpace(selectedId) && box.Document != null)
                 {
-                    var userText = ViewModel.MiniInputText ?? GetMiniUserInputText();
+                    var userText = ViewModel.ChatVM.MiniInputText ?? GetMiniUserInputText();
 
                     var caret = box.CaretPosition.GetInsertionPosition(LogicalDirection.Forward);
                     var docStart = box.Document.ContentStart.GetInsertionPosition(LogicalDirection.Forward);
@@ -1149,21 +1154,21 @@ namespace PromptMasterv5
                 }
             }
 
-            if (e.Key == Key.Delete && (ViewModel.LocalConfig.MiniAiOnlyChatEnabled || ViewModel.IsAiResultDisplayed))
+            if (e.Key == Key.Delete && (ViewModel.LocalConfig.MiniAiOnlyChatEnabled || ViewModel.ChatVM.IsAiResultDisplayed))
             {
-                ViewModel.MiniInputText = "";
-                ViewModel.IsAiResultDisplayed = false;
+                ViewModel.ChatVM.MiniInputText = "";
+                ViewModel.ChatVM.IsAiResultDisplayed = false;
                 RebuildMiniInputDocument("", focusUserInput: true);
                 e.Handled = true;
                 return;
             }
 
-            if (ViewModel.IsSearchPopupOpen && ViewModel.SearchResults.Count > 0)
+            if (ViewModel.ChatVM.IsSearchPopupOpen && ViewModel.ChatVM.SearchResults.Count > 0)
             {
                 if (e.Key == Key.Down)
                 {
                     int newIndex = SearchListBox.SelectedIndex + 1;
-                    if (newIndex >= ViewModel.SearchResults.Count) newIndex = 0;
+                    if (newIndex >= ViewModel.ChatVM.SearchResults.Count) newIndex = 0;
                     SearchListBox.SelectedIndex = newIndex;
                     SearchListBox.ScrollIntoView(SearchListBox.SelectedItem);
                     e.Handled = true;
@@ -1172,7 +1177,7 @@ namespace PromptMasterv5
                 else if (e.Key == Key.Up)
                 {
                     int newIndex = SearchListBox.SelectedIndex - 1;
-                    if (newIndex < 0) newIndex = ViewModel.SearchResults.Count - 1;
+                    if (newIndex < 0) newIndex = ViewModel.ChatVM.SearchResults.Count - 1;
                     SearchListBox.SelectedIndex = newIndex;
                     SearchListBox.ScrollIntoView(SearchListBox.SelectedItem);
                     e.Handled = true;
@@ -1182,9 +1187,9 @@ namespace PromptMasterv5
 
             if (e.Key == Key.Enter)
             {
-                if (ViewModel.IsSearchPopupOpen)
+                    if (ViewModel.ChatVM.IsSearchPopupOpen)
                 {
-                    ViewModel.ConfirmSearchResultCommand.Execute(null);
+                        ViewModel.ChatVM.ConfirmSearchResultCommand.Execute(null);
                     e.Handled = true;
                     await Dispatcher.BeginInvoke(new Action(() =>
                     {
@@ -1202,7 +1207,7 @@ namespace PromptMasterv5
                                 }
                             }
                         }
-                        RebuildMiniInputDocument(ViewModel.MiniInputText ?? "", focusUserInput: true);
+                            RebuildMiniInputDocument(ViewModel.ChatVM.MiniInputText ?? "", focusUserInput: true);
                     }), System.Windows.Threading.DispatcherPriority.ContextIdle);
                     return;
                 }
@@ -1244,8 +1249,8 @@ namespace PromptMasterv5
                 {
                     await Task.Delay(450);
                     if (_miniEnterSequence != enterSeq) return;
-                    await ViewModel.ExecuteMiniAiOrPatternAsync();
-                    RebuildMiniInputDocument(ViewModel.MiniInputText ?? "", focusUserInput: true);
+                        await ViewModel.ChatVM.ExecuteMiniAiOrPatternAsync();
+                        RebuildMiniInputDocument(ViewModel.ChatVM.MiniInputText ?? "", focusUserInput: true);
                 }, System.Windows.Threading.DispatcherPriority.ContextIdle);
             }
             else if (e.Key == Key.Up && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
@@ -1255,7 +1260,7 @@ namespace PromptMasterv5
             }
         }
 
-        private void SearchResult_Click(object sender, MouseButtonEventArgs e) => ViewModel.ConfirmSearchResultCommand.Execute(null);
+        private void SearchResult_Click(object sender, MouseButtonEventArgs e) => ViewModel.ChatVM.ConfirmSearchResultCommand.Execute(null);
 
         private async Task TriggerSendProcess(InputMode mode)
         {
@@ -1268,7 +1273,7 @@ namespace PromptMasterv5
                 await ViewModel.SendByCoordinate();
             if (ViewModel != null && !ViewModel.IsFullMode)
             {
-                RebuildMiniInputDocument(ViewModel.MiniInputText ?? "", focusUserInput: true);
+                RebuildMiniInputDocument(ViewModel.ChatVM.MiniInputText ?? "", focusUserInput: true);
             }
         }
 

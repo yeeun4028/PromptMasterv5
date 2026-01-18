@@ -58,20 +58,13 @@ namespace PromptMasterv5.ViewModels
         [ObservableProperty] private bool isFullMode = true;
         public SidebarViewModel SidebarVM { get; }
         public ChatViewModel ChatVM { get; }
-        public string MiniInputText { get => ChatVM.MiniInputText; set => ChatVM.MiniInputText = value; }
-        public bool IsSearchPopupOpen { get => ChatVM.IsSearchPopupOpen; set => ChatVM.IsSearchPopupOpen = value; }
-        public ObservableCollection<PromptItem> SearchResults => ChatVM.SearchResults;
-        public PromptItem? SelectedSearchItem { get => ChatVM.SelectedSearchItem; set => ChatVM.SelectedSearchItem = value; }
         [ObservableProperty] private bool isMiniVarsExpanded = false;
 
         [ObservableProperty] private bool isSettingsOpen = false;
         [ObservableProperty] private int selectedSettingsTab = 0;
         [ObservableProperty] private string syncTimeDisplay = "Now";
         [ObservableProperty] private ICollectionView? filesView;
-        public IDropTarget FolderDropHandler => SidebarVM.FolderDropHandler;
         [ObservableProperty] private bool isNavigationVisible = true;
-        public ObservableCollection<FolderItem> Folders => SidebarVM.Folders;
-        public FolderItem? SelectedFolder { get => SidebarVM.SelectedFolder; set => SidebarVM.SelectedFolder = value; }
 
         [ObservableProperty] private ObservableCollection<PromptItem> files = new();
         [ObservableProperty] private PromptItem? selectedFile;
@@ -80,12 +73,8 @@ namespace PromptMasterv5.ViewModels
         [ObservableProperty] private bool hasVariables;
         [ObservableProperty] private string additionalInput = "";
 
-        public bool IsAiProcessing { get => ChatVM.IsAiProcessing; set => ChatVM.IsAiProcessing = value; }
-        [ObservableProperty] private bool isAiResultDisplayed = false;
-
         [ObservableProperty] private bool isDirty = false; 
 
-        public ObservableCollection<PromptItem> MiniPinnedPrompts => ChatVM.MiniPinnedPrompts;
         public IDropTarget MiniPinnedPromptDropHandler { get; private set; }
 
         public MainViewModel(
@@ -132,16 +121,6 @@ namespace PromptMasterv5.ViewModels
             ChatVM.ConfigProvider = () => Config;
             ChatVM.LocalConfigProvider = () => LocalConfig;
             ChatVM.FilesProvider = () => Files;
-            ChatVM.GetIsAiResultDisplayed = () => IsAiResultDisplayed;
-            ChatVM.SetIsAiResultDisplayed = v => IsAiResultDisplayed = v;
-
-            ChatVM.PropertyChanged += (s, e) =>
-            {
-                if (e.PropertyName == nameof(ChatViewModel.MiniInputText)) OnPropertyChanged(nameof(MiniInputText));
-                if (e.PropertyName == nameof(ChatViewModel.IsSearchPopupOpen)) OnPropertyChanged(nameof(IsSearchPopupOpen));
-                if (e.PropertyName == nameof(ChatViewModel.SelectedSearchItem)) OnPropertyChanged(nameof(SelectedSearchItem));
-                if (e.PropertyName == nameof(ChatViewModel.IsAiProcessing)) OnPropertyChanged(nameof(IsAiProcessing));
-            };
 
             WeakReferenceMessenger.Default.Register<MiniInputTextChangedMessage>(this, (_, m) => HandleMiniInputTextChangedFromChat(m.Value));
             WeakReferenceMessenger.Default.Register<FolderSelectionChangedMessage>(this, (_, m) =>
@@ -151,8 +130,10 @@ namespace PromptMasterv5.ViewModels
             });
             WeakReferenceMessenger.Default.Register<RequestSelectFileMessage>(this, (_, m) =>
             {
+                if (m.EnterEditMode) _isCreatingFile = true;
                 SelectedFile = m.File;
                 if (m.EnterEditMode) IsEditMode = true;
+                _isCreatingFile = false;
             });
             WeakReferenceMessenger.Default.Register<RequestMoveFileToFolderMessage>(this, (_, m) => MoveFileToFolder(m.File, m.TargetFolder));
             WeakReferenceMessenger.Default.Register<RequestSaveMessage>(this, (_, m) => RequestSave());
@@ -176,7 +157,7 @@ namespace PromptMasterv5.ViewModels
 
                 if (!IsFullMode && mainWindow.Visibility == Visibility.Visible && mainWindow.IsActive)
                 {
-                    MiniInputText = "";
+                    ChatVM.MiniInputText = "";
                 }
                 else
                 {
@@ -184,7 +165,7 @@ namespace PromptMasterv5.ViewModels
                     {
                         ToggleMainWindow();
                     }
-                    MiniInputText = "";
+                    ChatVM.MiniInputText = "";
                 }
 
                 await Task.Delay(50);
@@ -201,12 +182,12 @@ namespace PromptMasterv5.ViewModels
 
                 await Task.Delay(20);
 
-                if (!string.IsNullOrEmpty(MiniInputText))
+                if (!string.IsNullOrEmpty(ChatVM.MiniInputText))
                 {
-                    string cleaned = MiniInputText.TrimStart(';', '；');
-                    if (cleaned != MiniInputText)
+                    string cleaned = ChatVM.MiniInputText.TrimStart(';', '；');
+                    if (cleaned != ChatVM.MiniInputText)
                     {
-                        MiniInputText = cleaned;
+                        ChatVM.MiniInputText = cleaned;
                     }
                 }
                 if (mainWindow.MiniInputBox.Document != null)
@@ -422,14 +403,14 @@ namespace PromptMasterv5.ViewModels
 
         private void HandleMiniInputTextChangedFromChat(string value)
         {
-            if (IsAiResultDisplayed && !string.IsNullOrWhiteSpace(value))
+            if (ChatVM.IsAiResultDisplayed && !string.IsNullOrWhiteSpace(value))
             {
-                IsAiResultDisplayed = false;
+                ChatVM.IsAiResultDisplayed = false;
             }
 
             if (!LocalConfig.MiniAiOnlyChatEnabled)
             {
-                IsSearchPopupOpen = false;
+                ChatVM.IsSearchPopupOpen = false;
                 Variables.Clear();
                 HasVariables = false;
                 IsMiniVarsExpanded = false;
@@ -443,7 +424,7 @@ namespace PromptMasterv5.ViewModels
                 var normalizedPrefix = NormalizeSymbols(prefix);
                 if (normalizedValue.StartsWith(normalizedPrefix, StringComparison.Ordinal))
                 {
-                    IsSearchPopupOpen = false;
+                    ChatVM.IsSearchPopupOpen = false;
                     Variables.Clear();
                     HasVariables = false;
                     IsMiniVarsExpanded = false;
@@ -451,7 +432,7 @@ namespace PromptMasterv5.ViewModels
                 }
             }
 
-            IsSearchPopupOpen = false;
+            ChatVM.IsSearchPopupOpen = false;
             ParseVariablesRealTime(value);
         }
 
@@ -637,11 +618,6 @@ RegisterWindowHotkey("ToggleMiniWindowHotkey", Config.MiniWindowHotkey, () => To
             }
         }
 
-        public Task ExecuteAiQuery()
-        {
-            return ChatVM.ExecuteAiQuery();
-        }
-
         private static char NormalizeSymbol(char c)
         {
             return c switch
@@ -659,17 +635,6 @@ RegisterWindowHotkey("ToggleMiniWindowHotkey", Config.MiniWindowHotkey, () => To
         private static string NormalizeSymbols(string s)
         {
             return new string((s ?? "").Select(NormalizeSymbol).ToArray());
-        }
-
-        public Task ExecuteMiniAiOrPatternAsync()
-        {
-            return ChatVM.ExecuteMiniAiOrPatternAsync();
-        }
-
-        [RelayCommand]
-        private void ConfirmSearchResult()
-        {
-            ChatVM.ConfirmSearchResultCommand.Execute(null);
         }
 
         private void ParseVariablesRealTime(string content)
@@ -702,7 +667,7 @@ RegisterWindowHotkey("ToggleMiniWindowHotkey", Config.MiniWindowHotkey, () => To
             }
             else
             {
-                finalContent = MiniInputText;
+                finalContent = ChatVM.MiniInputText;
                 if (!LocalConfig.MiniPinnedPromptClickShowsFullContent && !string.IsNullOrWhiteSpace(LocalConfig.MiniSelectedPinnedPromptId))
                 {
                     var pinned = Files.FirstOrDefault(f => f.Id == LocalConfig.MiniSelectedPinnedPromptId);
@@ -740,7 +705,7 @@ RegisterWindowHotkey("ToggleMiniWindowHotkey", Config.MiniWindowHotkey, () => To
             string content = CompileContent();
             await ExecuteSendAsync(content, InputMode.SmartFocus);
             if (IsFullMode) AdditionalInput = "";
-            else MiniInputText = "";
+            else ChatVM.MiniInputText = "";
         }
 
         public async Task SendByCoordinate()
@@ -748,7 +713,7 @@ RegisterWindowHotkey("ToggleMiniWindowHotkey", Config.MiniWindowHotkey, () => To
             string content = CompileContent().TrimEnd();
             await ExecuteSendAsync(content, InputMode.CoordinateClick);
             if (IsFullMode) AdditionalInput = "";
-            else MiniInputText = "";
+            else ChatVM.MiniInputText = "";
         }
 
         private async Task ExecuteSendAsync(string content, InputMode targetMode)
@@ -784,7 +749,7 @@ RegisterWindowHotkey("ToggleMiniWindowHotkey", Config.MiniWindowHotkey, () => To
 
             if (!IsFullMode)
             {
-                MiniInputText = "";
+                ChatVM.MiniInputText = "";
             }
             else
             {
@@ -959,38 +924,7 @@ RegisterWindowHotkey("ToggleMiniWindowHotkey", Config.MiniWindowHotkey, () => To
             if (handle != IntPtr.Zero) _previousWindowHandle = handle;
         }
 
-        [RelayCommand]
-        private void CreateFolder()
-        {
-            SidebarVM.CreateFolderCommand.Execute(null);
-        }
-
-        [RelayCommand]
-        private void CreateFile()
-        {
-            if (SelectedFolder == null) return;
-            _isCreatingFile = true;
-            SidebarVM.CreateFileCommand.Execute(null);
-            _isCreatingFile = false;
-        }
         [RelayCommand] private void DeleteFile(PromptItem? i) { var t = i ?? SelectedFile; if (t != null) { Files.Remove(t); if (SelectedFile == t) SelectedFile = null; RequestSave(); } }
-        [RelayCommand]
-        private void DeleteFolder(FolderItem? folder)
-        {
-            SidebarVM.DeleteFolderCommand.Execute(folder);
-        }
-
-        [RelayCommand]
-        private void ChangeFolderIcon(FolderItem f)
-        {
-            SidebarVM.ChangeFolderIconCommand.Execute(f);
-        }
-
-        [RelayCommand]
-        private void RenameFolder(FolderItem f)
-        {
-            SidebarVM.RenameFolderCommand.Execute(f);
-        }
         [RelayCommand]
         private void ChangeFileIcon(PromptItem f)
         {
@@ -1041,7 +975,6 @@ RegisterWindowHotkey("ToggleMiniWindowHotkey", Config.MiniWindowHotkey, () => To
             IsSettingsOpen = false;
         }
         [RelayCommand] private void SelectSettingsTab(string s) { if (int.TryParse(s, out int i)) SelectedSettingsTab = i; }
-        public void ReorderFolders(int o, int n) { SidebarVM.ReorderFolders(o, n); }
         public void MoveFileToFolder(PromptItem f, FolderItem t) { if (f == null || t == null || f.FolderId == t.Id) return; f.FolderId = t.Id; FilesView?.Refresh(); if (SelectedFile == f) SelectedFile = null; RequestSave(); }
         [RelayCommand] private void ToggleNavigation() => IsNavigationVisible = !IsNavigationVisible;
         [RelayCommand] private void ToggleEditMode() { IsEditMode = !IsEditMode; if (!IsEditMode) RequestSave(); }
@@ -1056,7 +989,7 @@ RegisterWindowHotkey("ToggleMiniWindowHotkey", Config.MiniWindowHotkey, () => To
             try
             {
                 ConfigService.Save(Config);
-                await _dataService.SaveAsync(Folders, Files);
+                await _dataService.SaveAsync(SidebarVM.Folders, Files);
                 _lastSyncTime = DateTime.Now;
                 UpdateTimeDisplay();
                 IsDirty = false;
@@ -1125,15 +1058,15 @@ RegisterWindowHotkey("ToggleMiniWindowHotkey", Config.MiniWindowHotkey, () => To
                 }
 
                 SelectedFile = null;
-                SelectedFolder = null;
+                SidebarVM.SelectedFolder = null;
 
-                Folders.Clear();
-                foreach (var f in data.Folders) Folders.Add(f);
+                SidebarVM.Folders.Clear();
+                foreach (var f in data.Folders) SidebarVM.Folders.Add(f);
 
                 Files.Clear();
                 foreach (var f in data.Files) Files.Add(f);
 
-                if (Folders.Count > 0) SelectedFolder = Folders.FirstOrDefault();
+                if (SidebarVM.Folders.Count > 0) SidebarVM.SelectedFolder = SidebarVM.Folders.FirstOrDefault();
 
                 IsDirty = false;
                 _lastSyncTime = DateTime.Now;
@@ -1229,12 +1162,12 @@ RegisterWindowHotkey("ToggleMiniWindowHotkey", Config.MiniWindowHotkey, () => To
 
             if (dialog.ShowDialog() == true)
             {
-                var targetFolder = SelectedFolder ?? Folders.FirstOrDefault();
+                var targetFolder = SidebarVM.SelectedFolder ?? SidebarVM.Folders.FirstOrDefault();
                 if (targetFolder == null)
                 {
                     targetFolder = new FolderItem { Name = "导入的提示词" };
-                    Folders.Add(targetFolder);
-                    SelectedFolder = targetFolder;
+                    SidebarVM.Folders.Add(targetFolder);
+                    SidebarVM.SelectedFolder = targetFolder;
                 }
 
                 int count = 0;
@@ -1271,7 +1204,7 @@ RegisterWindowHotkey("ToggleMiniWindowHotkey", Config.MiniWindowHotkey, () => To
             }
         }
 
-        private bool FilterFiles(object o) => o is PromptItem f && SelectedFolder != null && f.FolderId == SelectedFolder.Id;
+        private bool FilterFiles(object o) => o is PromptItem f && SidebarVM.SelectedFolder != null && f.FolderId == SidebarVM.SelectedFolder.Id;
 
         private void RequestSave()
         {
@@ -1288,7 +1221,7 @@ RegisterWindowHotkey("ToggleMiniWindowHotkey", Config.MiniWindowHotkey, () => To
             try
             {
                 // 静默保存到本地 data.json，用户无感知
-                await _localDataService.SaveAsync(Folders, Files);
+                await _localDataService.SaveAsync(SidebarVM.Folders, Files);
             }
             catch (Exception ex)
             {
@@ -1297,7 +1230,7 @@ RegisterWindowHotkey("ToggleMiniWindowHotkey", Config.MiniWindowHotkey, () => To
             }
         }
 
-        private async Task SaveDataAsync() { try { await _dataService.SaveAsync(Folders, Files); _lastSyncTime = DateTime.Now; UpdateTimeDisplay(); } catch { SyncTimeDisplay = "Err"; } }
+        private async Task SaveDataAsync() { try { await _dataService.SaveAsync(SidebarVM.Folders, Files); _lastSyncTime = DateTime.Now; UpdateTimeDisplay(); } catch { SyncTimeDisplay = "Err"; } }
         private void UpdateTimeDisplay() { var s = DateTime.Now - _lastSyncTime; SyncTimeDisplay = s.TotalSeconds < 60 ? $"{(int)s.TotalSeconds}s" : $"{(int)s.TotalMinutes}m"; }
 
         // ★★★ 方案A：初始化与智能恢复逻辑 ★★★
@@ -1341,9 +1274,9 @@ RegisterWindowHotkey("ToggleMiniWindowHotkey", Config.MiniWindowHotkey, () => To
                 Files.Clear();
                 foreach (var file in data.Files) Files.Add(file);
 
-                if (Folders.Count > 0)
+                if (SidebarVM.Folders.Count > 0)
                 {
-                    var fid = Folders.First().Id;
+                    var fid = SidebarVM.Folders.First().Id;
                     foreach (var f in Files) if (string.IsNullOrEmpty(f.FolderId)) f.FolderId = fid;
                 }
 
@@ -1358,7 +1291,7 @@ RegisterWindowHotkey("ToggleMiniWindowHotkey", Config.MiniWindowHotkey, () => To
                     RequestSave();
                     SyncMiniPinnedPrompts();
                 };
-                SelectedFolder = Folders.FirstOrDefault();
+                SidebarVM.SelectedFolder = SidebarVM.Folders.FirstOrDefault();
                 IsFullMode = true;
 
                 // 如果不是从本地恢复的脏数据，则重置为 Clean
