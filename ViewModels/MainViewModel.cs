@@ -327,6 +327,45 @@ namespace PromptMasterv5.ViewModels
                 SetBrush(resources, "Block3Background", "#363B40");
                 SetBrush(resources, "Block4Background", "#363B40");
 
+                SetBrush(resources, "PrimaryTextBrush", "#B8BFC6");
+                SetBrush(resources, "SecondaryTextBrush", "#B8BFC6");
+                SetBrush(resources, "PlaceholderTextBrush", "#B8BFC6");
+
+                SetBrush(resources, "DividerBrush", "#4A4A55");
+
+                SetBrush(resources, "ActionIconBrush", "#B0B4B8");
+                SetBrush(resources, "ActionIconHoverBrush", "#FFFFFF");
+                SetBrush(resources, "HeaderIconBrush", "#B0B4B8");
+                SetBrush(resources, "HeaderIconHoverBrush", "#FFFFFF");
+
+                SetBrush(resources, "InputFocusBackgroundBrush", "#2E3033");
+                SetBrush(resources, "ListItemHoverBackgroundBrush", "#3A3F45");
+                SetBrush(resources, "ListItemSelectedBackgroundBrush", "#444A52");
+
+                SetBrush(resources, "AppBackground", "#2E3033");
+                SetBrush(resources, "SidebarBackground", "#363B40");
+                SetBrush(resources, "CardBackground", "#2E3033");
+                SetBrush(resources, "TextPrimary", "#B8BFC6");
+                SetBrush(resources, "TextSecondary", "#B8BFC6");
+                SetBrush(resources, "DividerColor", "#4A4A55");
+                SetBrush(resources, "HintBrush", "#B8BFC6");
+
+                // Markdown theme colors for dark theme
+                SetBrush(resources, "GithubTextBrush", "#B8BFC6");
+                SetBrush(resources, "GithubLinkBrush", "#58A6FF");
+                SetBrush(resources, "GithubBorderBrush", "#30363D");
+                SetBrush(resources, "GithubCodeBgBrush", "#1E1E1E");
+                SetBrush(resources, "GithubQuoteBorderBrush", "#52586F");
+            }
+
+            if (theme == ThemeType.Dark)
+            {
+                SetBrush(resources, "ShellBackground", "#2E3033");
+                SetBrush(resources, "Block1Background", "#2E3033");
+                SetBrush(resources, "Block2Background", "#2E3033");
+                SetBrush(resources, "Block3Background", "#363B40");
+                SetBrush(resources, "Block4Background", "#363B40");
+
                 SetBrush(resources, "PrimaryTextBrush", "#E6E8EA");
                 SetBrush(resources, "SecondaryTextBrush", "#B0B4B8");
                 SetBrush(resources, "PlaceholderTextBrush", "#8A8F96");
