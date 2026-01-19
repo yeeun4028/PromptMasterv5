@@ -1,26 +1,26 @@
 using System;
 using System.Globalization;
-using System.Windows;
 using System.Windows.Data;
+using System.Windows.Media;
 
-namespace PromptMasterv5.Utils
+namespace PromptMasterv5.Utils;
+
+public sealed class SelectedIdToBrushConverter : IMultiValueConverter
 {
-    public class SelectedIdToBrushConverter : IMultiValueConverter
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
-        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
-        {
-            var selectedId = values.Length > 0 ? values[0] as string : null;
-            var currentId = values.Length > 1 ? values[1] as string : null;
+        var selectedId = values.Length > 0 ? values[0] as string : null;
+        var itemId = values.Length > 1 ? values[1] as string : null;
 
-            var isSelected = !string.IsNullOrWhiteSpace(selectedId) && string.Equals(selectedId, currentId, StringComparison.Ordinal);
+        var isSelected = !string.IsNullOrEmpty(selectedId) &&
+                         !string.IsNullOrEmpty(itemId) &&
+                         string.Equals(selectedId, itemId, StringComparison.Ordinal);
 
-            var active = System.Windows.Application.Current.TryFindResource("MiniModeBtnActiveBrush") as System.Windows.Media.Brush;
-            var inactive = System.Windows.Application.Current.TryFindResource("MiniModeBtnInactiveBrush") as System.Windows.Media.Brush;
-
-            return isSelected ? (active ?? System.Windows.Media.Brushes.White) : (inactive ?? System.Windows.Media.Brushes.Gray);
-        }
-
-        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) =>
-            throw new NotSupportedException();
+        var key = isSelected ? "MiniModeBtnActiveBrush" : "MiniModeBtnInactiveBrush";
+        var brush = System.Windows.Application.Current?.TryFindResource(key) as System.Windows.Media.Brush;
+        return brush ?? System.Windows.Media.Brushes.White;
     }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
 }

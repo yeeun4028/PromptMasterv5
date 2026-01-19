@@ -16,19 +16,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Betalgo.OpenAI" Version="8.7.2" />
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="gong-wpf-dragdrop" Version="4.0.0" />
-    <PackageReference Include="HandyControl" Version="3.5.1" />
-    <PackageReference Include="Markdig.Wpf" Version="0.5.0.1" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
-    <PackageReference Include="MouseKeyHook" Version="5.7.1" />
-    <PackageReference Include="NHotkey.Wpf" Version="3.0.0" />
-    <PackageReference Include="WebDav.Client" Version="2.9.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Infrastructure\" />
+    <PackageReference Include="Betalgo.OpenAI" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="gong-wpf-dragdrop" />
+    <PackageReference Include="HandyControl" />
+    <PackageReference Include="Markdig.Wpf" />
+    <PackageReference Include="MouseKeyHook" />
+    <PackageReference Include="NHotkey.Wpf" />
+    <PackageReference Include="WebDav.Client" />
   </ItemGroup>
 
 </Project>

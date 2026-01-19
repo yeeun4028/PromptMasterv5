@@ -198,6 +198,34 @@ namespace PromptMasterv5.ViewModels
             if (SearchResults.Count > 0) SelectedSearchItem = SearchResults.FirstOrDefault();
         }
 
+        public void UpdateSearchPopup(string keyword)
+        {
+            PerformSearch(keyword);
+            IsSearchPopupOpen = SearchResults.Count > 0;
+        }
+
+        [RelayCommand]
+        private void SelectNextSearchResult()
+        {
+            if (SearchResults.Count <= 0) return;
+
+            var currentIndex = SelectedSearchItem == null ? -1 : SearchResults.IndexOf(SelectedSearchItem);
+            var nextIndex = currentIndex + 1;
+            if (nextIndex >= SearchResults.Count) nextIndex = 0;
+            SelectedSearchItem = SearchResults[nextIndex];
+        }
+
+        [RelayCommand]
+        private void SelectPrevSearchResult()
+        {
+            if (SearchResults.Count <= 0) return;
+
+            var currentIndex = SelectedSearchItem == null ? 0 : SearchResults.IndexOf(SelectedSearchItem);
+            var prevIndex = currentIndex - 1;
+            if (prevIndex < 0) prevIndex = SearchResults.Count - 1;
+            SelectedSearchItem = SearchResults[prevIndex];
+        }
+
         [RelayCommand]
         private void ConfirmSearchResult()
         {

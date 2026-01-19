@@ -1,42 +1,42 @@
 using GongSolutions.Wpf.DragDrop;
-using PromptMasterv5.Core.Models;
+using System;
 using System.Windows;
-using DragDropEffects = System.Windows.DragDropEffects;
 using IDropTarget = GongSolutions.Wpf.DragDrop.IDropTarget;
 
-namespace PromptMasterv5.ViewModels
+namespace PromptMasterv5.ViewModels;
+
+public sealed class PinnedPromptDropHandler : IDropTarget
 {
-    public class PinnedPromptDropHandler : IDropTarget
+    private readonly MainViewModel _vm;
+
+    public PinnedPromptDropHandler(MainViewModel vm)
     {
-        private readonly MainViewModel _viewModel;
+        _vm = vm;
+    }
 
-        public PinnedPromptDropHandler(MainViewModel viewModel)
-        {
-            _viewModel = viewModel;
-        }
+    public void DragOver(IDropInfo dropInfo)
+    {
+        if (dropInfo == null) return;
+        if (dropInfo.Data == null) return;
+        if (dropInfo.TargetCollection == null) return;
 
-        public void DragOver(IDropInfo dropInfo)
-        {
-            if (dropInfo.Data is PromptItem && dropInfo.TargetItem is PromptItem)
-            {
-                dropInfo.DropTargetAdorner = DropTargetAdorners.Insert;
-                dropInfo.Effects = DragDropEffects.Move;
-            }
-        }
+        dropInfo.Effects = System.Windows.DragDropEffects.Move;
+        dropInfo.DropTargetAdorner = DropTargetAdorners.Insert;
+    }
 
-        public void Drop(IDropInfo dropInfo)
-        {
-            if (dropInfo.Data is not PromptItem source || dropInfo.TargetItem is not PromptItem) return;
+    public void Drop(IDropInfo dropInfo)
+    {
+        if (dropInfo == null) return;
+        if (dropInfo.DragInfo == null) return;
 
-            int oldIndex = _viewModel.ChatVM.MiniPinnedPrompts.IndexOf(source);
-            int newIndex = dropInfo.InsertIndex;
-            if (oldIndex < 0) return;
-            if (oldIndex < newIndex) newIndex--;
-            if (newIndex < 0) newIndex = 0;
-            if (newIndex >= _viewModel.ChatVM.MiniPinnedPrompts.Count) newIndex = _viewModel.ChatVM.MiniPinnedPrompts.Count - 1;
-            if (oldIndex == newIndex) return;
+        var oldIndex = dropInfo.DragInfo.SourceIndex;
+        var newIndex = dropInfo.InsertIndex;
 
-            _viewModel.ReorderMiniPinnedPrompts(oldIndex, newIndex);
-        }
+        if (oldIndex < 0) return;
+        if (newIndex < 0) return;
+
+        if (newIndex > oldIndex) newIndex--;
+
+        _vm.ReorderMiniPinnedPrompts(oldIndex, newIndex);
     }
 }

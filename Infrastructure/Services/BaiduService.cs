@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.Json.Nodes; // 必须引用: 用于解析 JSON
 using System.Threading.Tasks;
 
-namespace PromptMasterv5.Infrastructure.Services
+namespace PromptMasterv5.Services
 {
     public class BaiduService
     {
