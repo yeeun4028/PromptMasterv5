@@ -323,6 +323,7 @@
         <Style x:Key="MiniRichTextBoxStyle" TargetType="RichTextBox">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource MiniCaretBrush}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="0"/>
             <Setter Property="FontSize" Value="16"/>
@@ -919,7 +920,7 @@
                                 <RowDefinition Height="3*"/>
                             </Grid.RowDefinitions>
 
-                            <Grid Grid.Row="0" Margin="20,10,20,0" TextElement.Foreground="{DynamicResource PrimaryTextBrush}" TextElement.FontFamily="Segoe UI, Microsoft YaHei UI">
+                            <Grid Grid.Row="0" Margin="20,10,20,0" TextElement.Foreground="{DynamicResource Block3EditorTextBrush}" TextElement.FontFamily="Segoe UI, Microsoft YaHei UI">
                                 <Grid.Style>
                                     <Style TargetType="Grid">
                                         <Style.Triggers>
@@ -945,7 +946,13 @@
                                                  FontWeight="Bold"
                                                  BorderThickness="0"
                                                  Background="Transparent"
-                                                 Foreground="{DynamicResource PrimaryTextBrush}"
+                                                 Foreground="{DynamicResource Block3EditorTextBrush}"
+                                                 CaretBrush="{DynamicResource Block3EditorCaretBrush}"
+                                                 SelectionBrush="{DynamicResource Block3EditorSelectionBrush}"
+                                                 SelectionOpacity="1"
+                                                 TextBlock.LineHeight="26"
+                                                 TextOptions.TextFormattingMode="Ideal"
+                                                 TextOptions.TextRenderingMode="ClearType"
                                                  FontFamily="Segoe UI, Microsoft YaHei UI">
                                         <TextBox.Style>
                                             <Style TargetType="TextBox">
@@ -990,7 +997,7 @@
                                                FontWeight="Bold"
                                                VerticalAlignment="Center"
                                                IsHitTestVisible="False"
-                                               Foreground="{DynamicResource PrimaryTextBrush}"
+                                               Foreground="{DynamicResource Block3EditorTextBrush}"
                                                FontFamily="Segoe UI, Microsoft YaHei UI"
                                                Margin="0,20,0,0">
                                         <TextBlock.Style>
@@ -1167,7 +1174,14 @@
                                              VerticalContentAlignment="Top"
                                              BorderThickness="0"
                                              Background="Transparent"
+                                             Foreground="{DynamicResource Block3EditorTextBrush}"
+                                             CaretBrush="{DynamicResource Block3EditorCaretBrush}"
+                                             SelectionBrush="{DynamicResource Block3EditorSelectionBrush}"
+                                             SelectionOpacity="1"
                                              FontSize="14"
+                                             TextBlock.LineHeight="26"
+                                             TextOptions.TextFormattingMode="Ideal"
+                                             TextOptions.TextRenderingMode="ClearType"
                                              Padding="5"
                                              FontFamily="Segoe UI, Microsoft YaHei UI"
                                              PreviewKeyDown="TextBox_PreviewKeyDown">
@@ -1207,9 +1221,25 @@
                                     </TextBlock>
                                 </Grid>
 
-                                <md:MarkdownViewer Grid.Row="1" 
-                   Markdown="{Binding SelectedFile.Content}" 
-                   xml:lang="zh-CN">
+                                <md:MarkdownViewer Grid.Row="1"
+                                                  Markdown="{Binding SelectedFile.Content}"
+                                                  xml:lang="zh-CN"
+                                                  Background="{DynamicResource Block3Background}">
+                                    <md:MarkdownViewer.Resources>
+                                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#4A89DC"/>
+                                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#B8BFC6"/>
+
+                                        <Style x:Key="{x:Static md:Styles.DocumentStyleKey}" TargetType="{x:Type FlowDocument}">
+                                            <Setter Property="FontFamily" Value="Segoe UI, Microsoft YaHei UI"/>
+                                            <Setter Property="FontSize" Value="16"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource Block3EditorTextBrush}"/>
+                                            <Setter Property="LineHeight" Value="26"/>
+                                            <Setter Property="TextAlignment" Value="Left"/>
+                                            <Setter Property="PagePadding" Value="30,30,30,50"/>
+                                            <Setter Property="TextOptions.TextFormattingMode" Value="Ideal"/>
+                                            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+                                        </Style>
+                                    </md:MarkdownViewer.Resources>
                                     <md:MarkdownViewer.Style>
                                         <Style TargetType="md:MarkdownViewer">
                                             <Setter Property="Visibility" Value="Visible"/>

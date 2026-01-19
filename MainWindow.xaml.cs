@@ -68,6 +68,8 @@ namespace PromptMasterv5
         private DispatcherTimer? _miniUrlMonitorTimer;
         private bool _isMiniTargetUrlActive;
         private bool _shouldStealMiniFocusWhenIdle;
+        private DateTime _suppressMiniAutoShowUntilUtc = DateTime.MinValue;
+        private string _suppressMiniAutoShowUrl = "";
 
         private double GetMiniDefaultWidth()
         {
@@ -422,9 +424,22 @@ namespace PromptMasterv5
 
             if (!isMatch)
             {
+                _suppressMiniAutoShowUrl = "";
                 Topmost = false;
                 _shouldStealMiniFocusWhenIdle = false;
                 if (!IsActive && Visibility == Visibility.Visible) Hide();
+                return;
+            }
+
+            var nowUtc = DateTime.UtcNow;
+            if (nowUtc < _suppressMiniAutoShowUntilUtc)
+            {
+                return;
+            }
+            if (Visibility != Visibility.Visible &&
+                !string.IsNullOrWhiteSpace(_suppressMiniAutoShowUrl) &&
+                string.Equals(url ?? "", _suppressMiniAutoShowUrl, StringComparison.OrdinalIgnoreCase))
+            {
                 return;
             }
 
@@ -440,7 +455,7 @@ namespace PromptMasterv5
             Topmost = true;
 
             var idleMs = (DateTime.UtcNow - _lastMouseActivityUtc).TotalMilliseconds;
-            if (idleMs >= 2000 && _shouldStealMiniFocusWhenIdle && !IsActive)
+            if (idleMs >= 1000 && _shouldStealMiniFocusWhenIdle && !IsActive)
             {
                 _shouldStealMiniFocusWhenIdle = false;
                 BringToFrontAndEnsureOnScreen();
@@ -1393,6 +1408,14 @@ namespace PromptMasterv5
 
         private async Task TriggerSendProcess(InputMode mode)
         {
+            var sendHwnd = NativeMethods.GetForegroundWindow();
+            var sendUrl = BrowserUrlDetector.TryGetChromeOrEdgeAddressBarUrl(sendHwnd);
+            if (!string.IsNullOrWhiteSpace(sendUrl))
+            {
+                _suppressMiniAutoShowUrl = sendUrl;
+            }
+            _suppressMiniAutoShowUntilUtc = DateTime.UtcNow.AddMilliseconds(2000);
+            _shouldStealMiniFocusWhenIdle = false;
             this.Hide();
             await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.Render);
             await Task.Delay(60);

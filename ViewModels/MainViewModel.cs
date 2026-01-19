@@ -315,6 +315,18 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ChangeFileIcon(PromptItem? file)
+    {
+        if (file == null) return;
+        var dialog = new PromptMasterv5.IconInputDialog(file.IconGeometry);
+        if (dialog.ShowDialog() == true)
+        {
+            file.IconGeometry = dialog.ResultGeometry;
+            RequestSave();
+        }
+    }
+
+    [RelayCommand]
     private void ToggleNavigation()
     {
         IsNavigationVisible = !IsNavigationVisible;
@@ -413,6 +425,11 @@ public partial class MainViewModel : ObservableObject
             SetBrush(resources, "ActionIconHoverBrush", "#ACBFBE");
             SetBrush(resources, "HeaderIconBrush", "#ACBFBE");
             SetBrush(resources, "HeaderIconHoverBrush", "#ACBFBE");
+
+            SetBrush(resources, "MiniCaretBrush", "#B8BFC6");
+            SetBrush(resources, "Block3EditorTextBrush", "#B8BFC6");
+            SetBrush(resources, "Block3EditorCaretBrush", "#B8BFC6");
+            SetBrush(resources, "Block3EditorSelectionBrush", "#4A89DC");
         }
         else
         {
@@ -440,6 +457,11 @@ public partial class MainViewModel : ObservableObject
             SetBrush(resources, "ActionIconHoverBrush", "#333333");
             SetBrush(resources, "HeaderIconBrush", "#666666");
             SetBrush(resources, "HeaderIconHoverBrush", "#333333");
+
+            SetBrush(resources, "MiniCaretBrush", "#333333");
+            SetBrush(resources, "Block3EditorTextBrush", "#333333");
+            SetBrush(resources, "Block3EditorCaretBrush", "#333333");
+            SetBrush(resources, "Block3EditorSelectionBrush", "#4A89DC");
         }
     }
 
