@@ -22,8 +22,8 @@
             <DropShadowEffect x:Key="EffectShadow2" Color="#000000" Direction="270" ShadowDepth="4" BlurRadius="10" Opacity="0.4"/>
 
             <SolidColorBrush x:Key="ShellBackground" Color="#2E3033"/>
-            <SolidColorBrush x:Key="AppBackground" Color="#2E3033"/>
-            <SolidColorBrush x:Key="SidebarBackground" Color="#363B40"/>
+            <SolidColorBrush x:Key="AppBackground" Color="#363B40"/>
+            <SolidColorBrush x:Key="SidebarBackground" Color="#2E3033"/>
             <SolidColorBrush x:Key="CardBackground" Color="#363B40"/>
 
             <SolidColorBrush x:Key="Block1Background" Color="#E8E7E7"/>

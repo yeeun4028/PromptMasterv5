@@ -34,7 +34,6 @@ public partial class MainViewModel : ObservableObject
     private readonly IDataService _dataService;
     private readonly IDataService _localDataService;
     private readonly GlobalKeyService _keyService;
-    private readonly BrowserAutomationService _browserService;
     private readonly IAiService _aiService;
     private readonly FabricService _fabricService;
     private readonly BaiduService _baiduService;
@@ -77,7 +76,6 @@ public partial class MainViewModel : ObservableObject
         WebDavDataService dataService,
         FileDataService localDataService,
         GlobalKeyService keyService,
-        BrowserAutomationService browserService,
         FabricService fabricService,
         BaiduService baiduService,
         ChatViewModel chatVM,
@@ -87,7 +85,6 @@ public partial class MainViewModel : ObservableObject
         _dataService = dataService;
         _localDataService = localDataService;
         _keyService = keyService;
-        _browserService = browserService;
         _fabricService = fabricService;
         _baiduService = baiduService;
 
@@ -137,9 +134,6 @@ public partial class MainViewModel : ObservableObject
             if (!IsFullMode) ChatVM.MiniInputText = "";
         });
         if (Config.EnableDoubleCtrl) try { _keyService.Start(); } catch { }
-
-        _browserService.OnTargetSiteMatched += BrowserService_OnTargetSiteMatched;
-        _browserService.Start();
 
         ApplyTheme(LocalConfig.Theme);
         UpdateWindowHotkeys();
@@ -234,7 +228,7 @@ public partial class MainViewModel : ObservableObject
     public string SelectedSettingsTabName => SelectedSettingsTab switch
     {
         0 => "基础",
-        1 => "AI",
+        1 => "发送方式",
         2 => "外部工具",
         3 => "发送",
         4 => "迷你",
@@ -396,8 +390,8 @@ public partial class MainViewModel : ObservableObject
         if (theme == ThemeType.Dark)
         {
             SetBrush(resources, "ShellBackground", "#2E3033");
-            SetBrush(resources, "AppBackground", "#2E3033");
-            SetBrush(resources, "SidebarBackground", "#363B40");
+            SetBrush(resources, "AppBackground", "#363B40");
+            SetBrush(resources, "SidebarBackground", "#2E3033");
             SetBrush(resources, "CardBackground", "#363B40");
             SetBrush(resources, "TextPrimary", "#ACBFBE");
             SetBrush(resources, "TextSecondary", "#ACBFBE");
@@ -534,38 +528,6 @@ public partial class MainViewModel : ObservableObject
         if (!IsFullMode) IsMiniVarsExpanded = HasVariables;
     }
 
-    private void BrowserService_OnTargetSiteMatched(object? sender, EventArgs e)
-    {
-        Application.Current.Dispatcher.Invoke(() =>
-        {
-            var mainWindow = Application.Current.MainWindow;
-            if (mainWindow == null) return;
-            if (!IsFullMode && mainWindow.Visibility == Visibility.Visible)
-            {
-                CaptureForegroundWindow();
-                if (NativeMethods.IsKeyDown(0x01)) return;
-
-                mainWindow.Activate();
-                mainWindow.Focus();
-                mainWindow.Topmost = true;
-
-                if (mainWindow is MainWindow win)
-                {
-                    win.MiniInputBox.Focus();
-                    if (win.MiniInputBox.Document != null)
-                    {
-                        win.MiniInputBox.CaretPosition = win.MiniInputBox.Document.ContentEnd;
-                        win.MiniInputBox.ScrollToEnd();
-                    }
-                }
-            }
-        });
-    }
-
-    private void CaptureForegroundWindow()
-    {
-        try { _previousWindowHandle = NativeMethods.GetForegroundWindow(); } catch { }
-    }
 
     [RelayCommand]
     private void EnableMiniAiMode()

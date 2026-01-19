@@ -18,6 +18,8 @@ using System.Windows.Shapes;
 using System.Windows.Documents;
 using System.Text.RegularExpressions;
 using System.Windows.Media.Media3D;
+using System.Windows.Automation;
+using System.Diagnostics;
 
 // 引用自定义枚举和控件别名，解决命名冲突
 using InputMode = PromptMasterv5.Core.Models.InputMode;
@@ -334,6 +336,170 @@ namespace PromptMasterv5
 
             // 处理窗口关闭事件
             this.Closing += MainWindow_Closing;
+
+            StartMiniUrlMonitor();
+        }
+
+        private DispatcherTimer? _miniUrlMonitorTimer;
+        private bool _isMiniTargetUrlActive;
+        private string _lastForegroundUrl = "";
+
+        private void StartMiniUrlMonitor()
+        {
+            if (_miniUrlMonitorTimer != null) return;
+            _miniUrlMonitorTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(450) };
+            _miniUrlMonitorTimer.Tick += (_, __) => UpdateMiniUrlMonitor();
+            _miniUrlMonitorTimer.Start();
+        }
+
+        private void UpdateMiniUrlMonitor()
+        {
+            if (ViewModel == null) return;
+            if (ViewModel.IsFullMode)
+            {
+                _isMiniTargetUrlActive = false;
+                _lastForegroundUrl = "";
+                return;
+            }
+
+            if (ViewModel.LocalConfig.IsMiniTopmostLocked)
+            {
+                _isMiniTargetUrlActive = false;
+                _lastForegroundUrl = "";
+                return;
+            }
+
+            var keywords = ViewModel.LocalConfig?.CoordinateRules?
+                .Select(r => r.UrlContains?.Trim())
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Select(s => s!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            if (keywords == null || keywords.Length == 0)
+            {
+                _isMiniTargetUrlActive = false;
+                _lastForegroundUrl = "";
+                return;
+            }
+
+            var hwnd = NativeMethods.GetForegroundWindow();
+            var processName = GetProcessName(hwnd);
+            var isChromium = processName is "chrome" or "msedge";
+
+            var url = isChromium ? TryGetChromeOrEdgeAddressBarUrl(hwnd) : "";
+            var isMatch = isChromium &&
+                          !string.IsNullOrWhiteSpace(url) &&
+                          keywords.Any(k => url.Contains(k, StringComparison.OrdinalIgnoreCase));
+
+            _lastForegroundUrl = url ?? "";
+            _isMiniTargetUrlActive = isMatch;
+
+            if (isMatch)
+            {
+                if (Visibility != Visibility.Visible)
+                {
+                    var oldShowActivated = ShowActivated;
+                    ShowActivated = false;
+                    Show();
+                    ShowActivated = oldShowActivated;
+                }
+
+                EnsureWindowOnScreen();
+                Topmost = true;
+                return;
+            }
+
+            Topmost = false;
+
+            if (!IsActive && Visibility == Visibility.Visible)
+            {
+                Hide();
+            }
+        }
+
+        private static string GetProcessName(IntPtr hwnd)
+        {
+            if (hwnd == IntPtr.Zero) return "";
+            try
+            {
+                NativeMethods.GetWindowThreadProcessId(hwnd, out uint pid);
+                using var process = Process.GetProcessById((int)pid);
+                return process.ProcessName.ToLowerInvariant();
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+        private static string TryGetChromeOrEdgeAddressBarUrl(IntPtr hwnd)
+        {
+            if (hwnd == IntPtr.Zero) return "";
+            try
+            {
+                var root = AutomationElement.FromHandle(hwnd);
+                if (root == null) return "";
+
+                var editCondition = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Edit);
+                var edits = root.FindAll(TreeScope.Descendants, editCondition);
+                if (edits == null || edits.Count == 0) return "";
+
+                string bestValue = "";
+                double bestScore = double.NegativeInfinity;
+
+                foreach (AutomationElement element in edits)
+                {
+                    if (!element.TryGetCurrentPattern(ValuePattern.Pattern, out object patternObj)) continue;
+                    var value = ((ValuePattern)patternObj).Current.Value;
+                    if (string.IsNullOrWhiteSpace(value)) continue;
+                    if (value.Any(char.IsWhiteSpace)) continue;
+                    if (!LooksLikeUrlOrDomain(value)) continue;
+
+                    var rect = element.Current.BoundingRectangle;
+                    if (rect.IsEmpty) continue;
+                    if (rect.Height < 10 || rect.Height > 80) continue;
+                    if (rect.Width < 350) continue;
+                    if (rect.Top > 260) continue;
+
+                    var name = element.Current.Name ?? "";
+                    var automationId = element.Current.AutomationId ?? "";
+                    var hintBoost =
+                        (name.Contains("address", StringComparison.OrdinalIgnoreCase) ||
+                         name.Contains("search", StringComparison.OrdinalIgnoreCase) ||
+                         name.Contains("地址", StringComparison.OrdinalIgnoreCase) ||
+                         name.Contains("网址", StringComparison.OrdinalIgnoreCase) ||
+                         name.Contains("搜索", StringComparison.OrdinalIgnoreCase) ||
+                         automationId.Contains("address", StringComparison.OrdinalIgnoreCase))
+                            ? 2000
+                            : 0;
+
+                    var score = hintBoost + rect.Width - rect.Top * 5;
+                    if (score > bestScore)
+                    {
+                        bestScore = score;
+                        bestValue = value;
+                    }
+                }
+
+                return bestValue;
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+        private static bool LooksLikeUrlOrDomain(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return false;
+            if (value.Length < 4) return false;
+            if (value.Contains("://", StringComparison.OrdinalIgnoreCase)) return true;
+            if (value.StartsWith("about:", StringComparison.OrdinalIgnoreCase)) return true;
+            if (value.StartsWith("chrome://", StringComparison.OrdinalIgnoreCase)) return true;
+            if (value.StartsWith("edge://", StringComparison.OrdinalIgnoreCase)) return true;
+            if (value.Contains('.')) return true;
+            return false;
         }
 
         private void ScheduleMiniPersist()
@@ -545,6 +711,12 @@ namespace PromptMasterv5
             {
                 return;
             }
+            if (ViewModel != null && !ViewModel.IsFullMode && _isMiniTargetUrlActive)
+            {
+                this.Topmost = false;
+                StopHideTimer();
+                return;
+            }
 
             // 1. 需求实现：不需要始终保持置顶
             // 当失去焦点（用户点击了其他软件）时，取消置顶，允许其他窗口覆盖它
@@ -567,7 +739,7 @@ namespace PromptMasterv5
                 bool isAnyChildActive = Application.Current.Windows.Cast<Window>().Any(w => w.IsActive);
 
                 // 只有当主窗口不活动，且没有任何子窗口活动时，才执行隐藏
-                if (!this.IsActive && !isAnyChildActive)
+                if (!this.IsActive && !isAnyChildActive && !(ViewModel != null && !ViewModel.IsFullMode && _isMiniTargetUrlActive))
                 {
                     this.Hide();
                 }

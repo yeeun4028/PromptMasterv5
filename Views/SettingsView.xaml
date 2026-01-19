@@ -96,6 +96,7 @@
             <Setter Property="Background" Value="{DynamicResource ShellBackground}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource DividerBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="#DEDEDE"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
@@ -129,11 +130,11 @@
             <Setter Property="Background" Value="{DynamicResource ShellBackground}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource DividerBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="#DEDEDE"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="PasswordBox">
                         <Border x:Name="border"
-                                Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="4">
@@ -333,7 +334,7 @@
                                     <Viewbox Width="16" Height="16" Margin="0,1,12,1">
                                         <TextBlock Text="⚡" FontSize="16" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
                                     </Viewbox>
-                                    <TextBlock Text="自动化" FontSize="14" VerticalAlignment="Center"/>
+                                    <TextBlock Text="发送方式" FontSize="14" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
 
@@ -420,9 +421,8 @@
 
                         <!-- Header with Close Button -->
                         <Grid Grid.Row="0" Margin="0,0,0,20">
-                            <TextBlock Text="{Binding SelectedSettingsTabName}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
                             <Button Command="{Binding SaveSettingsCommand}" 
-                                    Content="✕" FontSize="18" Foreground="#999"
+                                    Content="✕" FontSize="18" Foreground="{DynamicResource TextSecondary}"
                                     HorizontalAlignment="Right" VerticalAlignment="Top"
                                     Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="5">
                                 <Button.Template>
@@ -465,7 +465,6 @@
                                         <!-- Row 1: Double Ctrl -->
                                         <StackPanel Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
                                             <TextBlock Text="双击 Ctrl 键唤醒" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,4"/>
-                                            <TextBlock Text="即使窗口最小化，也能立即唤醒。" Style="{StaticResource HintTextStyle}"/>
                                         </StackPanel>
                                         <CheckBox Grid.Row="0" Grid.Column="1" 
                                                   IsChecked="{Binding Config.EnableDoubleCtrl}" 
@@ -476,7 +475,6 @@
                                         <!-- Row 2: Full Window -->
                                         <StackPanel Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
                                             <TextBlock Text="完整窗口" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,4"/>
-                                            <TextBlock Text="支持单键或组合键；按下后强制唤出完整窗口，再按一次隐藏。" Style="{StaticResource HintTextStyle}"/>
                                         </StackPanel>
                                         <TextBox Grid.Row="1" Grid.Column="1" 
                                                  Text="{Binding Config.FullWindowHotkey}" 
@@ -491,7 +489,6 @@
                                         <!-- Row 3: Mini Window -->
                                         <StackPanel Grid.Row="2" Grid.Column="0" VerticalAlignment="Center">
                                             <TextBlock Text="迷你窗口" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,4"/>
-                                            <TextBlock Text="支持单键或组合键；按下后强制唤出迷你窗口，再按一次隐藏。" Style="{StaticResource HintTextStyle}"/>
                                         </StackPanel>
                                         <TextBox Grid.Row="2" Grid.Column="1" 
                                                  Text="{Binding Config.MiniWindowHotkey}"
@@ -522,7 +519,7 @@
 
                                         <RadioButton GroupName="InputMode"
                                                      IsChecked="{Binding LocalConfig.Mode, Converter={converters:EnumToBoolConverter}, ConverterParameter=SmartFocus}"
-                                                     Content="智能回退模式 (推荐)"
+                                                     Content="智能回退模式"
                                                      FontSize="14" Cursor="Hand" Margin="0,0,0,5" VerticalContentAlignment="Center"/>
                                         <TextBlock Text="软件隐藏后，自动将焦点还给上一个活动的窗口 (如浏览器输入框)，然后发送内容。"
                                                    Style="{StaticResource HintTextStyle}" Margin="20,0,0,12"/>
