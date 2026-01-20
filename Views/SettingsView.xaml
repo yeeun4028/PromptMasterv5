@@ -1293,6 +1293,36 @@
 
                                         <TextBlock Text="提示：设置快捷键后会立即生效。" 
                                                    Style="{StaticResource HintTextStyle}" Margin="0,10,0,0"/>
+
+                                        <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,20,0,20"/>
+
+                                        <!-- 翻译框尺寸设置 -->
+                                        <TextBlock Text="翻译框尺寸" Style="{StaticResource FieldLabelTextStyle}" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,12"/>
+
+                                        <Grid Margin="0,0,0,12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="20"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="宽度 (px)" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                <TextBox Text="{Binding Config.TranslationPopupWidth, Mode=TwoWay}" 
+                                                         Style="{StaticResource ModernTextBoxStyle}"
+                                                         ToolTip="翻译结果窗口的宽度，建议 300-600"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="高度 (px)" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                <TextBox Text="{Binding Config.TranslationPopupHeight, Mode=TwoWay}" 
+                                                         Style="{StaticResource ModernTextBoxStyle}"
+                                                         ToolTip="翻译结果窗口的高度，建议 200-400"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <TextBlock Text="提示：翻译框会自动跟随鼠标位置，并确保不超出屏幕边界。" 
+                                                   Style="{StaticResource HintTextStyle}" Margin="0,10,0,0"/>
                                     </StackPanel>
 
                                     <!-- Sub-Tab Content: Baidu -->
