@@ -62,5 +62,10 @@ namespace PromptMasterv5.Views
         {
             ResultBox.Text = text;
         }
+
+        private void CloseButton_Click(object sender, System.EventArgs e)
+        {
+            this.Close();
+        }
     }
 }

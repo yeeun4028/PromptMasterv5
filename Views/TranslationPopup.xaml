@@ -17,22 +17,70 @@
             <DropShadowEffect Color="Black" BlurRadius="15" ShadowDepth="3" Opacity="0.3"/>
         </Border.Effect>
         
-        <TextBox x:Name="ResultBox"
-                 Text="Loading..."
-                 TextWrapping="Wrap"
-                 BorderThickness="0"
-                 Background="Transparent"
-                 Foreground="#b8bfc6"
-                 FontFamily="Segoe UI, Microsoft YaHei UI, Microsoft YaHei, Sans-Serif"
-                 FontSize="16"
-                 IsReadOnly="True"
-                 MaxWidth="500"
-                 TextAlignment="Left">
-            <TextBox.Resources>
-                <Style TargetType="{x:Type Paragraph}">
-                    <Setter Property="LineHeight" Value="26"/>
-                </Style>
-            </TextBox.Resources>
-        </TextBox>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            
+            <!-- Close Button -->
+            <Button x:Name="CloseButton"
+                    Grid.Row="0"
+                    Content="✕"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="0,-10,-10,0"
+                    Width="24"
+                    Height="24"
+                    FontSize="16"
+                    Foreground="#888888"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Cursor="Hand"
+                    Click="CloseButton_Click">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" 
+                                            CornerRadius="12">
+                                        <ContentPresenter HorizontalAlignment="Center" 
+                                                        VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                <Setter Property="Background" Value="#555555"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+            
+            <!-- Translation Result -->
+            <TextBox x:Name="ResultBox"
+                     Grid.Row="1"
+                     Text="Loading..."
+                     TextWrapping="Wrap"
+                     BorderThickness="0"
+                     Background="Transparent"
+                     Foreground="#b8bfc6"
+                     FontFamily="Segoe UI, Microsoft YaHei UI, Microsoft YaHei, Sans-Serif"
+                     FontSize="16"
+                     IsReadOnly="True"
+                     MaxWidth="500"
+                     TextAlignment="Left"
+                     Margin="0,5,0,0">
+                <TextBox.Resources>
+                    <Style TargetType="{x:Type Paragraph}">
+                        <Setter Property="LineHeight" Value="26"/>
+                    </Style>
+                </TextBox.Resources>
+            </TextBox>
+        </Grid>
     </Border>
 </Window>
