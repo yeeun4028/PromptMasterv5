@@ -1044,67 +1044,7 @@ namespace PromptMasterv5
             if (Top > maxTop) Top = maxTop;
         }
 
-        private void MiniWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { if (e.ButtonState == MouseButtonState.Pressed) this.DragMove(); }
-        private void FullWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { if (e.ButtonState == MouseButtonState.Pressed) this.DragMove(); }
 
-        private void MiniModeContainer_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (ViewModel == null) return;
-            if (ViewModel.IsFullMode) return;
-            if (e.LeftButton != MouseButtonState.Pressed) return;
-
-            if (e.OriginalSource is not DependencyObject source) return;
-
-            if (MiniInputBox != null && IsDescendantOf(source, MiniInputBox)) return;
-            if (SearchListBox != null && IsDescendantOf(source, SearchListBox)) return;
-            if (IsDescendantOf<Button>(source)) return;
-            if (IsDescendantOf<Thumb>(source)) return;
-
-            DragMove();
-            e.Handled = true;
-        }
-
-        private static bool IsDescendantOf(DependencyObject source, DependencyObject ancestor)
-        {
-            var current = source;
-            while (current != null)
-            {
-                if (ReferenceEquals(current, ancestor)) return true;
-                current = GetParentObject(current);
-            }
-            return false;
-        }
-
-        private static bool IsDescendantOf<T>(DependencyObject source) where T : DependencyObject
-        {
-            var current = source;
-            while (current != null)
-            {
-                if (current is T) return true;
-                current = GetParentObject(current);
-            }
-            return false;
-        }
-
-        private static DependencyObject? GetParentObject(DependencyObject current)
-        {
-            if (current is Visual || current is Visual3D)
-            {
-                return VisualTreeHelper.GetParent(current);
-            }
-
-            if (current is FrameworkContentElement fce)
-            {
-                return fce.Parent;
-            }
-
-            if (current is ContentElement ce)
-            {
-                return ContentOperations.GetParent(ce) ?? (ce as FrameworkContentElement)?.Parent;
-            }
-
-            return LogicalTreeHelper.GetParent(current);
-        }
 
         private void MiniPinnedPromptItem_Click(object sender, RoutedEventArgs e)
         {
@@ -1134,75 +1074,6 @@ namespace PromptMasterv5
             RebuildMiniInputDocument(userText, focusUserInput: true);
         }
 
-        private void MiniResizeThumb_DragDelta(object sender, DragDeltaEventArgs e)
-        {
-            if (ViewModel == null) return;
-            if (ViewModel.IsFullMode) return;
-            if (WindowState != WindowState.Normal) return;
-            if (sender is not FrameworkElement fe) return;
-            if (fe.Tag is not string tag) return;
-
-            const double minWidth = 260;
-            const double minHeight = 90;
-
-            double newLeft = Left;
-            double newTop = Top;
-            double newWidth = Width;
-            double newHeight = Height;
-
-            bool resizeLeft = tag.Contains("Left", StringComparison.OrdinalIgnoreCase) && !tag.Equals("Top", StringComparison.OrdinalIgnoreCase) && !tag.Equals("Bottom", StringComparison.OrdinalIgnoreCase);
-            bool resizeRight = tag.Contains("Right", StringComparison.OrdinalIgnoreCase);
-            bool resizeTop = tag.Contains("Top", StringComparison.OrdinalIgnoreCase);
-            bool resizeBottom = tag.Contains("Bottom", StringComparison.OrdinalIgnoreCase) && !tag.Equals("Top", StringComparison.OrdinalIgnoreCase);
-
-            if (tag == "Left") { resizeLeft = true; resizeTop = false; resizeBottom = false; resizeRight = false; }
-            if (tag == "Right") { resizeRight = true; resizeTop = false; resizeBottom = false; resizeLeft = false; }
-            if (tag == "Top") { resizeTop = true; resizeLeft = false; resizeRight = false; resizeBottom = false; }
-            if (tag == "Bottom") { resizeBottom = true; resizeLeft = false; resizeRight = false; resizeTop = false; }
-
-            if (resizeLeft)
-            {
-                double proposedWidth = newWidth - e.HorizontalChange;
-                if (proposedWidth >= minWidth)
-                {
-                    newWidth = proposedWidth;
-                    newLeft += e.HorizontalChange;
-                }
-                else
-                {
-                    newLeft += newWidth - minWidth;
-                    newWidth = minWidth;
-                }
-            }
-            else if (resizeRight)
-            {
-                newWidth = Math.Max(minWidth, newWidth + e.HorizontalChange);
-            }
-
-            if (resizeTop)
-            {
-                double proposedHeight = newHeight - e.VerticalChange;
-                if (proposedHeight >= minHeight)
-                {
-                    newHeight = proposedHeight;
-                    newTop += e.VerticalChange;
-                }
-                else
-                {
-                    newTop += newHeight - minHeight;
-                    newHeight = minHeight;
-                }
-            }
-            else if (resizeBottom)
-            {
-                newHeight = Math.Max(minHeight, newHeight + e.VerticalChange);
-            }
-
-            Left = newLeft;
-            Top = newTop;
-            Width = newWidth;
-            Height = newHeight;
-        }
 
         private async void MiniInput_PreviewKeyDown(object sender, KeyEventArgs e)
         {

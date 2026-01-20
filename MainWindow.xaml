@@ -9,6 +9,8 @@
         xmlns:models="clr-namespace:PromptMasterv5.Core.Models"
         xmlns:utils="clr-namespace:PromptMasterv5.Utils"
         xmlns:views="clr-namespace:PromptMasterv5.Views"
+        xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:behaviors="clr-namespace:PromptMasterv5.Infrastructure.Behaviors"
         mc:Ignorable="d"
         Title="PromptMaster v5" 
         Height="600" Width="1000"
@@ -352,8 +354,10 @@
     <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
         <Grid x:Name="MiniModeContainer" 
               Visibility="{Binding IsFullMode, Converter={StaticResource InverseBoolToVis}}"
-              Background="Transparent"
-              PreviewMouseLeftButtonDown="MiniModeContainer_PreviewMouseLeftButtonDown">
+              Background="Transparent">
+            <b:Interaction.Behaviors>
+                <behaviors:WindowDragBehavior/>
+            </b:Interaction.Behaviors>
 
             <Border Margin="10"
                     Background="#363B40"
@@ -374,36 +378,44 @@
                            VerticalAlignment="Stretch"
                            Style="{StaticResource MiniResizeThumbStyle}"
                            Cursor="SizeWE"
-                           Tag="Left"
-                           DragDelta="MiniResizeThumb_DragDelta"
-                           Panel.ZIndex="10"/>
+                           Panel.ZIndex="10">
+                        <b:Interaction.Behaviors>
+                            <behaviors:WindowResizeBehavior Direction="Left"/>
+                        </b:Interaction.Behaviors>
+                    </Thumb>
                     <Thumb Width="6"
                            Grid.RowSpan="3"
                            HorizontalAlignment="Right"
                            VerticalAlignment="Stretch"
                            Style="{StaticResource MiniResizeThumbStyle}"
                            Cursor="SizeWE"
-                           Tag="Right"
-                           DragDelta="MiniResizeThumb_DragDelta"
-                           Panel.ZIndex="10"/>
+                           Panel.ZIndex="10">
+                        <b:Interaction.Behaviors>
+                            <behaviors:WindowResizeBehavior Direction="Right"/>
+                        </b:Interaction.Behaviors>
+                    </Thumb>
                     <Thumb Height="6"
                            Grid.RowSpan="3"
                            HorizontalAlignment="Stretch"
                            VerticalAlignment="Top"
                            Style="{StaticResource MiniResizeThumbStyle}"
                            Cursor="SizeNS"
-                           Tag="Top"
-                           DragDelta="MiniResizeThumb_DragDelta"
-                           Panel.ZIndex="10"/>
+                           Panel.ZIndex="10">
+                        <b:Interaction.Behaviors>
+                            <behaviors:WindowResizeBehavior Direction="Top"/>
+                        </b:Interaction.Behaviors>
+                    </Thumb>
                     <Thumb Height="6"
                            Grid.RowSpan="3"
                            HorizontalAlignment="Stretch"
                            VerticalAlignment="Bottom"
                            Style="{StaticResource MiniResizeThumbStyle}"
                            Cursor="SizeNS"
-                           Tag="Bottom"
-                           DragDelta="MiniResizeThumb_DragDelta"
-                           Panel.ZIndex="10"/>
+                           Panel.ZIndex="10">
+                        <b:Interaction.Behaviors>
+                            <behaviors:WindowResizeBehavior Direction="Bottom"/>
+                        </b:Interaction.Behaviors>
+                    </Thumb>
 
                     <Thumb Width="12"
                            Height="12"
@@ -412,9 +424,11 @@
                            VerticalAlignment="Top"
                            Style="{StaticResource MiniResizeThumbStyle}"
                            Cursor="SizeNWSE"
-                           Tag="TopLeft"
-                           DragDelta="MiniResizeThumb_DragDelta"
-                           Panel.ZIndex="10"/>
+                           Panel.ZIndex="10">
+                        <b:Interaction.Behaviors>
+                            <behaviors:WindowResizeBehavior Direction="TopLeft"/>
+                        </b:Interaction.Behaviors>
+                    </Thumb>
                     <Thumb Width="12"
                            Height="12"
                            Grid.RowSpan="3"
@@ -422,9 +436,11 @@
                            VerticalAlignment="Top"
                            Style="{StaticResource MiniResizeThumbStyle}"
                            Cursor="SizeNESW"
-                           Tag="TopRight"
-                           DragDelta="MiniResizeThumb_DragDelta"
-                           Panel.ZIndex="10"/>
+                           Panel.ZIndex="10">
+                        <b:Interaction.Behaviors>
+                            <behaviors:WindowResizeBehavior Direction="TopRight"/>
+                        </b:Interaction.Behaviors>
+                    </Thumb>
                     <Thumb Width="12"
                            Height="12"
                            Grid.RowSpan="3"
@@ -432,9 +448,11 @@
                            VerticalAlignment="Bottom"
                            Style="{StaticResource MiniResizeThumbStyle}"
                            Cursor="SizeNESW"
-                           Tag="BottomLeft"
-                           DragDelta="MiniResizeThumb_DragDelta"
-                           Panel.ZIndex="10"/>
+                           Panel.ZIndex="10">
+                        <b:Interaction.Behaviors>
+                            <behaviors:WindowResizeBehavior Direction="BottomLeft"/>
+                        </b:Interaction.Behaviors>
+                    </Thumb>
                     <Thumb Width="12"
                            Height="12"
                            Grid.RowSpan="3"
@@ -442,9 +460,11 @@
                            VerticalAlignment="Bottom"
                            Style="{StaticResource MiniResizeThumbStyle}"
                            Cursor="SizeNWSE"
-                           Tag="BottomRight"
-                           DragDelta="MiniResizeThumb_DragDelta"
-                           Panel.ZIndex="10"/>
+                           Panel.ZIndex="10">
+                        <b:Interaction.Behaviors>
+                            <behaviors:WindowResizeBehavior Direction="BottomRight"/>
+                        </b:Interaction.Behaviors>
+                    </Thumb>
 
                     <Grid Grid.Row="0"
                           Background="Transparent">
@@ -753,7 +773,11 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Height="40" VerticalAlignment="Top" Background="Transparent" MouseLeftButtonDown="FullWindow_MouseLeftButtonDown" />
+                    <Border Grid.Column="0" Height="40" VerticalAlignment="Top" Background="Transparent">
+                        <b:Interaction.Behaviors>
+                            <behaviors:WindowDragBehavior/>
+                        </b:Interaction.Behaviors>
+                    </Border>
 
                     <Border Grid.Column="0" 
                             Width="60"
@@ -868,7 +892,11 @@
 
                     <Border Grid.Column="1" Background="{DynamicResource Block2Background}">
                         <Grid>
-                            <Grid Height="40" VerticalAlignment="Top" Background="Transparent" MouseLeftButtonDown="FullWindow_MouseLeftButtonDown"/>
+                            <Grid Height="40" VerticalAlignment="Top" Background="Transparent">
+                                <b:Interaction.Behaviors>
+                                    <behaviors:WindowDragBehavior/>
+                                </b:Interaction.Behaviors>
+                            </Grid>
 
                             <ListBox ItemsSource="{Binding FilesView}"
                                       SelectedItem="{Binding SelectedFile}"
@@ -934,7 +962,10 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                <Grid Grid.Row="0" Margin="0,0,0,10" Background="Transparent" MouseLeftButtonDown="FullWindow_MouseLeftButtonDown">
+                                <Grid Grid.Row="0" Margin="0,0,0,10" Background="Transparent">
+                                    <b:Interaction.Behaviors>
+                                        <behaviors:WindowDragBehavior/>
+                                    </b:Interaction.Behaviors>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
