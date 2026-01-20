@@ -9,33 +9,30 @@
         Topmost="True"
         ShowInTaskbar="False"
         Deactivated="Window_Deactivated"
-        SizeToContent="Manual">
+        SizeToContent="WidthAndHeight">
 
-    <Border Background="#FAFAFA" 
-            BorderBrush="#DDD" 
-            BorderThickness="1" 
+    <Border Background="#363B40" 
             CornerRadius="8"
-            Padding="15">
+            Padding="30">
         <Border.Effect>
-            <DropShadowEffect Color="Black" BlurRadius="10" ShadowDepth="2" Opacity="0.2"/>
+            <DropShadowEffect Color="Black" BlurRadius="15" ShadowDepth="3" Opacity="0.3"/>
         </Border.Effect>
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-
-
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                <TextBox x:Name="ResultBox"
-                         Text="Loading..."
-                         TextWrapping="Wrap"
-                         BorderThickness="0"
-                         Background="Transparent"
-                         FontSize="14"
-                         IsReadOnly="True"/>
-            </ScrollViewer>
-        </Grid>
+        
+        <TextBox x:Name="ResultBox"
+                 Text="Loading..."
+                 TextWrapping="Wrap"
+                 BorderThickness="0"
+                 Background="Transparent"
+                 Foreground="#b8bfc6"
+                 FontSize="16"
+                 IsReadOnly="True"
+                 MaxWidth="500"
+                 TextAlignment="Left">
+            <TextBox.Resources>
+                <Style TargetType="{x:Type Paragraph}">
+                    <Setter Property="LineHeight" Value="26"/>
+                </Style>
+            </TextBox.Resources>
+        </TextBox>
     </Border>
 </Window>

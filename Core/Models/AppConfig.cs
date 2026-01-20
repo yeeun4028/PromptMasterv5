@@ -91,13 +91,6 @@ namespace PromptMasterv5.Core.Models
         [ObservableProperty]
         private string ocrHotkey = "";
 
-        // Translation Popup Size
-        [ObservableProperty]
-        private double translationPopupWidth = 400;
-
-        [ObservableProperty]
-        private double translationPopupHeight = 250;
-
         public string RemoteFolderName { get; set; } = "PromptMaster";
     }
 }
