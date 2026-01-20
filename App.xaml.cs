@@ -114,6 +114,9 @@ namespace PromptMasterv5
         {
             services.AddHttpClient();
 
+            // Configuration Service (单例，所有 VM 共享配置)
+            services.AddSingleton<ISettingsService, SettingsService>();
+
             services.AddSingleton<SidebarViewModel>();
             services.AddSingleton<ChatViewModel>();
             services.AddSingleton<MainViewModel>();
