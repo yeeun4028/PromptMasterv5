@@ -272,7 +272,7 @@ namespace PromptMasterv5.ViewModels
             {
                 // If OCR is not explicitly enabled via Baidu, check if others could do it? Currently only Baidu OCR supported in code?
                 // The original code checked specific profiles.
-                System.Windows.MessageBox.Show("请先启用百度 OCR 功能", "配置缺失");
+                _dialogService.ShowAlert("请先启用百度 OCR 功能", "配置缺失");
                 return false;
             }
 
@@ -290,7 +290,7 @@ namespace PromptMasterv5.ViewModels
 
             if (profile == null)
             {
-                System.Windows.MessageBox.Show("未找到有效的 API 配置，请在设置中添加并选中一个配置。", "配置缺失");
+                _dialogService.ShowAlert("未找到有效的 API 配置，请在设置中添加并选中一个配置。", "配置缺失");
                 return false;
             }
             return true;
