@@ -121,6 +121,7 @@ namespace PromptMasterv5
             services.AddSingleton<SettingsViewModel>();
             services.AddSingleton<SidebarViewModel>();
             services.AddSingleton<ChatViewModel>();
+            services.AddSingleton<ExternalToolsViewModel>();
             services.AddSingleton<MainViewModel>();
             services.AddSingleton<MainWindow>();
 
