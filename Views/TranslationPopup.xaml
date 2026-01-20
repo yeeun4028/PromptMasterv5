@@ -13,7 +13,7 @@
 
     <Border Background="#363B40" 
             CornerRadius="8"
-            Padding="30">
+            Padding="20">
         <Border.Effect>
             <DropShadowEffect Color="Black" BlurRadius="15" ShadowDepth="3" Opacity="0.3"/>
         </Border.Effect>
@@ -24,6 +24,7 @@
                  BorderThickness="0"
                  Background="Transparent"
                  Foreground="#b8bfc6"
+                 FontFamily="Segoe UI, Microsoft YaHei UI, Microsoft YaHei, Sans-Serif"
                  FontSize="16"
                  IsReadOnly="True"
                  MaxWidth="500"
