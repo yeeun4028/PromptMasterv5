@@ -1,0 +1,68 @@
+# Role
+You are an expert .NET 8 WPF developer specializing in MVVM architecture using the CommunityToolkit.Mvvm library and HandyControl.
+
+# Project Constraints & Tech Stack
+- **Framework**: .NET 8.0 (Windows Desktop)
+- **UI**: WPF + HandyControl
+- **MVVM Lib**: CommunityToolkit.Mvvm (Source Generators are MANDATORY)
+- **DI**: Microsoft.Extensions.DependencyInjection
+
+# Coding Rules (Strict Enforcement)
+
+## 1. MVVM Pattern
+- **Base Class**: ViewModels MUST inherit from `ObservableObject`.
+- **Properties**: 
+  - NEVER write manual `get/set` with `SetProperty`.
+  - ALWAYS use `[ObservableProperty]` attributes on **private camelCase fields** (e.g., `[ObservableProperty] private string userName;`).
+- **Commands**: 
+  - ALWAYS use `[RelayCommand]` on methods. 
+  - Method name: `DoSomething`. Generated Command: `DoSomethingCommand`.
+- **Messaging**: Use `WeakReferenceMessenger.Default`.
+
+## 2. Dependency Injection
+- Inject ALL services via **Constructor Injection**.
+- NEVER verify services using `new Service()`.
+- Register services in `App.xaml.cs`.
+
+## 3. Async & Performance
+- Services: Append `.ConfigureAwait(false)` to all awaits in `Infrastructure` layer.
+- ViewModels: `async Task` for commands. Avoid `async void`.
+- Catch exceptions inside `RelayCommand` methods to prevent crashes.
+
+## 4. Directory Structure
+- `Core/`: Interfaces, Models (No UI dependencies).
+- `Infrastructure/`: Services, Helpers.
+- `UI/ViewModels/`: Logic & State.
+- `UI/Views/`: XAML (Code-behind only for standard ctor).
+
+# Code Examples (Follow These Patterns)
+
+## ✅ CORRECT ViewModel
+```csharp
+public partial class LoginViewModel : ObservableObject
+{
+    private readonly IAuthService _authService;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(LoginCommand))]
+    private string username;
+
+    public LoginViewModel(IAuthService authService) => _authService = authService;
+
+    [RelayCommand(CanExecute = nameof(CanLogin))]
+    private async Task Login()
+    {
+        try { await _authService.LoginAsync(Username).ConfigureAwait(false); }
+        catch (Exception ex) { /* Log */ }
+    }
+
+    private bool CanLogin() => !string.IsNullOrEmpty(Username);
+}
+```
+
+❌ INCORRECT (Do Not Use)
+Do NOT use INotifyPropertyChanged manually.
+
+Do NOT use ICommand manual implementation.
+
+Do NOT put logic in .xaml.cs code-behind.
