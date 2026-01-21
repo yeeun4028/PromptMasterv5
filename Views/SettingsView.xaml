@@ -1566,30 +1566,40 @@
                                         <Grid Margin="0,0,0,20">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
 
-                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="百度" VerticalAlignment="Center" Margin="0,0,0,12"/>
-                                            <CheckBox Grid.Row="0" Grid.Column="1" IsChecked="{Binding Config.EnableBaidu}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand" VerticalAlignment="Center" Margin="0,0,0,12"/>
+                                            <!-- Row 1 -->
+                                            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,12">
+                                                <CheckBox IsChecked="{Binding Config.EnableBaidu}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand" VerticalAlignment="Center"/>
+                                                <TextBlock Text="百度" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                            </StackPanel>
 
-                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="腾讯云" VerticalAlignment="Center" Margin="0,0,0,12"/>
-                                            <CheckBox Grid.Row="1" Grid.Column="1" IsChecked="{Binding Config.EnableTencentCloud}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand" VerticalAlignment="Center" Margin="0,0,0,12"/>
+                                            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,12">
+                                                <CheckBox IsChecked="{Binding Config.EnableTencentCloud}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand" VerticalAlignment="Center"/>
+                                                <TextBlock Text="腾讯云" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                            </StackPanel>
 
-                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="有道" VerticalAlignment="Center" Margin="0,0,0,12"/>
-                                            <CheckBox Grid.Row="2" Grid.Column="1" IsChecked="{Binding Config.EnableYoudao}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand" VerticalAlignment="Center" Margin="0,0,0,12"/>
+                                            <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" Margin="0,0,0,12">
+                                                <CheckBox IsChecked="{Binding Config.EnableYoudao}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand" VerticalAlignment="Center"/>
+                                                <TextBlock Text="有道" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                            </StackPanel>
 
-                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Google" VerticalAlignment="Center" Margin="0,0,0,12"/>
-                                            <CheckBox Grid.Row="3" Grid.Column="1" IsChecked="{Binding Config.EnableGoogle}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand" VerticalAlignment="Center" Margin="0,0,0,12"/>
+                                            <!-- Row 2 -->
+                                            <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,0">
+                                                <CheckBox IsChecked="{Binding Config.EnableGoogle}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Google" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                            </StackPanel>
 
-                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="AI 翻译" VerticalAlignment="Center"/>
-                                            <CheckBox Grid.Row="4" Grid.Column="1" IsChecked="{Binding Config.EnableAiTranslation}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,0">
+                                                <CheckBox IsChecked="{Binding Config.EnableAiTranslation}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand" VerticalAlignment="Center"/>
+                                                <TextBlock Text="AI 翻译" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                            </StackPanel>
                                         </Grid>
 
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
