@@ -1067,6 +1067,7 @@
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
@@ -1131,6 +1132,57 @@
                                                     </DataTemplate>
                                                 </ListBox.ItemTemplate>
                                             </ListBox>
+
+                                            <!-- 底部显示提示词方式 -->
+                                            <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,20,0,0">
+                                                <TextBlock Text="底部显示提示词方式"
+                                                           Style="{StaticResource FieldLabelTextStyle}"
+                                                           Margin="0,0,0,8"
+                                                           VerticalAlignment="Center"/>
+                                                
+                                                <Grid Margin="0,0,0,8">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" Text="图标" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimary}"/>
+                                                    <CheckBox Grid.Column="2"
+                                                              IsChecked="{Binding LocalConfig.MiniPinnedPromptShowIcons}"
+                                                              Style="{StaticResource ToggleSwitchStyle}"
+                                                              Cursor="Hand"/>
+                                                </Grid>
+
+                                                <Grid Margin="0,0,0,8">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" Text="名称" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimary}"/>
+                                                    <CheckBox Grid.Column="2"
+                                                              IsChecked="{Binding LocalConfig.MiniPinnedPromptShowIcons, Converter={StaticResource InverseBoolConverter}}"
+                                                              Style="{StaticResource ToggleSwitchStyle}"
+                                                              Cursor="Hand"/>
+                                                </Grid>
+
+                                                <!-- 点击提示词展示 -->
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" 
+                                                               Text="点击提示词展示：点击后填入完整内容（关闭则组合发送）" 
+                                                               VerticalAlignment="Center" 
+                                                               Foreground="{DynamicResource TextPrimary}"/>
+                                                    <CheckBox Grid.Column="2"
+                                                              IsChecked="{Binding LocalConfig.MiniPinnedPromptClickShowsFullContent}"
+                                                              Style="{StaticResource ToggleSwitchStyle}"
+                                                              Cursor="Hand"/>
+                                                </Grid>
+                                            </StackPanel>
                                         </Grid>
                                     </StackPanel>
 
@@ -1141,74 +1193,58 @@
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="260"/>
                                             </Grid.ColumnDefinitions>
 
-                                            <TextBlock Grid.Row="0" Grid.Column="0"
-                                                       Text="AI查询（默认聊天；前缀触发提示词匹配）"
-                                                       Style="{StaticResource FieldLabelTextStyle}"
-                                                       Margin="0,0,0,0"
-                                                       VerticalAlignment="Center"/>
-                                            <CheckBox Grid.Row="0" Grid.Column="1"
-                                                      IsChecked="{Binding LocalConfig.MiniAiOnlyChatEnabled}"
-                                                      Style="{StaticResource ToggleSwitchStyle}"
-                                                      Content="启用"
-                                                      Margin="10,0,0,0"
-                                                      Cursor="Hand"/>
+                                            <!-- AI查询设置 -->
+                                            <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,12">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" 
+                                                           Text="AI查询（默认聊天；前缀触发提示词匹配）"
+                                                           Style="{StaticResource FieldLabelTextStyle}"
+                                                           VerticalAlignment="Center"/>
+                                                <CheckBox Grid.Column="2"
+                                                          IsChecked="{Binding LocalConfig.MiniAiOnlyChatEnabled}"
+                                                          Style="{StaticResource ToggleSwitchStyle}"
+                                                          Content="启用"
+                                                          Cursor="Hand"/>
+                                            </Grid>
 
+                                            <!-- 提示词匹配前缀 -->
                                             <TextBlock Grid.Row="1" Grid.Column="0"
                                                        Text="提示词匹配前缀"
                                                        Style="{StaticResource FieldLabelTextStyle}"
-                                                       Margin="0,12,0,0"
+                                                       Margin="0,0,0,0"
                                                        VerticalAlignment="Center"/>
                                             <TextBox Grid.Row="1" Grid.Column="1"
                                                      Text="{Binding LocalConfig.MiniPatternPrefix, UpdateSourceTrigger=PropertyChanged}"
                                                      FontSize="14"
                                                      Background="#2E3033"
-                                                     Margin="10,12,0,0"/>
+                                                     Margin="10,0,0,0"/>
 
-                                            <TextBlock Grid.Row="2" Grid.Column="0"
-                                                       Text="AI回复后输入清空"
-                                                       Style="{StaticResource FieldLabelTextStyle}"
-                                                       Margin="0,12,0,0"
-                                                       VerticalAlignment="Center"/>
-                                            <CheckBox Grid.Row="2" Grid.Column="1"
-                                                      IsChecked="{Binding LocalConfig.MiniClearAiResultOnTyping}"
-                                                      Style="{StaticResource ToggleSwitchStyle}"
-                                                      Content="输入新内容时清空AI回复（保留本次输入）"
-                                                      Margin="10,12,0,0"
-                                                      Cursor="Hand"/>
-
-                                            <TextBlock Grid.Row="3" Grid.Column="0"
-                                                       Text="迷你窗口底部显示提示词方式"
-                                                       Style="{StaticResource FieldLabelTextStyle}"
-                                                       Margin="0,12,0,0"
-                                                       VerticalAlignment="Center"/>
-                                            <CheckBox Grid.Row="3" Grid.Column="1"
-                                                      IsChecked="{Binding LocalConfig.MiniPinnedPromptShowIcons}"
-                                                      Style="{StaticResource ToggleSwitchStyle}"
-                                                      Content="显示图标（关闭则显示名称）"
-                                                      Margin="10,12,0,0"
-                                                      Cursor="Hand"/>
-
-                                            <TextBlock Grid.Row="4" Grid.Column="0"
-                                                       Text="点击提示词展示"
-                                                       Style="{StaticResource FieldLabelTextStyle}"
-                                                       Margin="0,12,0,0"
-                                                       VerticalAlignment="Center"/>
-                                            <CheckBox Grid.Row="4" Grid.Column="1"
-                                                      IsChecked="{Binding LocalConfig.MiniPinnedPromptClickShowsFullContent}"
-                                                      Style="{StaticResource ToggleSwitchStyle}"
-                                                      Content="点击后填入完整内容（关闭则组合发送）"
-                                                      Margin="10,12,0,0"
-                                                      Cursor="Hand"/>
+                                            <!-- AI回复后输入清空 -->
+                                            <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,12,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" 
+                                                           Text="AI回复后输入清空：输入新内容时清空AI回复（保留本次输入）"
+                                                           Style="{StaticResource FieldLabelTextStyle}"
+                                                           VerticalAlignment="Center"/>
+                                                <CheckBox Grid.Column="2"
+                                                          IsChecked="{Binding LocalConfig.MiniClearAiResultOnTyping}"
+                                                          Style="{StaticResource ToggleSwitchStyle}"
+                                                          Cursor="Hand"/>
+                                            </Grid>
                                         </Grid>
 
                                         <TextBlock Text="说明：Enter=AI查询/匹配提示词（AI关闭时 Enter=发送到网页输入框）；Shift+Enter=换行；Ctrl+Enter/双击Enter=发送到网页输入框"
@@ -1224,66 +1260,86 @@
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="260"/>
-                                            </Grid.ColumnDefinitions>
 
-                                            <TextBlock Grid.Row="0" Grid.Column="0"
-                                                       Text="使用默认位置（忽略上次记忆）"
+                                            <!-- 坐标设置 -->
+                                            <TextBlock Grid.Row="0"
+                                                       Text="指定左下角坐标"
                                                        Style="{StaticResource FieldLabelTextStyle}"
+                                                       Margin="0,0,0,8"
                                                        VerticalAlignment="Center"/>
-                                            <CheckBox Grid.Row="0" Grid.Column="1"
-                                                      IsChecked="{Binding LocalConfig.MiniUseDefaultPosition}"
-                                                      Style="{StaticResource ToggleSwitchStyle}"
-                                                      Content="启用"
-                                                      Margin="10,0,0,0"
-                                                      Cursor="Hand"/>
+                                            <Grid Grid.Row="1" Margin="0,0,0,20">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                                    <TextBox Text="{Binding LocalConfig.MiniDefaultLeft}"
+                                                             IsEnabled="{Binding LocalConfig.MiniUseDefaultPosition}"
+                                                             Width="80"
+                                                             Background="#2E3033"
+                                                             Style="{StaticResource ModernTextBoxStyle}"/>
+                                                    <TextBlock Text="/" Margin="8,0" VerticalAlignment="Center" Foreground="{DynamicResource PlaceholderTextBrush}"/>
+                                                    <TextBox Text="{Binding LocalConfig.MiniDefaultBottom}"
+                                                             IsEnabled="{Binding LocalConfig.MiniUseDefaultPosition}"
+                                                             Width="80"
+                                                             Background="#2E3033"
+                                                             Style="{StaticResource ModernTextBoxStyle}"/>
+                                                    <Button Content="⏱️3秒拾取"
+                                                            IsEnabled="{Binding LocalConfig.MiniUseDefaultPosition}"
+                                                            Click="PickMiniWindowDefaultPosition_Click"
+                                                            Style="{StaticResource TextLinkButtonStyle}"
+                                                            Margin="12,0,0,0"
+                                                            VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                                <CheckBox Grid.Column="2"
+                                                          IsChecked="{Binding LocalConfig.MiniUseDefaultPosition}"
+                                                          Style="{StaticResource ToggleSwitchStyle}"
+                                                          VerticalAlignment="Center"
+                                                          Cursor="Hand"
+                                                          ToolTip="开启后将使用指定坐标，关闭则记忆上次位置"/>
+                                            </Grid>
 
-                                            <TextBlock Grid.Row="1" Grid.Column="0"
-                                                       Text="默认左下角坐标（Left / Bottom）"
+                                            <!-- 尺寸设置 -->
+                                            <TextBlock Grid.Row="2"
+                                                       Text="指定宽度×高度 / 展开宽度"
                                                        Style="{StaticResource FieldLabelTextStyle}"
-                                                       Margin="0,12,0,0"
+                                                       Margin="0,0,0,8"
                                                        VerticalAlignment="Center"/>
-                                            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="10,12,0,0">
-                                                <TextBox Text="{Binding LocalConfig.MiniDefaultLeft}"
-                                                         Width="70"
-                                                         Background="#2E3033"
-                                                         Style="{StaticResource ModernTextBoxStyle}"/>
-                                                <TextBlock Text="/" Margin="6,0" VerticalAlignment="Center" Foreground="{DynamicResource PlaceholderTextBrush}"/>
-                                                <TextBox Text="{Binding LocalConfig.MiniDefaultBottom}"
-                                                         Width="70"
-                                                         Background="#2E3033"
-                                                         Style="{StaticResource ModernTextBoxStyle}"/>
-                                                <Button Content="⏱️3秒拾取"
-                                                        Click="PickMiniWindowDefaultPosition_Click"
-                                                        Style="{StaticResource TextLinkButtonStyle}"
-                                                        Margin="10,0,0,0"
-                                                        VerticalAlignment="Center"/>
-                                            </StackPanel>
-
-                                            <TextBlock Grid.Row="2" Grid.Column="0"
-                                                       Text="默认宽度×高度 / 展开宽度"
-                                                       Style="{StaticResource FieldLabelTextStyle}"
-                                                       Margin="0,12,0,0"
-                                                       VerticalAlignment="Center"/>
-                                            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="10,12,0,0">
-                                                <TextBox Text="{Binding LocalConfig.MiniDefaultWidth}"
-                                                         Width="70"
-                                                         Background="#2E3033"
-                                                         Style="{StaticResource ModernTextBoxStyle}"/>
-                                                <TextBlock Text="×" Margin="6,0" VerticalAlignment="Center" Foreground="{DynamicResource PlaceholderTextBrush}"/>
-                                                <TextBox Text="{Binding LocalConfig.MiniDefaultHeight}"
-                                                         Width="70"
-                                                         Background="#2E3033"
-                                                         Style="{StaticResource ModernTextBoxStyle}"/>
-                                                <TextBlock Text="/" Margin="6,0" VerticalAlignment="Center" Foreground="{DynamicResource PlaceholderTextBrush}"/>
-                                                <TextBox Text="{Binding LocalConfig.MiniExpandedWidth}"
-                                                         Width="70"
-                                                         Background="#2E3033"
-                                                         Style="{StaticResource ModernTextBoxStyle}"/>
-                                            </StackPanel>
+                                            <Grid Grid.Row="3" Margin="0,0,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                                    <TextBox Text="{Binding LocalConfig.MiniDefaultWidth}"
+                                                             IsEnabled="{Binding LocalConfig.MiniUseDefaultSize}"
+                                                             Width="80"
+                                                             Background="#2E3033"
+                                                             Style="{StaticResource ModernTextBoxStyle}"/>
+                                                    <TextBlock Text="×" Margin="8,0" VerticalAlignment="Center" Foreground="{DynamicResource PlaceholderTextBrush}"/>
+                                                    <TextBox Text="{Binding LocalConfig.MiniDefaultHeight}"
+                                                             IsEnabled="{Binding LocalConfig.MiniUseDefaultSize}"
+                                                             Width="80"
+                                                             Background="#2E3033"
+                                                             Style="{StaticResource ModernTextBoxStyle}"/>
+                                                    <TextBlock Text="/" Margin="8,0" VerticalAlignment="Center" Foreground="{DynamicResource PlaceholderTextBrush}"/>
+                                                    <TextBox Text="{Binding LocalConfig.MiniExpandedWidth}"
+                                                             IsEnabled="{Binding LocalConfig.MiniUseDefaultSize}"
+                                                             Width="80"
+                                                             Background="#2E3033"
+                                                             Style="{StaticResource ModernTextBoxStyle}"/>
+                                                </StackPanel>
+                                                <CheckBox Grid.Column="2"
+                                                          IsChecked="{Binding LocalConfig.MiniUseDefaultSize}"
+                                                          Style="{StaticResource ToggleSwitchStyle}"
+                                                          VerticalAlignment="Center"
+                                                          Cursor="Hand"
+                                                          ToolTip="开启后将使用指定尺寸，关闭则记忆上次尺寸"/>
+                                            </Grid>
                                         </Grid>
                                     </StackPanel>
                                 </StackPanel>

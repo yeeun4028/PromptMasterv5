@@ -782,8 +782,20 @@ namespace PromptMasterv5
             if (ViewModel.IsFullMode) return;
             if (_miniDefaultHeight <= 0)
             {
-                _miniDefaultHeight = GetMiniDefaultHeight();
+                // 如果 _miniDefaultHeight 尚未初始化，尝试初始化
+                if (ViewModel.LocalConfig.MiniUseDefaultSize)
+                {
+                    _miniDefaultHeight = GetMiniDefaultHeight();
+                }
+                else
+                {
+                    // 记忆模式下，_miniDefaultHeight 应该是记忆的高度
+                    var h = ViewModel.LocalConfig.MiniWindowHeight;
+                    if (h > 0) _miniDefaultHeight = h;
+                    else _miniDefaultHeight = GetMiniDefaultHeight();
+                }
             }
+            
             if (_miniDefaultHeight <= 0)
             {
                 EnsureMiniDefaultSizeMeasured();
@@ -792,9 +804,21 @@ namespace PromptMasterv5
 
             var bottom = _miniBottomAnchor ?? (Top + Height);
             var targetHeight = _miniDefaultHeight;
+            
+            // 确定目标宽度
+            var targetWidth = 0.0;
+            if (ViewModel.LocalConfig.MiniUseDefaultSize)
+            {
+                targetWidth = GetMiniDefaultWidth();
+            }
+            else
+            {
+                targetWidth = ViewModel.LocalConfig.MiniWindowWidth;
+                if (targetWidth <= 0) targetWidth = GetMiniDefaultWidth();
+            }
 
             _isApplyingMiniAutoResize = true;
-            Width = GetMiniDefaultWidth();
+            Width = targetWidth;
             Height = targetHeight;
             Top = bottom - Height;
             _isApplyingMiniAutoResize = false;
@@ -825,9 +849,26 @@ namespace PromptMasterv5
                 _lastFullTop = this.Top;
 
                 var cfg = ViewModel.LocalConfig;
-                this.Width = GetMiniDefaultWidth();
-                this.Height = GetMiniDefaultHeight();
+
+                // 1. 应用尺寸逻辑
+                if (cfg.MiniUseDefaultSize)
+                {
+                    this.Width = GetMiniDefaultWidth();
+                    this.Height = GetMiniDefaultHeight();
+                }
+                else
+                {
+                    // 使用记忆尺寸，如果无效则回退到默认
+                    var w = cfg.MiniWindowWidth;
+                    var h = cfg.MiniWindowHeight;
+                    if (w <= 0) w = GetMiniDefaultWidth();
+                    if (h <= 0) h = GetMiniDefaultHeight();
+                    this.Width = w;
+                    this.Height = h;
+                }
                 _miniDefaultHeight = this.Height;
+
+                // 2. 应用位置逻辑
                 if (cfg.MiniUseDefaultPosition)
                 {
                     this.Left = cfg.MiniDefaultLeft;
@@ -839,8 +880,15 @@ namespace PromptMasterv5
                     this.Left = cfg.MiniWindowLeft;
                     this.Top = cfg.MiniWindowTop;
                 }
+
                 if (this.Height < 90) this.Height = 90;
-                if (cfg.MiniUseDefaultPosition && _miniBottomAnchor.HasValue) this.Top = _miniBottomAnchor.Value - this.Height;
+                
+                // 如果是指定位置模式，根据 BottomAnchor 计算 Top
+                if (cfg.MiniUseDefaultPosition && _miniBottomAnchor.HasValue) 
+                {
+                    this.Top = _miniBottomAnchor.Value - this.Height;
+                }
+                
                 _miniBottomAnchor ??= Top + Height;
 
                 this.ResizeMode = ResizeMode.NoResize;
@@ -863,10 +911,23 @@ namespace PromptMasterv5
             if (ViewModel.IsFullMode) return;
 
             var cfg = ViewModel.LocalConfig;
-            if (cfg.MiniDefaultHeight > 0)
+            
+            if (cfg.MiniUseDefaultSize)
             {
-                _miniDefaultHeight = GetMiniDefaultHeight();
-                return;
+                if (cfg.MiniDefaultHeight > 0)
+                {
+                    _miniDefaultHeight = GetMiniDefaultHeight();
+                    return;
+                }
+            }
+            else
+            {
+                // 记忆模式
+                if (cfg.MiniWindowHeight > 0)
+                {
+                    _miniDefaultHeight = cfg.MiniWindowHeight;
+                    return;
+                }
             }
 
             _ = Dispatcher.BeginInvoke(new Action(() =>

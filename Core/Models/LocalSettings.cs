@@ -69,7 +69,11 @@ namespace PromptMasterv5.Core.Models
         public double MiniWindowWidth { get; set; } = 500;
         public double MiniWindowHeight { get; set; } = 0;
 
-        public bool MiniUseDefaultPosition { get; set; } = false;
+        [ObservableProperty]
+        private bool miniUseDefaultPosition = false;
+
+        [ObservableProperty]
+        private bool miniUseDefaultSize = false;
 
         [ObservableProperty]
         private double miniDefaultLeft = 100;
@@ -77,9 +81,15 @@ namespace PromptMasterv5.Core.Models
         [ObservableProperty]
         private double miniDefaultBottom = 600;
 
-        public double MiniDefaultWidth { get; set; } = 500;
-        public double MiniDefaultHeight { get; set; } = 0;
-        public double MiniExpandedWidth { get; set; } = 800;
+        [ObservableProperty]
+        private double miniDefaultWidth = 500;
+        
+        [ObservableProperty]
+        private double miniDefaultHeight = 0;
+        
+        [ObservableProperty]
+        private double miniExpandedWidth = 800;
+        
         public bool MiniClearAiResultOnTyping { get; set; } = true;
 
         public string MiniPinnedPromptId { get; set; } = "";
@@ -87,7 +97,10 @@ namespace PromptMasterv5.Core.Models
         public ObservableCollection<string> MiniPinnedPromptIds { get; set; } = new();
         [JsonIgnore]
         public string MiniSelectedPinnedPromptId { get; set; } = "";
-        public bool MiniPinnedPromptShowIcons { get; set; } = false;
+        
+        [ObservableProperty]
+        private bool miniPinnedPromptShowIcons = false;
+        
         public bool MiniPinnedPromptClickShowsFullContent { get; set; } = true;
 
         // 完整模式窗口位置记忆
