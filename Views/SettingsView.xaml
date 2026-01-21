@@ -97,7 +97,7 @@
             <Setter Property="Background" Value="{DynamicResource ShellBackground}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource DividerBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Foreground" Value="#DEDEDE"/>
+            <Setter Property="Foreground" Value="{DynamicResource InputTextBrush}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
@@ -589,6 +589,7 @@
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
 
                                         <!-- Row 1: Double Ctrl -->
@@ -660,7 +661,7 @@
                                                  ToolTip="点击按下按键设置，按 Delete 清除"/>
 
                                         <!-- Row 6: OCR -->
-                                        <StackPanel Grid.Row="5" Grid.Column="0" VerticalAlignment="Center">
+                                        <StackPanel Grid.Row="5" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
                                             <TextBlock Text="OCR 识别" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,4"/>
                                         </StackPanel>
                                         <TextBox Grid.Row="5" Grid.Column="1" 
@@ -672,6 +673,21 @@
                                                  Cursor="IBeam"
                                                  VerticalAlignment="Center"
                                                  PreviewKeyDown="OcrHotkeyTextBox_PreviewKeyDown"
+                                                 ToolTip="点击按下按键设置，按 Delete 清除"/>
+
+                                        <!-- Row 7: Quick Action (Selected Text Extension) -->
+                                        <StackPanel Grid.Row="6" Grid.Column="0" VerticalAlignment="Center">
+                                            <TextBlock Text="划词扩展" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,4"/>
+                                        </StackPanel>
+                                        <TextBox Grid.Row="6" Grid.Column="1" 
+                                                 x:Name="QuickActionHotkeyTextBox" 
+                                                 Text="{Binding Config.QuickActionHotkey, Mode=TwoWay}"
+                                                 Style="{StaticResource ModernTextBoxStyle}"
+                                                 Width="140"
+                                                 IsReadOnly="True"
+                                                 Cursor="IBeam"
+                                                 VerticalAlignment="Center"
+                                                 PreviewKeyDown="QuickActionHotkeyTextBox_PreviewKeyDown"
                                                  ToolTip="点击按下按键设置，按 Delete 清除"/>
                                     </Grid>
                                 </StackPanel>
@@ -837,7 +853,8 @@
                                                                             Padding="12,10"
                                                                             Margin="0,0,10,10"
                                                                             Width="180"
-                                                                            Cursor="Hand">
+                                                                            Cursor="Hand"
+                                                                            Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ListBox}}">
                                                                         <Grid>
                                                                             <Grid.ColumnDefinitions>
                                                                                 <ColumnDefinition Width="Auto"/>
@@ -851,7 +868,7 @@
 
                                                                         <Border.ContextMenu>
                                                                             <ContextMenu>
-                                                                                <MenuItem Header="删除" Command="{Binding DataContext.DeleteAiModelCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}"/>
+                                                                                <MenuItem Header="删除" Command="{Binding PlacementTarget.Tag.SettingsVM.DeleteAiModelCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}"/>
                                                                             </ContextMenu>
                                                                         </Border.ContextMenu>
                                                                     </Border>
