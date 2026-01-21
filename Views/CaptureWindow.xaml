@@ -81,6 +81,27 @@
                     <Button Content="复制" Command="{Binding CopyCommand}" Margin="5,0"/>
                     <Button Content="替换" Command="{Binding ReplaceCommand}" Margin="5,0"/>
                 </StackPanel>
+                
+                <!-- 追问输入框 -->
+                <Grid Margin="10,0,10,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <TextBox Text="{Binding FollowUpText, UpdateSourceTrigger=PropertyChanged}" 
+                             Foreground="White" 
+                             Background="#333333" 
+                             BorderThickness="0" 
+                             Padding="8"
+                             FontSize="13">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter" Command="{Binding SendFollowUpCommand}"/>
+                        </TextBox.InputBindings>
+                    </TextBox>
+                    
+                    <Button Grid.Column="1" Content="发送" Command="{Binding SendFollowUpCommand}" Margin="5,0,0,0" Padding="10,5"/>
+                </Grid>
             </StackPanel>
             
             <!-- 加载动画 -->

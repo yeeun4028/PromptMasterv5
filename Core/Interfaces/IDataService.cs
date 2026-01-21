@@ -11,5 +11,8 @@ namespace PromptMasterv5.Core.Interfaces
         
         // Quick Action specific
         Task<IEnumerable<PromptItem>> GetQuickActionsAsync();
+        
+        // History Archiving
+        Task ArchiveQuickActionHistoryAsync(string userQuestion, string aiResponse);
     }
 }

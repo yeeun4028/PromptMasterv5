@@ -12,6 +12,10 @@ using Application = System.Windows.Application;
 using Clipboard = System.Windows.Forms.Clipboard;
 using Views = PromptMasterv5.Views;
 
+using OpenAI.ObjectModels.RequestModels;
+using OpenAI.ObjectModels;
+using System.Collections.Generic;
+
 namespace PromptMasterv5.ViewModels
 {
     public partial class CaptureViewModel : ObservableObject
@@ -31,6 +35,15 @@ namespace PromptMasterv5.ViewModels
 
         [ObservableProperty]
         private string resultText = "";
+        
+        // Multi-turn chat
+        [ObservableProperty]
+        private string followUpText = "";
+        
+        private readonly List<ChatMessage> _conversationHistory = new();
+        
+        // For history archiving
+        private string _lastUserQuestion = "";
 
         public CaptureViewModel()
         {
@@ -75,20 +88,82 @@ namespace PromptMasterv5.ViewModels
         private async Task CaptureSelectedText()
         {
             // 1. 模拟 Ctrl+C
-            SendKeys.SendWait("^c");
-            
-            // 2. 等待剪贴板更新
-            await Task.Delay(100);
-            
-            // 3. 获取文本
-            if (Clipboard.ContainsText())
+            try
             {
-                var text = Clipboard.GetText();
-                if (!string.IsNullOrWhiteSpace(text))
+                // Clear clipboard first to detect new copy
+                Clipboard.Clear();
+                
+                SendKeys.SendWait("^c");
+                
+                // 2. 等待剪贴板更新
+                // Retry loop for clipboard access
+                for (int i = 0; i < 5; i++)
                 {
-                    _capturedText = text;
+                    await Task.Delay(100);
+                    if (Clipboard.ContainsText()) break;
+                }
+                
+                // 3. 获取文本
+                if (Clipboard.ContainsText())
+                {
+                    var text = Clipboard.GetText();
+                    if (!string.IsNullOrWhiteSpace(text))
+                    {
+                        _capturedText = text;
+                    }
                 }
             }
+            catch (Exception)
+            {
+                // Clipboard access failed (e.g. locked by another process)
+                // Just ignore, _capturedText will be empty
+            }
+        }
+
+        [RelayCommand]
+        private async Task SendFollowUp()
+        {
+            if (string.IsNullOrWhiteSpace(FollowUpText) || _aiService == null) return;
+            
+            var userMsg = FollowUpText;
+            FollowUpText = ""; // Clear input
+            IsLoading = true;
+            
+            _conversationHistory.Add(ChatMessage.FromUser(userMsg));
+            
+            // Call AI Service with history
+            var config = ((App)Application.Current).ServiceProvider.GetService(typeof(ISettingsService)) as ISettingsService;
+            if (config != null)
+            {
+                ResultText = ""; // Clear to show new answer
+                // Or maybe we want to keep history visible? 
+                // The requirement says "AI continues to optimize result".
+                // Usually this means replacing the old result with the new one.
+                
+                var fullResponseBuilder = new System.Text.StringBuilder();
+                
+                // Use new overload supporting message list
+                await foreach (var chunk in _aiService.ChatStreamAsync(_conversationHistory, config.Config))
+                {
+                    ResultText += chunk;
+                    fullResponseBuilder.Append(chunk);
+                }
+                
+                var fullResponse = fullResponseBuilder.ToString();
+                _conversationHistory.Add(ChatMessage.FromAssistant(fullResponse));
+                
+                // Archive update
+                if (_dataService != null && !string.IsNullOrEmpty(ResultText))
+                {
+                    _ = _dataService.ArchiveQuickActionHistoryAsync($"[Follow-up] {userMsg}", ResultText);
+                }
+            }
+            else
+            {
+                ResultText = "Error: Configuration service not found.";
+            }
+            
+            IsLoading = false;
         }
 
         [RelayCommand]
@@ -98,6 +173,7 @@ namespace PromptMasterv5.ViewModels
             
             IsLoading = true;
             ResultText = "";
+            _conversationHistory.Clear(); // New session
             
             var promptContent = action.Content ?? "";
             var finalText = "";
@@ -111,15 +187,33 @@ namespace PromptMasterv5.ViewModels
                 finalText = $"{promptContent}\n\n{_capturedText}";
             }
             
+            _lastUserQuestion = finalText;
+            _conversationHistory.Add(ChatMessage.FromUser(finalText));
+            
             // Call AI Service
             // Streaming support
             var config = ((App)Application.Current).ServiceProvider.GetService(typeof(ISettingsService)) as ISettingsService;
             if (config != null)
             {
                 ResultText = ""; // Clear before streaming
+                
+                // We need to capture the full response to add to history later
+                var fullResponseBuilder = new System.Text.StringBuilder();
+                
                 await foreach (var chunk in _aiService.ChatStreamAsync(finalText, config.Config))
                 {
                     ResultText += chunk;
+                    fullResponseBuilder.Append(chunk);
+                }
+                
+                var fullResponse = fullResponseBuilder.ToString();
+                _conversationHistory.Add(ChatMessage.FromAssistant(fullResponse));
+                
+                // Archive history
+                if (_dataService != null && !string.IsNullOrEmpty(ResultText))
+                {
+                    // Fire and forget, don't block UI
+                    _ = _dataService.ArchiveQuickActionHistoryAsync(_lastUserQuestion, ResultText);
                 }
             }
             else

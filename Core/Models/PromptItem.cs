@@ -27,6 +27,19 @@ namespace PromptMasterv5.Core.Models
         [ObservableProperty]
         private string? iconGeometry;
 
+        // ★★★ 新增：描述信息 ★★★
+        [ObservableProperty]
+        private string? description;
+
+        // ★★★ 新增：创建时间 ★★★
+        [ObservableProperty]
+        private DateTime createdAt = DateTime.Now;
+
+        // ★★★ 新增：更新时间（兼容 LastModified） ★★★
+        // 实际上我们可以用 LastModified 作为 UpdatedAt 的别名，或者显式添加 UpdatedAt
+        [ObservableProperty]
+        private DateTime updatedAt = DateTime.Now;
+
         // ★★★ 新增：全局划词助手相关字段 ★★★
         [ObservableProperty]
         private bool isQuickAction; // 是否出现在快捷窗口

@@ -130,6 +130,55 @@ namespace PromptMasterv5.Infrastructure.Services
             }
         }
 
+        public IAsyncEnumerable<string> ChatStreamAsync(List<ChatMessage> messages, AppConfig config)
+        {
+            return ChatStreamAsync(messages, config.AiApiKey, config.AiBaseUrl, config.AiModel);
+        }
+
+        public async IAsyncEnumerable<string> ChatStreamAsync(List<ChatMessage> messages, string apiKey, string baseUrl, string model)
+        {
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                yield return "[设置错误] 请先在设置中配置 API Key";
+                yield break;
+            }
+
+            var options = new OpenAiOptions
+            {
+                ApiKey = apiKey,
+                BaseDomain = baseUrl
+            };
+
+            var openAiService = new OpenAIService(options);
+
+            var request = new ChatCompletionCreateRequest
+            {
+                Messages = messages,
+                Model = model,
+                Temperature = 0.7f,
+                Stream = true
+            };
+
+            await foreach (var completionResult in openAiService.ChatCompletion.CreateCompletionAsStream(request))
+            {
+                if (completionResult.Successful)
+                {
+                    var choice = completionResult.Choices?.FirstOrDefault();
+                    if (choice != null && choice.Message != null && !string.IsNullOrEmpty(choice.Message.Content))
+                    {
+                        yield return choice.Message.Content;
+                    }
+                }
+                else
+                {
+                    if (completionResult.Error != null)
+                    {
+                        yield return $"[AI 错误] {completionResult.Error.Message}";
+                    }
+                }
+            }
+        }
+
         public Task<(bool Success, string Message)> TestConnectionAsync(AppConfig config)
         {
             return TestConnectionAsync(config.AiApiKey, config.AiBaseUrl, config.AiModel);
