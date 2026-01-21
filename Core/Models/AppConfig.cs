@@ -1,5 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
+using System.Text.Json.Serialization;
+using PromptMasterv5.Infrastructure.Converters;
 
 namespace PromptMasterv5.Core.Models
 {
@@ -12,6 +14,7 @@ namespace PromptMasterv5.Core.Models
         private string userName = "";
 
         [ObservableProperty]
+        [property: JsonConverter(typeof(JsonEncryptedStringConverter))]
         private string password = "";
 
         [ObservableProperty]
@@ -35,6 +38,7 @@ namespace PromptMasterv5.Core.Models
         private string aiBaseUrl = "https://api.deepseek.com";
 
         [ObservableProperty]
+        [property: JsonConverter(typeof(JsonEncryptedStringConverter))]
         private string aiApiKey = "";
 
         [ObservableProperty]
@@ -85,6 +89,7 @@ namespace PromptMasterv5.Core.Models
         private string aiTranslateBaseUrl = "https://api.deepseek.com";
 
         [ObservableProperty]
+        [property: JsonConverter(typeof(JsonEncryptedStringConverter))]
         private string aiTranslateApiKey = "";
 
         [ObservableProperty]

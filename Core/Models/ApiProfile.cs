@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using PromptMasterv5.Infrastructure.Converters;
 
 namespace PromptMasterv5.Core.Models
 {
@@ -48,6 +49,7 @@ namespace PromptMasterv5.Core.Models
         // Google: API Key
         [ObservableProperty]
         [property: JsonPropertyName("key1")]
+        [property: JsonConverter(typeof(JsonEncryptedStringConverter))]
         private string key1 = "";
 
         // Key2 字段含义根据供应商不同：
@@ -57,6 +59,7 @@ namespace PromptMasterv5.Core.Models
         // Google: (未使用)
         [ObservableProperty]
         [property: JsonPropertyName("key2")]
+        [property: JsonConverter(typeof(JsonEncryptedStringConverter))]
         private string key2 = "";
 
         // 显示用的字段名称（根据供应商和服务类型）
