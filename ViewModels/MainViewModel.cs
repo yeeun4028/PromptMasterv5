@@ -460,6 +460,9 @@ public partial class MainViewModel : ObservableObject
     private void ManualRestore() => SettingsVM.ManualRestoreCommand.Execute(null);
 
     [RelayCommand]
+    private void ManualLocalRestore() => SettingsVM.ManualLocalRestoreCommand.Execute(null);
+
+    [RelayCommand]
     private void ManualBackup() => SettingsVM.ManualBackupCommand.Execute(null);
 
     [RelayCommand]
