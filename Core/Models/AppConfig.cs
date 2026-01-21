@@ -114,6 +114,10 @@ namespace PromptMasterv5.Core.Models
         [ObservableProperty]
         private string ocrHotkey = "";
 
+        // Global Quick Action Hotkey
+        [ObservableProperty]
+        private string quickActionHotkey = "Alt+Q";
+
         public string RemoteFolderName { get; set; } = "PromptMaster";
     }
 }

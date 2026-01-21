@@ -13,6 +13,10 @@ namespace PromptMasterv5
     public partial class App : System.Windows.Application
     {
         private ServiceProvider? _serviceProvider;
+
+        // Expose ServiceProvider
+        public IServiceProvider ServiceProvider => _serviceProvider!;
+
         private System.Threading.Mutex? _singleInstanceMutex;
         private const string MutexName = "PromptMasterv5_SingleInstance_Mutex";
         private const string WindowTitle = "PromptMaster v5";

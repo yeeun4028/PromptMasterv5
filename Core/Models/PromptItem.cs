@@ -26,5 +26,12 @@ namespace PromptMasterv5.Core.Models
         // ★★★ 新增：自定义图标 SVG 路径代码 ★★★
         [ObservableProperty]
         private string? iconGeometry;
+
+        // ★★★ 新增：全局划词助手相关字段 ★★★
+        [ObservableProperty]
+        private bool isQuickAction; // 是否出现在快捷窗口
+
+        [ObservableProperty]
+        private string? boundModelId; // 绑定的特定模型ID，为空则跟随全局
     }
 }

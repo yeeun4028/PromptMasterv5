@@ -73,6 +73,63 @@ namespace PromptMasterv5.Infrastructure.Services
             }
         }
 
+        public IAsyncEnumerable<string> ChatStreamAsync(string userContent, AppConfig config, string? systemPrompt = null)
+        {
+            return ChatStreamAsync(userContent, config.AiApiKey, config.AiBaseUrl, config.AiModel, systemPrompt);
+        }
+
+        public async IAsyncEnumerable<string> ChatStreamAsync(string userContent, string apiKey, string baseUrl, string model, string? systemPrompt = null)
+        {
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                yield return "[设置错误] 请先在设置中配置 API Key";
+                yield break;
+            }
+
+            var options = new OpenAiOptions
+            {
+                ApiKey = apiKey,
+                BaseDomain = baseUrl
+            };
+
+            var openAiService = new OpenAIService(options);
+
+            string finalSystemPrompt = systemPrompt ?? "You are a helpful assistant. Output result directly without unnecessary conversational filler. IMPORTANT: Always answer in Simplified Chinese unless the user explicitly asks for another language.";
+
+            var messages = new List<ChatMessage>
+            {
+                ChatMessage.FromSystem(finalSystemPrompt),
+                ChatMessage.FromUser(userContent)
+            };
+
+            var request = new ChatCompletionCreateRequest
+            {
+                Messages = messages,
+                Model = model,
+                Temperature = 0.7f,
+                Stream = true // Enable streaming
+            };
+
+            await foreach (var completionResult in openAiService.ChatCompletion.CreateCompletionAsStream(request))
+            {
+                if (completionResult.Successful)
+                {
+                    var choice = completionResult.Choices?.FirstOrDefault();
+                    if (choice != null && choice.Message != null && !string.IsNullOrEmpty(choice.Message.Content))
+                    {
+                        yield return choice.Message.Content;
+                    }
+                }
+                else
+                {
+                    if (completionResult.Error != null)
+                    {
+                        yield return $"[AI 错误] {completionResult.Error.Message}";
+                    }
+                }
+            }
+        }
+
         public Task<(bool Success, string Message)> TestConnectionAsync(AppConfig config)
         {
             return TestConnectionAsync(config.AiApiKey, config.AiBaseUrl, config.AiModel);

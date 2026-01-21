@@ -130,5 +130,11 @@ namespace PromptMasterv5.Infrastructure.Services
                 return new AppData();
             }
         }
+
+        public async Task<IEnumerable<PromptItem>> GetQuickActionsAsync()
+        {
+            var data = await LoadAsync();
+            return data.Files.FindAll(f => f.IsQuickAction);
+        }
     }
 }

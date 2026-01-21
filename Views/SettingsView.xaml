@@ -1615,35 +1615,47 @@
                                         <!-- 快捷键设置 -->
                                         <TextBlock Text="功能快捷键" Style="{StaticResource FieldLabelTextStyle}" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,12"/>
 
-                                        <StackPanel Margin="0,0,0,12">
-                                            <TextBlock Text="截图翻译快捷键" Style="{StaticResource FieldLabelTextStyle}"/>
-                                            <TextBox x:Name="ScreenshotTranslateHotkeyTextBox" 
+                                        <Grid Margin="0,0,0,12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="截图翻译" Style="{StaticResource FieldLabelTextStyle}" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                                            <TextBox Grid.Column="1" x:Name="ScreenshotTranslateHotkeyTextBox" 
                                                      Text="{Binding Config.ScreenshotTranslateHotkey, Mode=TwoWay}"
                                                      Style="{StaticResource ModernTextBoxStyle}"
                                                      PreviewKeyDown="ScreenshotTranslateHotkeyTextBox_PreviewKeyDown"
                                                      IsReadOnly="True"
                                                      ToolTip="按下组合键设置快捷键，按 Delete 清除"/>
-                                        </StackPanel>
+                                        </Grid>
 
-                                        <StackPanel Margin="0,0,0,12">
-                                            <TextBlock Text="划词翻译快捷键 (选中文字后按键)" Style="{StaticResource FieldLabelTextStyle}"/>
-                                            <TextBox x:Name="SelectedTextTranslateHotkeyTextBox"
+                                        <Grid Margin="0,0,0,12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="划词翻译" Style="{StaticResource FieldLabelTextStyle}" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                                            <TextBox Grid.Column="1" x:Name="SelectedTextTranslateHotkeyTextBox"
                                                      Text="{Binding Config.SelectedTextTranslateHotkey, Mode=TwoWay}" 
                                                      PreviewKeyDown="SelectedTextTranslateHotkeyTextBox_PreviewKeyDown"
                                                      Style="{StaticResource ModernTextBoxStyle}"
                                                      IsReadOnly="True"
                                                      ToolTip="按下组合键设置快捷键，按 Delete 清除"/>
-                                        </StackPanel>
+                                        </Grid>
 
-                                        <StackPanel Margin="0,0,0,12">
-                                            <TextBlock Text="OCR 识别快捷键" Style="{StaticResource FieldLabelTextStyle}"/>
-                                            <TextBox x:Name="OcrHotkeyTextBox" 
+                                        <Grid Margin="0,0,0,12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="OCR 识别" Style="{StaticResource FieldLabelTextStyle}" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                                            <TextBox Grid.Column="1" x:Name="OcrHotkeyTextBox" 
                                                      Text="{Binding Config.OcrHotkey, Mode=TwoWay}"
                                                      Style="{StaticResource ModernTextBoxStyle}"
                                                      PreviewKeyDown="OcrHotkeyTextBox_PreviewKeyDown"
                                                      IsReadOnly="True"
                                                      ToolTip="按下组合键设置快捷键，按 Delete 清除"/>
-                                        </StackPanel>
+                                        </Grid>
 
                                         <TextBlock Text="提示：设置快捷键后会立即生效。" 
                                                    Style="{StaticResource HintTextStyle}" Margin="0,10,0,0"/>

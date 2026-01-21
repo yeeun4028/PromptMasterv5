@@ -463,6 +463,14 @@ public partial class MainViewModel : ObservableObject
     private void ManualLocalRestore() => SettingsVM.ManualLocalRestoreCommand.Execute(null);
 
     [RelayCommand]
+    private void TriggerQuickAction()
+    {
+        var window = new Views.CaptureWindow();
+        window.Show();
+        window.Activate();
+    }
+
+    [RelayCommand]
     private void ManualBackup() => SettingsVM.ManualBackupCommand.Execute(null);
 
     [RelayCommand]
@@ -751,6 +759,7 @@ public partial class MainViewModel : ObservableObject
         RegisterWindowHotkey("ScreenshotTranslate", Config.ScreenshotTranslateHotkey, () => ExternalToolsVM.TriggerTranslateCommand.Execute(null));
         RegisterWindowHotkey("SelectedTextTranslate", Config.SelectedTextTranslateHotkey, () => ExternalToolsVM.TriggerSelectedTextTranslateCommand.Execute(null));
         RegisterWindowHotkey("OcrOnly", Config.OcrHotkey, () => ExternalToolsVM.TriggerOcrCommand.Execute(null));
+        RegisterWindowHotkey("GlobalQuickAction", Config.QuickActionHotkey, () => TriggerQuickActionCommand.Execute(null));
 
         ConfigService.Save(Config);
     }
