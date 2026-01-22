@@ -1024,6 +1024,29 @@
                                                     </DataTemplate>
                                                 </ListBox.ItemTemplate>
                                             </ListBox>
+                                            
+                                            <!-- QuickAction Display Settings -->
+                                            <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,20,0,20"/>
+                                            
+                                            <TextBlock Text="显示设置" Style="{StaticResource FieldLabelTextStyle}" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                                            
+                                            <StackPanel Margin="0,0,0,16">
+                                                <TextBlock Text="提示词按钮显示方式" 
+                                                          Style="{StaticResource FieldLabelTextStyle}" 
+                                                          Margin="0,0,0,8"/>
+                                                
+                                                <StackPanel Orientation="Horizontal">
+                                                    <RadioButton GroupName="QuickActionDisplayMode" 
+                                                                Content="文本" 
+                                                                IsChecked="{Binding Config.QuickActionShowText}"
+                                                                Margin="0,0,20,0"/>
+                                                    
+                                                    <RadioButton GroupName="QuickActionDisplayMode" 
+                                                                Content="仅图标"
+                                                                IsChecked="{Binding Config.QuickActionShowText, 
+                                                                           Converter={StaticResource InverseBoolConverter}}"/>
+                                                </StackPanel>
+                                            </StackPanel>
                                         </StackPanel>
                                     </StackPanel>
                                 </StackPanel>
@@ -1820,47 +1843,6 @@
                                             <TextBlock Text="翻译后自动复制结果" VerticalAlignment="Center" Margin="0,0,20,0"/>
                                             <CheckBox IsChecked="{Binding Config.AutoCopyTranslationResult}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand" VerticalAlignment="Center"/>
                                         </StackPanel>
-
-                                        <!-- QuickAction Settings -->
-                                        <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,10,0,20"/>
-                                        
-                                        <TextBlock Text="划词助手 (QuickAction)" 
-                                                   Style="{StaticResource FieldLabelTextStyle}" 
-                                                   FontSize="14" 
-                                                   FontWeight="SemiBold" 
-                                                   Margin="0,0,0,12"/>
-
-                                        <StackPanel Margin="0,0,0,16">
-                                            <TextBlock Text="长文本处理方式" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,8"/>
-                                            
-                                            <RadioButton GroupName="LongTextMode" 
-                                                        Content="外部编辑器打开 (默认)" 
-                                                        IsChecked="{Binding Config.QuickActionLongTextMode, 
-                                                                   Converter={StaticResource EnumToBoolConverter}, 
-                                                                   ConverterParameter=ExternalEditor}"
-                                                        Margin="0,0,0,8"/>
-                                            
-                                            <RadioButton GroupName="LongTextMode" 
-                                                        Content="应用内大屏展开"
-                                                        IsChecked="{Binding Config.QuickActionLongTextMode, 
-                                                                   Converter={StaticResource EnumToBoolConverter}, 
-                                                                   ConverterParameter=InternalExpand}"/>
-                                        </StackPanel>
-
-                                        <StackPanel Margin="0,0,0,16">
-                                            <TextBlock Text="触发阈值（AI 回复超过此行数时触发长文本处理）" 
-                                                      Style="{StaticResource FieldLabelTextStyle}" 
-                                                      Margin="0,0,0,8"/>
-                                            <TextBox Text="{Binding Config.QuickActionLineThreshold, Mode=TwoWay}" 
-                                                    Style="{StaticResource ModernTextBoxStyle}" 
-                                                    Width="100" 
-                                                    HorizontalAlignment="Left"/>
-                                        </StackPanel>
-
-                                        <TextBlock Text="提示：在外部编辑器模式下，长文本will be saved to QuickAction_Archive folder and opened automatically." 
-                                                   Style="{StaticResource HintTextStyle}" 
-                                                   Margin="0,10,0,0" 
-                                                   TextWrapping="Wrap"/>
 
                                     </StackPanel>
 

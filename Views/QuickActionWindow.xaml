@@ -182,6 +182,15 @@
                               Width="16" Height="16"/>
                     </Button>
                     
+                    <Button Command="{Binding OpenInExternalEditorCommand}"
+                           Style="{StaticResource IconButton}"
+                           ToolTip="在外部编辑器中打开">
+                        <Path Data="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2M18 20H6V4H13V9H18V20M8 15.2L9.4 13.8L12 16.4L18.6 9.8L20 11.2L12 19.2L8 15.2Z" 
+                              Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                              Stretch="Uniform"
+                              Width="16" Height="16"/>
+                    </Button>
+                    
                     <Button Command="{Binding CloseWindowCommand}"
                            Style="{StaticResource IconButton}"
                            ToolTip="关闭">

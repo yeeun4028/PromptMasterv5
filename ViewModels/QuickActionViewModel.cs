@@ -319,30 +319,36 @@ namespace PromptMasterv5.ViewModels
             if (_longTextHandled) return;
 
             var config = _settingsService.Config;
-            if (CurrentLineCount >= config.QuickActionLineThreshold)
+            
+            // Only check for internal expansion mode (external editor is now manual via button)
+            if (CurrentLineCount >= config.QuickActionLineThreshold && config.QuickActionLongTextMode == Core.Models.QuickActionLongTextMode.InternalExpand)
             {
                 _longTextHandled = true;
-
-                if (config.QuickActionLongTextMode == Core.Models.QuickActionLongTextMode.ExternalEditor)
-                {
-                    // Save to markdown and open externally
-                    string content = CurrentResult;
-                    SaveAndOpenMarkdownFile(content);
-                    
-                    // Lock window to prevent auto-close
-                    IsWindowLocked = true;
-                    
-                    LoggerService.Instance.LogInfo($"Long text detected ({CurrentLineCount} lines), saved to external editor", "QuickActionViewModel");
-                }
-                else
-                {
-                    // Expand window to large mode
-                    IsLargeMode = true;
-                    OnToggleLargeMode?.Invoke();
-                    
-                    LoggerService.Instance.LogInfo($"Long text detected ({CurrentLineCount} lines), expanded to large mode", "QuickActionViewModel");
-                }
+                
+                // Expand window to large mode
+                IsLargeMode = true;
+                OnToggleLargeMode?.Invoke();
+                
+                LoggerService.Instance.LogInfo($"Long text detected ({CurrentLineCount} lines), expanded to large mode", "QuickActionViewModel");
             }
+        }
+
+        [RelayCommand]
+        private void OpenInExternalEditor()
+        {
+            if (string.IsNullOrEmpty(CurrentResult))
+            {
+                LoggerService.Instance.LogWarning("No content to save", "QuickActionViewModel.OpenInExternalEditor");
+                return;
+            }
+
+            // Save current result to markdown file and open
+            SaveAndOpenMarkdownFile(CurrentResult);
+            
+            // Lock window to prevent auto-close
+            IsWindowLocked = true;
+            
+            LoggerService.Instance.LogInfo("Manually opened result in external editor", "QuickActionViewModel");
         }
 
         private void SaveAndOpenMarkdownFile(string content)
