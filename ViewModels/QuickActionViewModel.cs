@@ -38,6 +38,11 @@ namespace PromptMasterv5.ViewModels
         [ObservableProperty]
         private string currentResult = "";
 
+        // Store model configuration from first execution to maintain consistency
+        private string? _lastUsedApiKey;
+        private string? _lastUsedBaseUrl;
+        private string? _lastUsedModel;
+
         // Window reference for expanding animation
         public Action? OnExpandWindow { get; set; }
         public Action? OnCloseWindow { get; set; }
@@ -70,6 +75,11 @@ namespace PromptMasterv5.ViewModels
 
             // Resolve model
             var (apiKey, baseUrl, model, systemPrompt) = ResolveModel(prompt);
+
+            // Store for subsequent messages in this conversation
+            _lastUsedApiKey = apiKey;
+            _lastUsedBaseUrl = baseUrl;
+            _lastUsedModel = model;
 
             // Add user message
             Messages.Clear();
@@ -122,22 +132,12 @@ namespace PromptMasterv5.ViewModels
 
             try
             {
-                // Get last used model from first execution
-                var config = _settingsService.Config;
-                string apiKey = config.AiApiKey;
-                string baseUrl = config.AiBaseUrl;
-                string model = config.AiModel;
+                // Use the same model as the first execution to maintain conversation context
+                string apiKey = _lastUsedApiKey ?? _settingsService.Config.AiApiKey;
+                string baseUrl = _lastUsedBaseUrl ?? _settingsService.Config.AiBaseUrl;
+                string model = _lastUsedModel ?? _settingsService.Config.AiModel;
 
-                if (!string.IsNullOrEmpty(config.ActiveModelId))
-                {
-                    var activeModel = config.SavedModels.FirstOrDefault(m => m.Id == config.ActiveModelId);
-                    if (activeModel != null)
-                    {
-                        apiKey = activeModel.ApiKey;
-                        baseUrl = activeModel.BaseUrl;
-                        model = activeModel.ModelName;
-                    }
-                }
+                LoggerService.Instance.LogInfo($"Continuing conversation with model: {model}", "QuickActionViewModel.SendMessage");
 
                 var apiMessages = Messages.ToList();
 
@@ -221,27 +221,42 @@ namespace PromptMasterv5.ViewModels
             string model = config.AiModel;
             string systemPrompt = "";
 
-            // Check if prompt has bound model
+            AiModelConfig? selectedModel = null;
+
+            // Priority 1: Check if prompt has bound model
             if (!string.IsNullOrEmpty(prompt.BoundModelId))
             {
-                var boundModel = config.SavedModels.FirstOrDefault(m => m.Id == prompt.BoundModelId);
-                if (boundModel != null)
+                selectedModel = config.SavedModels.FirstOrDefault(m => m.Id == prompt.BoundModelId);
+                if (selectedModel != null)
                 {
-                    apiKey = boundModel.ApiKey;
-                    baseUrl = boundModel.BaseUrl;
-                    model = boundModel.ModelName;
+                    LoggerService.Instance.LogInfo($"Using bound model for prompt '{prompt.Title}': {selectedModel.ModelName}", "QuickActionViewModel.ResolveModel");
+                }
+                else
+                {
+                    LoggerService.Instance.LogWarning($"Bound model ID '{prompt.BoundModelId}' not found for prompt '{prompt.Title}', falling back to active model", "QuickActionViewModel.ResolveModel");
                 }
             }
-            // Otherwise use active model
-            else if (!string.IsNullOrEmpty(config.ActiveModelId))
+
+            // Priority 2: Fallback to active model if no bound model or bound model not found
+            if (selectedModel == null && !string.IsNullOrEmpty(config.ActiveModelId))
             {
-                var activeModel = config.SavedModels.FirstOrDefault(m => m.Id == config.ActiveModelId);
-                if (activeModel != null)
+                selectedModel = config.SavedModels.FirstOrDefault(m => m.Id == config.ActiveModelId);
+                if (selectedModel != null)
                 {
-                    apiKey = activeModel.ApiKey;
-                    baseUrl = activeModel.BaseUrl;
-                    model = activeModel.ModelName;
+                    LoggerService.Instance.LogInfo($"Using active model: {selectedModel.ModelName}", "QuickActionViewModel.ResolveModel");
                 }
+            }
+
+            // Apply selected model if found
+            if (selectedModel != null)
+            {
+                apiKey = selectedModel.ApiKey;
+                baseUrl = selectedModel.BaseUrl;
+                model = selectedModel.ModelName;
+            }
+            else
+            {
+                LoggerService.Instance.LogInfo($"Using default config values: {model}", "QuickActionViewModel.ResolveModel");
             }
 
             return (apiKey, baseUrl, model, systemPrompt);
