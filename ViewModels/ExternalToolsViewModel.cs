@@ -8,6 +8,9 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using PromptMasterv5.Infrastructure.Helpers;
+using HandyControl.Controls;
+using HandyControl.Data;
 
 namespace PromptMasterv5.ViewModels
 {
@@ -113,16 +116,13 @@ namespace PromptMasterv5.ViewModels
                 // 1. Clear clipboard
                 try { System.Windows.Clipboard.Clear(); } catch { }
 
-                // 2. Simulate Ctrl+C
+                // 2. Simulate Ctrl+C via SendInput (Robust method)
                 // Notify MainViewModel to ignore key events
                 if (_mainViewModel != null) _mainViewModel.SetSimulatingKeys(true);
                 
                 try 
                 {
-                    NativeMethods.keybd_event(NativeMethods.VK_CONTROL, 0, 0, 0);
-                    NativeMethods.keybd_event(NativeMethods.VK_C, 0, 0, 0);
-                    NativeMethods.keybd_event(NativeMethods.VK_C, 0, NativeMethods.KEYEVENTF_KEYUP, 0);
-                    NativeMethods.keybd_event(NativeMethods.VK_CONTROL, 0, NativeMethods.KEYEVENTF_KEYUP, 0);
+                    InputHelper.SendCopyCommand();
                     
                     // 3. Loop check clipboard
                     string text = "";
@@ -132,43 +132,68 @@ namespace PromptMasterv5.ViewModels
                         try 
                         {
                             if (System.Windows.Clipboard.ContainsText())
+                            {
+                                text = System.Windows.Clipboard.GetText();
+                                if (!string.IsNullOrWhiteSpace(text)) break;
+                            }
+                        }
+                        catch { }
+                    }
+
+                    // 4. Secondary Attempt: WM_COPY (if Ctrl+C failed)
+                    if (string.IsNullOrWhiteSpace(text))
+                    {
+                        if (InputHelper.TrySendWmCopy())
                         {
-                            text = System.Windows.Clipboard.GetText();
-                            if (!string.IsNullOrWhiteSpace(text)) break;
+                             // Wait briefly for message to process
+                             await Task.Delay(100);
+                             try 
+                             {
+                                 if (System.Windows.Clipboard.ContainsText())
+                                 {
+                                     text = System.Windows.Clipboard.GetText();
+                                 }
+                             }
+                             catch { }
                         }
                     }
-                    catch { }
-                }
 
-                if (string.IsNullOrWhiteSpace(text))
+                    if (string.IsNullOrWhiteSpace(text))
+                    {
+                        // 5. Fallback Notification
+                        Growl.WarningGlobal(new GrowlInfo
+                        {
+                            Message = "无法获取选中文本 (复制失败)。\n建议：请尝试使用截图翻译 (Alt+S)。",
+                            ShowDateTime = false,
+                            WaitTime = 4
+                        });
+                        return;
+                    }
+
+                    var translated = await PerformTranslation(text);
+
+                    if (string.IsNullOrWhiteSpace(translated)) return;
+
+                    if (Config.AutoCopyTranslationResult)
+                    {
+                        try { await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => System.Windows.Clipboard.SetText(translated)); } catch { }
+                    }
+
+                    // 6. Show Result
+                    _windowManager.ShowTranslationPopup(translated);
+                }
+                finally
                 {
-                    return;
+                    // Delay reset
+                    await Task.Delay(200);
+                    if (_mainViewModel != null) _mainViewModel.SetSimulatingKeys(false);
                 }
-
-                var translated = await PerformTranslation(text);
-
-                if (string.IsNullOrWhiteSpace(translated)) return;
-
-                if (Config.AutoCopyTranslationResult)
-                {
-                    try { await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => System.Windows.Clipboard.SetText(translated)); } catch { }
-                }
-
-                // 4. Show Result
-                _windowManager.ShowTranslationPopup(translated);
             }
-            finally
+            catch (Exception ex)
             {
-                // Delay reset
-                await Task.Delay(200);
-                if (_mainViewModel != null) _mainViewModel.SetSimulatingKeys(false);
+                _dialogService.ShowAlert($"划词翻译出错: {ex.Message}", "错误");
             }
         }
-        catch (Exception ex)
-        {
-            _dialogService.ShowAlert($"划词翻译出错: {ex.Message}", "错误");
-        }
-    }
 
     private async Task<string> PerformTranslation(string text)
     {

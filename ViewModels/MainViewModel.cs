@@ -982,13 +982,47 @@ public partial class MainViewModel : ObservableObject
             }
 
             // 2. 获取带有 IsQuickAction 标记的提示词
-            var quickActions = Files.Where(f => f.IsQuickAction).ToList();
-            
-            // 如果为空，尝试自动初始化默认指令
+            var quickActions = new ObservableCollection<PromptItem>();
+
+            // 优先使用 LocalConfig 中的配置 (支持自定义模型绑定)
+            if (LocalConfig.QuickActionPrompts != null && LocalConfig.QuickActionPrompts.Count > 0)
+            {
+                foreach (var configItem in LocalConfig.QuickActionPrompts)
+                {
+                    var file = Files.FirstOrDefault(f => f.Id == configItem.Id);
+                    if (file != null)
+                    {
+                        // 创建临时对象，确保使用配置中的模型ID，且不污染原始对象
+                        quickActions.Add(new PromptItem
+                        {
+                            Id = file.Id,
+                            Title = file.Title,
+                            Content = file.Content,
+                            FolderId = file.FolderId,
+                            IconGeometry = file.IconGeometry,
+                            Description = file.Description,
+                            IsQuickAction = true,
+                            BoundModelId = configItem.BoundModelId,
+                            CreatedAt = file.CreatedAt,
+                            LastModified = file.LastModified
+                        });
+                    }
+                }
+            }
+
+            // 如果配置为空，回退到旧版 IsQuickAction 标记逻辑
             if (quickActions.Count == 0)
             {
-                InitializeQuickActions();
-                quickActions = Files.Where(f => f.IsQuickAction).ToList();
+                var legacyItems = Files.Where(f => f.IsQuickAction).ToList();
+                
+                // 如果为空，尝试自动初始化默认指令
+                if (legacyItems.Count == 0)
+                {
+                    InitializeQuickActions();
+                    legacyItems = Files.Where(f => f.IsQuickAction).ToList();
+                }
+                
+                foreach (var item in legacyItems) quickActions.Add(item);
             }
 
             if (quickActions.Count == 0)
@@ -1008,7 +1042,7 @@ public partial class MainViewModel : ObservableObject
                     _clipboardService,
                     _settingsService,
                     selectedText,
-                    new ObservableCollection<PromptItem>(quickActions));
+                    quickActions);
 
                 var window = new Views.QuickActionWindow
                 {
