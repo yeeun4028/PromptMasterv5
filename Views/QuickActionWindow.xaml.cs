@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
 using System.Windows.Controls;
-using System.Windows.Controls;
+
 using System.ComponentModel;
 using System.Collections.Specialized;
 using PromptMasterv5.ViewModels;

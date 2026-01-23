@@ -21,6 +21,18 @@ namespace PromptMasterv5.ViewModels
         private readonly BaiduService _baiduService;
         private readonly GoogleService _googleService;
 
+        public ObservableCollection<ApiProfile> OcrProfiles => 
+            new(Config.ApiProfiles.Where(p => p.ServiceType == ServiceType.OCR));
+
+        public ObservableCollection<ApiProfile> TranslateProfiles => 
+            new(Config.ApiProfiles.Where(p => p.ServiceType == ServiceType.Translation));
+
+        public void RefreshProfiles()
+        {
+            OnPropertyChanged(nameof(OcrProfiles));
+            OnPropertyChanged(nameof(TranslateProfiles));
+        }
+
         // Reference to MainViewModel to access Files/Folders if needed for AI Translation Prompt
         private MainViewModel? _mainViewModel;
 
@@ -51,6 +63,25 @@ namespace PromptMasterv5.ViewModels
             _windowManager = windowManager;
             
             LoggerService.Instance.LogInfo("ExternalToolsViewModel initialized", "ExternalToolsViewModel.ctor");
+            
+            EnsureAiProfileExists();
+        }
+
+        private void EnsureAiProfileExists()
+        {
+            // Ensure there is at least one AI profile for selection
+            if (!Config.ApiProfiles.Any(p => p.Provider == ApiProvider.AI && p.ServiceType == ServiceType.Translation))
+            {
+                Config.ApiProfiles.Add(new ApiProfile 
+                { 
+                    Name = "AI 智能翻译", 
+                    Provider = ApiProvider.AI, 
+                    ServiceType = ServiceType.Translation,
+                    Id = Guid.NewGuid().ToString() // Ensure ID is set
+                });
+                _settingsService.SaveConfig();
+                RefreshProfiles();
+            }
         }
 
         [RelayCommand]
@@ -195,56 +226,43 @@ namespace PromptMasterv5.ViewModels
             }
         }
 
-    private async Task<string> PerformTranslation(string text)
-    {
-        if (string.IsNullOrWhiteSpace(text)) return "";
 
-        // 1. AI Translation
-        if (Config.EnableAiTranslation)
-        {
-            return await TranslateWithAiAsync(text);
-        }
 
-        // 2. Google
-        if (Config.EnableGoogle)
+        private async Task<string> PerformTranslation(string text)
         {
-            var profile = Config.ApiProfiles.FirstOrDefault(p => p.Provider == ApiProvider.Google && p.ServiceType == ServiceType.Translation);
-            if (profile != null)
+            if (string.IsNullOrWhiteSpace(text)) return "";
+
+            // 1. Get Selected Profile
+            if (TryGetTranslateProfile(out var profile))
             {
-                return await _googleService.TranslateAsync(text, profile);
-            }
-            return "Google 翻译已开启，但未找到有效的 API 配置。";
-        }
+                // Dispatch based on provider
+                switch (profile!.Provider)
+                {
+                    case ApiProvider.Google:
+                        if (Config.EnableGoogle)
+                            return await _googleService.TranslateAsync(text, profile);
+                        return "Google 翻译未启用";
 
-        // 3. Youdao (Not implemented in snippet)
-
-        // 4. Baidu (Fallback or if enabled)
-        // Need to get TranslateProfile first
-            if (TryGetTranslateProfile(out var transProfile))
-        {
-                return await _baiduService.TranslateAsync(text, transProfile!, "auto", "zh");
-        }
-        else
-        {
-            // If Baidu is enabled but no profile found/selected:
-            if (Config.EnableBaidu)
-            {
-                return "Baidu 翻译已启用但未选择有效的配置 (Profile)。请检查设置。";
-            }
-        }
-        
-        // Fallback: If no dedicated translation enabled, maybe try AI if configured
-            // Check if AI Translation is possible (either via new Model ID or old manual keys)
-            bool hasAiConfig = !string.IsNullOrWhiteSpace(Config.TranslationModelId) || 
-                               !string.IsNullOrWhiteSpace(Config.ActiveModelId) ||
-                               !string.IsNullOrWhiteSpace(Config.AiTranslateApiKey);
-
-            if (hasAiConfig)
-            {
-                 return await TranslateWithAiAsync(text);
+                    case ApiProvider.Baidu:
+                        if (Config.EnableBaidu)
+                            return await _baiduService.TranslateAsync(text, profile, "auto", "zh");
+                        return "百度翻译未启用";
+                    
+                    // Add other providers here...
+                    case ApiProvider.AI:
+                        if (Config.EnableAiTranslation)
+                            return await TranslateWithAiAsync(text);
+                        return "AI 翻译未启用 (请在 AI 选项卡中开启)";
+                }
             }
 
-            return "请先在设置中配置并开启翻译服务 (AI / Google / 百度)";
+            // 2. AI Translation (Fallback or if enabled separately)
+            if (Config.EnableAiTranslation)
+            {
+                return await TranslateWithAiAsync(text);
+            }
+
+            return "请先在设置中选择有效的翻译配置 (AI / Google / 百度)";
         }
 
          private async Task<string> TranslateWithAiAsync(string text)
@@ -328,31 +346,32 @@ namespace PromptMasterv5.ViewModels
         private bool TryGetOcrProfile(out ApiProfile? profile)
         {
             profile = null;
-            if (!Config.EnableBaidu)
-            {
-                // If OCR is not explicitly enabled via Baidu, check if others could do it? Currently only Baidu OCR supported in code?
-                // The original code checked specific profiles.
-                _dialogService.ShowAlert("请先启用百度 OCR 功能", "配置缺失");
-                return false;
-            }
-
-            // Logic to get profile from Config using OcrProfileId
             if (!string.IsNullOrWhiteSpace(Config.OcrProfileId))
             {
                 profile = Config.ApiProfiles.FirstOrDefault(p => p.Id == Config.OcrProfileId);
             }
             
-            // Fallback to active profile if specific one not set
-            if (profile == null && !string.IsNullOrWhiteSpace(Config.ActiveApiProfileId))
-            {
-                profile = Config.ApiProfiles.FirstOrDefault(p => p.Id == Config.ActiveApiProfileId);
-            }
-
             if (profile == null)
             {
-                _dialogService.ShowAlert("未找到有效的 API 配置，请在设置中添加并选中一个配置。", "配置缺失");
+                _dialogService.ShowAlert("请在设置中选择有效的 OCR 配置。", "配置缺失");
                 return false;
             }
+
+            // Check if provider is enabled
+            bool isEnabled = profile.Provider switch
+            {
+                ApiProvider.Baidu => Config.EnableBaidu,
+                ApiProvider.TencentCloud => Config.EnableTencentCloud,
+                ApiProvider.Youdao => Config.EnableYoudao,
+                _ => false
+            };
+
+            if (!isEnabled)
+            {
+                 _dialogService.ShowAlert($"请先开启 {profile.ProviderDisplayName} 服务。", "服务未启用");
+                 return false;
+            }
+
             return true;
         }
 

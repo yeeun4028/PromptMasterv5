@@ -129,6 +129,21 @@ namespace PromptMasterv5.Views
             }
 
             ConfigService.Save(ViewModel.Config);
+            
+            // Refresh logic if needed (ObservableCollection updates automatically if added/removed, but filters might need help if relying on new instances)
+            // Since we added to Config.ApiProfiles, the computed properties in ExternalToolsViewModel (if implemented as just getters returning new OC) won't auto-update unless we notify.
+            // Better to trigger a refresh in ViewModel.
+            // However, our current implementation created `new ObservableCollection` in the property getter which is NOT dynamic.
+            // We need to fix ExternalToolsViewModel to have ObservableCollections that sync with Config.ApiProfiles OR just refresh the view.
+            
+            // For now, let's just force a NotifyPropertyChanged on the ViewModel properties if we can.
+            // But better: let's modifying ExternalToolsViewModel to actually use a filtering mechanism, 
+            // OR just re-fetch the list here if we can access ExternalToolsVM.
+            
+            if (ViewModel.ExternalToolsVM != null)
+            {
+                ViewModel.ExternalToolsVM.RefreshProfiles();
+            }
         }
 
         private MainViewModel? ViewModel => DataContext as MainViewModel;
@@ -778,6 +793,11 @@ namespace PromptMasterv5.Views
             }
 
             ConfigService.Save(ViewModel.Config);
+
+            if (ViewModel.ExternalToolsVM != null)
+            {
+                ViewModel.ExternalToolsVM.RefreshProfiles();
+            }
         }
 
         private async void TestGoogle_Click(object sender, RoutedEventArgs e)

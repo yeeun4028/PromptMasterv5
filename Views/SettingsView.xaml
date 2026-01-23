@@ -1798,7 +1798,41 @@
 
                                     <!-- Sub-Tab Content: Main Interface -->
                                     <StackPanel x:Name="ExternalToolsMainTab">
-                                        <TextBlock Text="启用的供应商（同时控制翻译 + OCR）" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,12"/>
+                                        
+                                        <!-- Profile Selection Area -->
+                                        <Border Background="{DynamicResource CardBackground}" CornerRadius="8" Padding="15" Margin="0,0,0,20">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="20"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                
+                                                <!-- OCR Profile Selection -->
+                                                <StackPanel Grid.Column="0">
+                                                    <TextBlock Text="默认 OCR 供应商" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,8"/>
+                                                    <ComboBox ItemsSource="{Binding ExternalToolsVM.OcrProfiles}"
+                                                              DisplayMemberPath="Name"
+                                                              SelectedValuePath="Id"
+                                                              SelectedValue="{Binding Config.OcrProfileId, Mode=TwoWay}"
+                                                             />
+                                                    <TextBlock Text="选择用于截图文字识别的服务商" Style="{StaticResource HintTextStyle}" Margin="0,4,0,0"/>
+                                                </StackPanel>
+
+                                                <!-- Translation Profile Selection -->
+                                                <StackPanel Grid.Column="2">
+                                                    <TextBlock Text="默认翻译供应商" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,8"/>
+                                                    <ComboBox ItemsSource="{Binding ExternalToolsVM.TranslateProfiles}"
+                                                              DisplayMemberPath="Name"
+                                                              SelectedValuePath="Id"
+                                                              SelectedValue="{Binding Config.TranslateProfileId, Mode=TwoWay}"
+                                                             />
+                                                    <TextBlock Text="选择用于截图/划词翻译的服务商" Style="{StaticResource HintTextStyle}" Margin="0,4,0,0"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+
+                                        <TextBlock Text="启用的供应商（勾选以启用相应服务）" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,12"/>
                                         
                                         <Grid Margin="0,0,0,20">
                                             <Grid.ColumnDefinitions>
