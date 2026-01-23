@@ -266,19 +266,31 @@ public partial class MainViewModel : ObservableObject
         }
 
         Files = new ObservableCollection<PromptItem>(data.Files ?? new());
+        
+        // 附加自动保存监听器
+        Files.CollectionChanged += OnFilesCollectionChanged;
+        foreach (var item in Files)
+        {
+            item.PropertyChanged += OnFilePropertyChanged;
+        }
+        
         SidebarVM.Files = Files;
 
-        SidebarVM.Folders = new ObservableCollection<FolderItem>(data.Folders ?? new());
-        if (SidebarVM.Folders.Count == 0)
+        // ⚠️ 关键修复：使用同一个集合引用，而不是创建新集合
+        Folders = new ObservableCollection<FolderItem>(data.Folders ?? new());
+        if (Folders.Count == 0)
         {
             var defaultFolder = new FolderItem { Name = "默认" };
-            SidebarVM.Folders.Add(defaultFolder);
+            Folders.Add(defaultFolder);
             SidebarVM.SelectedFolder = defaultFolder;
         }
         else
         {
-            SidebarVM.SelectedFolder ??= SidebarVM.Folders.FirstOrDefault();
+            SidebarVM.SelectedFolder = Folders.FirstOrDefault();
         }
+        
+        // 将同一个集合引用赋值给 SidebarVM
+        SidebarVM.Folders = Folders;
 
         if (SidebarVM.SelectedFolder != null)
         {
@@ -832,6 +844,45 @@ public partial class MainViewModel : ObservableObject
             await _localDataService.SaveAsync(Folders, Files);
         }
         catch { }
+    }
+
+    /// <summary>
+    /// 当 Files 集合发生变化时（添加/删除项目），附加或移除监听器并触发保存
+    /// </summary>
+    private void OnFilesCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        // 为新添加的项目附加监听器
+        if (e.NewItems != null)
+        {
+            foreach (PromptItem item in e.NewItems)
+            {
+                item.PropertyChanged += OnFilePropertyChanged;
+            }
+        }
+        
+        // 从移除的项目上卸载监听器
+        if (e.OldItems != null)
+        {
+            foreach (PromptItem item in e.OldItems)
+            {
+                item.PropertyChanged -= OnFilePropertyChanged;
+            }
+        }
+        
+        // 集合变化时触发保存
+        RequestSave();
+    }
+
+    /// <summary>
+    /// 当 PromptItem 的属性发生变化时触发保存
+    /// </summary>
+    private void OnFilePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // 避免因更新 LastModified 导致的循环触发
+        if (e.PropertyName == nameof(PromptItem.LastModified)) 
+            return;
+        
+        RequestSave();
     }
 
     private void UpdateTimeDisplay()

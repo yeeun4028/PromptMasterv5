@@ -80,6 +80,22 @@ namespace PromptMasterv5
         {
             LoggerService.Instance.LogInfo($"Application exiting with code: {e.ApplicationExitCode}", "App.OnExit");
             
+            // 在退出前强制执行一次本地保存（仅对托盘菜单退出有效，taskkill /F 无效）
+            try
+            {
+                var mainVM = _serviceProvider?.GetService(typeof(MainViewModel)) as MainViewModel;
+                if (mainVM != null)
+                {
+                    LoggerService.Instance.LogInfo("执行退出前保存...", "App.OnExit");
+                    // 使用 Task.Run 避免同步上下文死锁
+                    Task.Run(async () => await mainVM.PerformLocalBackup()).Wait();
+                }
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Instance.LogException(ex, "退出前保存失败", "App.OnExit");
+            }
+            
             // Release the mutex
             _singleInstanceMutex?.ReleaseMutex();
             _singleInstanceMutex?.Dispose();

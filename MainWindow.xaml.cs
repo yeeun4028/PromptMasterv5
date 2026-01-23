@@ -607,22 +607,38 @@ namespace PromptMasterv5
 
         private void MainWindow_Closing(object? sender, CancelEventArgs e)
         {
-            // ★★★ 新增：安全退出拦截机制 ★★★
+            // 检查是否有未保存的修改
             if (ViewModel.IsDirty)
             {
-                var result = MessageBox.Show("您有未备份的修改。是否在退出/隐藏前备份到云端？", "未保存的更改", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
+                // 检查是否配置了WebDAV同步
+                bool hasWebDav = !string.IsNullOrWhiteSpace(ViewModel.Config.WebDavUrl) 
+                              && !string.IsNullOrWhiteSpace(ViewModel.Config.Password);
                 
-                if (result == MessageBoxResult.Cancel)
+                if (hasWebDav)
                 {
-                    e.Cancel = true; // 取消关闭/隐藏操作
-                    return;
+                    // 配置了WebDAV，询问是否备份到云端
+                    var result = MessageBox.Show("您有未备份的修改。是否在退出前备份到云端？\n\n提示：选择【否】将仅保存到本地。", 
+                                                "未保存的更改", 
+                                                MessageBoxButton.YesNoCancel, 
+                                                MessageBoxImage.Warning);
+                    
+                    if (result == MessageBoxResult.Cancel)
+                    {
+                        e.Cancel = true; // 取消关闭操作
+                        return;
+                    }
+                    else if (result == MessageBoxResult.Yes)
+                    {
+                        // 同步执行云端备份
+                        ViewModel.ManualBackupCommand.Execute(null);
+                    }
+                    // 如果选 No，继续执行（App.OnExit 会自动保存到本地）
                 }
-                else if (result == MessageBoxResult.Yes)
+                else
                 {
-                    // 同步执行备份
-                    ViewModel.ManualBackupCommand.Execute(null);
+                    // 未配置WebDAV，静默保存到本地（通过 App.OnExit）
+                    // 不显示任何提示，因为本地保存是自动的
                 }
-                // 如果选 No，直接继续执行后续关闭或隐藏操作
             }
 
             // 如果不是通过退出菜单关闭，则隐藏窗口而不是关闭

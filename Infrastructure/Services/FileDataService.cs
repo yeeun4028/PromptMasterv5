@@ -40,9 +40,15 @@ namespace PromptMasterv5.Infrastructure.Services
                 }
 
                 File.Move(tempPath, _filePath, overwrite: true);
+                
+                // 记录保存成功
+                LoggerService.Instance.LogInfo($"数据已保存到 {_filePath} ({data.Files.Count} 个提示词)", "FileDataService.SaveAsync");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                // 记录保存失败
+                LoggerService.Instance.LogException(ex, $"保存数据到 {_filePath} 失败", "FileDataService.SaveAsync");
+                
                 // Verify if temp file exists and delete it if operation failed
                 try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch { }
             }
@@ -124,10 +130,17 @@ namespace PromptMasterv5.Infrastructure.Services
             try
             {
                 using FileStream openStream = File.OpenRead(_filePath);
-                return await JsonSerializer.DeserializeAsync<AppData>(openStream) ?? new AppData();
+                var data = await JsonSerializer.DeserializeAsync<AppData>(openStream) ?? new AppData();
+                
+                // 记录加载成功
+                LoggerService.Instance.LogInfo($"从 {_filePath} 加载了 {data.Files?.Count ?? 0} 个提示词", "FileDataService.LoadAsync");
+                
+                return data;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                // 记录加载失败
+                LoggerService.Instance.LogException(ex, $"从 {_filePath} 加载数据失败", "FileDataService.LoadAsync");
                 return new AppData();
             }
         }
