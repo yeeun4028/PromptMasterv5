@@ -417,7 +417,7 @@ namespace PromptMasterv5.ViewModels
             var defaultOption = new AiModelConfig
             {
                 Id = Guid.Empty.ToString(),
-                ModelName = "默认 (不选择)",
+                ModelName = "清除选择",
                 ApiKey = "",
                 BaseUrl = ""
             };
