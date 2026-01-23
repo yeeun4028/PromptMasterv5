@@ -5,6 +5,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.IO;
 using System.Net.Http;
 using PromptMasterv5.Core.Models;
 using PromptMasterv5.Infrastructure.Services;
@@ -998,10 +1000,40 @@ namespace PromptMasterv5.Views
 
         private byte[] CreateTestImage()
         {
-            // Create a minimal 1x1 white PNG image for testing OCR
-            return Convert.FromBase64String(
-                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg=="
-            );
+            // Create a valid image with text to satisfy OCR requirements (min size and content)
+            var width = 200;
+            var height = 60;
+            var renderBitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+            var visual = new DrawingVisual();
+
+            using (var context = visual.RenderOpen())
+            {
+                // Background
+                context.DrawRectangle(System.Windows.Media.Brushes.White, null, new Rect(0, 0, width, height));
+                
+                // Text
+                var formattedText = new FormattedText(
+                    "OCR TEST",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Windows.FlowDirection.LeftToRight,
+                    new Typeface("Arial"),
+                    24,
+                    System.Windows.Media.Brushes.Black,
+                    VisualTreeHelper.GetDpi(this).PixelsPerDip);
+
+                context.DrawText(formattedText, new System.Windows.Point(40, 15));
+            }
+
+            renderBitmap.Render(visual);
+
+            var encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(renderBitmap));
+
+            using (var stream = new MemoryStream())
+            {
+                encoder.Save(stream);
+                return stream.ToArray();
+            }
         }
     }
 }
