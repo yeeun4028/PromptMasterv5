@@ -1788,52 +1788,95 @@
                                     </StackPanel>
 
                                     <!-- 6. AI 翻译配置 Tab (Migrated) -->
+                                    <!-- 6. AI 翻译配置 Tab (Migrated) -->
                                     <StackPanel x:Name="ExternalToolsAiTranslateTab" Visibility="Collapsed">
                                         <TextBlock Text="AI 辅助翻译设置" Style="{StaticResource FieldLabelTextStyle}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,15"/>
-                                        <TextBlock Text="利用大模型进行高质量的上下文感知翻译。" Style="{StaticResource HintTextStyle}" Margin="0,0,0,20"/>
+                                        <TextBlock Text="利用大模型进行高质量的上下文感知翻译。勾选的模型将参与并发竞速。" Style="{StaticResource HintTextStyle}" Margin="0,0,0,20"/>
                                         
-                                        <!-- Base URL & API Key -->
-                                        <Grid Margin="0,0,0,15">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="15"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel>
-                                                <TextBlock Text="API 地址 (Base URL)" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                <TextBox Text="{Binding Config.AiTranslateBaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="2">
-                                                <TextBlock Text="API Key" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                <TextBox Text="{Binding Config.AiTranslateApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ApiKeyTextBoxStyle}"/>
-                                            </StackPanel>
-                                        </Grid>
+                                        <!-- 1. AI Translation Models Checklist -->
+                                        <TextBlock Text="AI 翻译模型 (AI Translation Models)" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,12"/>
+                                        <Border Background="{DynamicResource CardBackground}" CornerRadius="8" Padding="15" Margin="0,0,0,20">
+                                            <ItemsControl ItemsSource="{Binding Config.SavedModels}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal" Margin="0,6">
+                                                            <CheckBox IsChecked="{Binding IsEnableForTranslation}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand" VerticalAlignment="Center" ToolTip="启用翻译"/>
+                                                            <TextBlock Text="{Binding ModelName}" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{DynamicResource TextPrimary}" FontWeight="Medium"/>
+                                                            <TextBlock Text="{Binding BaseUrl}" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{DynamicResource TextSecondary}" FontSize="11" Opacity="0.5" TextTrimming="CharacterEllipsis" MaxWidth="200"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Config.SavedModels.Count}" Value="0">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                        </Border>
+
+                                        <!-- 2. AI OCR Models Checklist -->
+                                        <TextBlock Text="AI OCR 模型 (AI OCR Models - Vision)" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,12"/>
+                                        <Border Background="{DynamicResource CardBackground}" CornerRadius="8" Padding="15" Margin="0,0,0,20">
+                                            <ItemsControl ItemsSource="{Binding Config.SavedModels}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal" Margin="0,6">
+                                                            <CheckBox IsChecked="{Binding IsEnableForOcr}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand" VerticalAlignment="Center" ToolTip="启用 OCR (需支持 Vision 能力的模型)"/>
+                                                            <TextBlock Text="{Binding ModelName}" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{DynamicResource TextPrimary}" FontWeight="Medium"/>
+                                                            <TextBlock Text="[需要视觉能力]" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{DynamicResource HintBrush}" FontSize="11"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Config.SavedModels.Count}" Value="0">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                        </Border>
+                                        
+                                        <!-- Empty State Hint -->
+                                        <TextBlock Text="暂无可用模型，请前往“模型”设置页添加。" 
+                                                   Foreground="{DynamicResource TextSecondary}" 
+                                                   FontStyle="Italic"
+                                                   Margin="0,-10,0,20">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock" BasedOn="{StaticResource HintTextStyle}">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Config.SavedModels.Count}" Value="0">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+
+                                        <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,0,0,20"/>
 
                                         <!-- Model & Prompt -->
-                                        <Grid Margin="0,0,0,15">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="15"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel>
-                                                <TextBlock Text="模型名称 (Model)" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                <TextBox Text="{Binding Config.AiTranslateModel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="2">
-                                                <TextBlock Text="预设提示词 (Prompt)" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                  <ComboBox ItemsSource="{Binding FilesView}"
-                                                          DisplayMemberPath="Title"
-                                                          SelectedValuePath="Id"
-                                                          SelectedValue="{Binding Config.AiTranslationPromptId, Mode=TwoWay}"/>
-                                            </StackPanel>
-                                        </Grid>
-                                        <TextBlock Text="如果未设置 Prompt，将使用内置的【翻译专家】系统提示词。" Style="{StaticResource HintTextStyle}" Margin="0,-10,0,20"/>
+                                        <StackPanel Margin="0,0,0,15">
+                                            <TextBlock Text="预设提示词 (Prompt)" Style="{StaticResource FieldLabelTextStyle}"/>
+                                            <ComboBox ItemsSource="{Binding FilesView}"
+                                                      DisplayMemberPath="Title"
+                                                      SelectedValuePath="Id"
+                                                      SelectedValue="{Binding Config.AiTranslationPromptId, Mode=TwoWay}"
+                                                      Margin="0,0,0,8"/>
+                                            <TextBlock Text="如果未设置 Prompt，将使用内置的【翻译专家】系统提示词。" Style="{StaticResource HintTextStyle}"/>
+                                        </StackPanel>
 
                                         <!-- 保存 & 测试 -->
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,10,0,0">
                                             <TextBlock x:Name="TestAiTranslationStatusText" Text="" VerticalAlignment="Center" Margin="0,0,15,0" FontWeight="Bold"/>
-                                            <Button Content="测试连接" Click="TestAiTranslationConnection_Click" Width="100" Height="34">
+                                            <Button Content="测试选中的模型" Click="TestAiTranslationConnection_Click" Width="120" Height="34">
                                                 <Button.Style>
                                                     <Style TargetType="Button">
                                                         <Setter Property="Background" Value="{StaticResource AccentColor}"/>

@@ -77,11 +77,24 @@ namespace PromptMasterv5.ViewModels
                     Name = "AI 智能翻译", 
                     Provider = ApiProvider.AI, 
                     ServiceType = ServiceType.Translation,
-                    Id = Guid.NewGuid().ToString() // Ensure ID is set
+                    Id = Guid.NewGuid().ToString() 
                 });
-                _settingsService.SaveConfig();
-                RefreshProfiles();
             }
+
+            // Ensure AI OCR profile exists
+            if (!Config.ApiProfiles.Any(p => p.Provider == ApiProvider.AI && p.ServiceType == ServiceType.OCR))
+            {
+                Config.ApiProfiles.Add(new ApiProfile
+                {
+                    Name = "AI 智能 OCR",
+                    Provider = ApiProvider.AI,
+                    ServiceType = ServiceType.OCR,
+                    Id = Guid.NewGuid().ToString()
+                });
+            }
+
+            _settingsService.SaveConfig();
+            RefreshProfiles();
         }
 
         [RelayCommand]
@@ -103,7 +116,7 @@ namespace PromptMasterv5.ViewModels
 
             if (!string.IsNullOrWhiteSpace(result))
             {
-                if (result.StartsWith("OCR 错误") || result.StartsWith("错误"))
+                if (result.StartsWith("OCR 错误") || result.StartsWith("错误") || result.StartsWith("OCR 失败"))
                 {
                     _dialogService.ShowAlert(result, "OCR 失败");
                 }
@@ -114,7 +127,7 @@ namespace PromptMasterv5.ViewModels
                 }
             }
         }
-
+    
         [RelayCommand]
         private async Task TriggerTranslate()
         {
@@ -163,8 +176,6 @@ namespace PromptMasterv5.ViewModels
             if (enabledTransProfiles.Count == 0)
             {
                  // Check if it's just a misconfiguration or intended fallback
-                 // But for selected text translate, we need at least one translator.
-                 // Unless we fallback to screenshot mode which needs OCR.
             }
 
             try
@@ -268,86 +279,160 @@ namespace PromptMasterv5.ViewModels
 
         private async Task<string> RaceOcrAsync(byte[] imageBytes, List<ApiProfile> profiles)
         {
-            if (profiles == null || profiles.Count == 0) return "未启用 OCR 服务";
+            if (imageBytes == null || imageBytes.Length == 0) return "图片数据为空";
+            
+            var tasks = new List<Task<string>>();
 
-            // Create a task for each profile
-            var tasks = profiles.Select(async profile =>
+            // 1. Standard Providers Tasks
+            if (profiles != null && profiles.Count > 0)
             {
-                try
+                var standardProfiles = profiles.Where(p => p.Provider != ApiProvider.AI).ToList();
+                tasks.AddRange(standardProfiles.Select(async profile =>
                 {
-                    return profile!.Provider switch
+                    try
                     {
-                        ApiProvider.Baidu => await _baiduService.OcrAsync(imageBytes, profile),
-                        // Add other providers here when implemented
-                        // ApiProvider.TencentCloud => await _tencentService.OcrAsync(...),
-                        _ => ""
-                    };
-                }
-                catch
-                {
-                    return ""; // Swallow individual errors
-                }
-            }).ToList();
+                        return profile!.Provider switch
+                        {
+                            ApiProvider.Baidu => await _baiduService.OcrAsync(imageBytes, profile).ConfigureAwait(false),
+                            // Add other providers here when implemented
+                            _ => ""
+                        };
+                    }
+                    catch { return ""; }
+                }));
+            }
 
-            // Racing Logic: Return first non-empty result
+            // 2. AI Models Tasks for OCR
+            // Check if "AI 智能 OCR" is enabled in the *Main* profiles list passed to this method
+            bool isAiOcrEnabled = profiles != null && profiles.Any(p => p.Provider == ApiProvider.AI && p.ServiceType == ServiceType.OCR);
+            
+            if (isAiOcrEnabled)
+            {
+                var enabledAiModels = Config.SavedModels.Where(m => m.IsEnableForOcr).ToList();
+                if (enabledAiModels.Any())
+                {
+                    tasks.AddRange(enabledAiModels.Select(async model =>
+                    {
+                        try
+                        {
+                            return await OcrWithAiModelAsync(imageBytes, model).ConfigureAwait(false);
+                        }
+                        catch { return ""; }
+                    }));
+                }
+            }
+
+            if (tasks.Count == 0) return "未启用任何 OCR 服务 (Standard or AI), 或者开启了 AI OCR 但未选择模型";
+
+            // 3. Racing Logic
             while (tasks.Count > 0)
             {
-                var finishedTask = await Task.WhenAny(tasks);
+                var finishedTask = await Task.WhenAny(tasks).ConfigureAwait(false);
                 tasks.Remove(finishedTask);
 
-                var result = await finishedTask;
-                if (!string.IsNullOrWhiteSpace(result) && !result.StartsWith("OCR 错误") && !result.StartsWith("错误"))
+                try
                 {
-                    return result; // Winner!
+                    var result = await finishedTask.ConfigureAwait(false);
+                    if (!string.IsNullOrWhiteSpace(result) && !result.StartsWith("OCR 错误") && !result.StartsWith("错误"))
+                    {
+                        return result; // Winner!
+                    }
                 }
+                catch { /* Ignore individual task failure */ }
             }
 
             return "OCR 失败：所有服务均未能识别文字";
         }
 
+        private async Task<string> OcrWithAiModelAsync(byte[] imageBytes, AiModelConfig model)
+        {
+            try
+            {
+                string ocrSystemPrompt = @"# 角色任务
+您是一个纯粹的 OCR 在线引擎。您的唯一任务是识别图像中的所有可见文字。
+
+# 输出要求
+1. 直接输出识别到的文本内容。
+2. 保持原始文本的换行格式。
+3. 不要包含任何开场白（如“图片的文字是...”）。
+4. 不要包含任何解释、注脚或Markdown代码块标记。
+5. 如果图片中没有文字，输出“无文字”。";
+
+                return await _aiService.ChatWithImageAsync(imageBytes, model.ApiKey, model.BaseUrl, model.ModelName, ocrSystemPrompt).ConfigureAwait(false);
+            }
+            catch (Exception)
+            {
+                // Optionally log
+                return "";
+            }
+        }
+
         private async Task<string> RaceTranslateAsync(string text, List<ApiProfile> profiles)
         {
             if (string.IsNullOrWhiteSpace(text)) return "";
-            if (profiles == null || profiles.Count == 0) return "未启用翻译服务";
+            
+            var tasks = new List<Task<string>>();
 
-            var tasks = profiles.Select(async profile =>
+            // 1. Standard Providers Tasks
+            if (profiles != null && profiles.Count > 0)
             {
-                try
+                tasks.AddRange(profiles.Select(async profile =>
                 {
-                    return profile!.Provider switch
+                    try
                     {
-                        ApiProvider.Google => await _googleService.TranslateAsync(text, profile),
-                        ApiProvider.Baidu => await _baiduService.TranslateAsync(text, profile, "auto", "zh"),
-                        ApiProvider.AI => await TranslateWithAiAsync(text),
-                        _ => ""
-                    };
-                }
-                catch
-                {
-                    return "";
-                }
-            }).ToList();
+                        return profile!.Provider switch
+                        {
+                            ApiProvider.Google => await _googleService.TranslateAsync(text, profile).ConfigureAwait(false),
+                            ApiProvider.Baidu => await _baiduService.TranslateAsync(text, profile, "auto", "zh").ConfigureAwait(false),
+                            // ApiProvider.AI is now handled separately below
+                            _ => ""
+                        };
+                    }
+                    catch { return ""; }
+                }));
+            }
 
+            // 2. AI Models Tasks
+            var enabledAiModels = Config.SavedModels.Where(m => m.IsEnableForTranslation).ToList();
+            if (enabledAiModels.Any())
+            {
+                string systemPrompt = GetAiTranslationSystemPrompt();
+                
+                tasks.AddRange(enabledAiModels.Select(async model =>
+                {
+                    try
+                    {
+                        return await TranslateWithAiModelAsync(text, model, systemPrompt).ConfigureAwait(false);
+                    }
+                    catch { return ""; }
+                }));
+            }
+
+            if (tasks.Count == 0) return "未启用任何翻译服务 (Standard or AI)";
+
+            // 3. Racing Logic
             while (tasks.Count > 0)
             {
-                var finishedTask = await Task.WhenAny(tasks);
+                var finishedTask = await Task.WhenAny(tasks).ConfigureAwait(false);
                 tasks.Remove(finishedTask);
 
-                var result = await finishedTask;
-                if (!string.IsNullOrWhiteSpace(result) && !result.StartsWith("翻译失败") && !result.StartsWith("错误"))
+                try
                 {
-                    return result; // Winner!
+                    var result = await finishedTask.ConfigureAwait(false);
+                    if (!string.IsNullOrWhiteSpace(result) && !result.StartsWith("翻译失败") && !result.StartsWith("错误") && !result.StartsWith("AI 翻译失败"))
+                    {
+                        return result; // Winner!
+                    }
                 }
+                catch { /* Ignore individual task failure */ }
             }
 
             return "翻译失败：所有服务均无响应";
         }
 
-        private async Task<string> TranslateWithAiAsync(string text)
+        private string GetAiTranslationSystemPrompt()
         {
-            try
-            {
-                string systemPrompt = @"# 身份与目的
+            string systemPrompt = @"# 身份与目的
 
 您是一位专业的翻译专家，接收的单词、短语、句子或文档作为输入，并尽最大努力将其尽可能准确、完美地翻译成**简体中文**。
 
@@ -372,52 +457,31 @@ namespace PromptMasterv5.ViewModels
 ## 输入
 
 输入：";
-                
-                if (!string.IsNullOrWhiteSpace(Config.AiTranslationPromptId) && _mainViewModel != null)
+            
+            if (!string.IsNullOrWhiteSpace(Config.AiTranslationPromptId) && _mainViewModel != null)
+            {
+                var promptFile = _mainViewModel.Files.FirstOrDefault(f => f.Id == Config.AiTranslationPromptId);
+                if (promptFile != null && !string.IsNullOrWhiteSpace(promptFile.Content))
                 {
-                    var promptFile = _mainViewModel.Files.FirstOrDefault(f => f.Id == Config.AiTranslationPromptId);
-                    if (promptFile != null && !string.IsNullOrWhiteSpace(promptFile.Content))
-                    {
-                        systemPrompt = promptFile.Content;
-                    }
+                    systemPrompt = promptFile.Content;
                 }
+            }
+            return systemPrompt;
+        }
 
-                // Resolve Model Configuration
-                string apiKey = Config.AiTranslateApiKey;
-                string baseUrl = Config.AiTranslateBaseUrl;
-                string modelId = Config.AiTranslateModel;
+        private async Task<string> TranslateWithAiModelAsync(string text, AiModelConfig model, string systemPrompt)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(model.ApiKey)) return "";
 
-                // 1. Try Specific Translation Model
-                if (!string.IsNullOrWhiteSpace(Config.TranslationModelId))
-                {
-                    var model = Config.SavedModels.FirstOrDefault(m => m.Id == Config.TranslationModelId);
-                    if (model != null)
-                    {
-                        apiKey = model.ApiKey;
-                        baseUrl = model.BaseUrl;
-                        modelId = model.ModelName;
-                    }
-                }
-                // 2. Fallback to Active Model (if manual keys are empty)
-                else if (string.IsNullOrWhiteSpace(apiKey) && !string.IsNullOrWhiteSpace(Config.ActiveModelId))
-                {
-                    var model = Config.SavedModels.FirstOrDefault(m => m.Id == Config.ActiveModelId);
-                    if (model != null)
-                    {
-                        apiKey = model.ApiKey;
-                        baseUrl = model.BaseUrl;
-                        modelId = model.ModelName;
-                    }
-                }
-
-                if (string.IsNullOrWhiteSpace(apiKey)) return "AI 翻译失败：未配置有效的 API Key";
-
-                return await _aiService.ChatAsync(text, apiKey, baseUrl, modelId, systemPrompt) 
-                       ?? "AI 翻译失败：未返回结果";
+                return await _aiService.ChatAsync(text, model.ApiKey, model.BaseUrl, model.ModelName, systemPrompt).ConfigureAwait(false) 
+                       ?? "";
             }
             catch (Exception ex)
             {
-                return $"AI 翻译异常: {ex.Message}";
+                // Optionally log error
+                return "";
             }
         }
     }

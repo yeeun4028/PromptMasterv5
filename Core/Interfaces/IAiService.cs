@@ -9,6 +9,7 @@ namespace PromptMasterv5.Core.Interfaces
     {
         Task<string> ChatAsync(string userContent, AppConfig config, string? systemPrompt = null);
         Task<string> ChatAsync(string userContent, string apiKey, string baseUrl, string model, string? systemPrompt = null);
+        Task<string> ChatWithImageAsync(byte[] imageBytes, string apiKey, string baseUrl, string model, string? systemPrompt = null);
         
         // Streaming support
         IAsyncEnumerable<string> ChatStreamAsync(string userContent, AppConfig config, string? systemPrompt = null);

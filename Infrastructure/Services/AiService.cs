@@ -73,6 +73,61 @@ namespace PromptMasterv5.Infrastructure.Services
             }
         }
 
+        public async Task<string> ChatWithImageAsync(byte[] imageBytes, string apiKey, string baseUrl, string model, string? systemPrompt = null)
+        {
+            if (string.IsNullOrWhiteSpace(apiKey)) return "[设置错误] 请先配置 API Key";
+            if (imageBytes == null || imageBytes.Length == 0) return "[输入错误] 图片数据为空";
+
+            var options = new OpenAiOptions { ApiKey = apiKey, BaseDomain = baseUrl };
+            var openAiService = new OpenAIService(options);
+
+            string finalSystemPrompt = systemPrompt ?? "You are a helpful assistant. Please perform OCR on the provided image.";
+            string base64Image = Convert.ToBase64String(imageBytes);
+            string imageUrl = $"data:image/jpeg;base64,{base64Image}";
+
+            var messages = new List<ChatMessage>
+            {
+                ChatMessage.FromSystem(finalSystemPrompt),
+                ChatMessage.FromUser(
+                    new List<MessageContent>
+                    {
+                        MessageContent.ImageUrlContent(imageUrl),
+                        MessageContent.TextContent("Please identify all text in this image and output it directly.")
+                    })
+            };
+
+            var request = new ChatCompletionCreateRequest
+            {
+                Messages = messages,
+                Model = model,
+                Temperature = 0.3f, // Lower temperature for OCR accuracy
+                MaxTokens = 2000
+            };
+
+            try
+            {
+                var completionResult = await openAiService.ChatCompletion.CreateCompletion(request);
+                if (completionResult.Successful)
+                {
+                    var choice = completionResult.Choices?.FirstOrDefault();
+                    if (choice != null && choice.Message != null && !string.IsNullOrEmpty(choice.Message.Content))
+                    {
+                        return choice.Message.Content.Trim();
+                    }
+                    return "[AI 无响应] 返回内容为空";
+                }
+                else
+                {
+                    if (completionResult.Error == null) return "[AI 错误] 未知网络错误";
+                    return $"[AI 错误] {completionResult.Error.Message} ({completionResult.Error.Type})";
+                }
+            }
+            catch (Exception ex)
+            {
+                return $"[系统错误] {ex.Message}";
+            }
+        }
+
         public IAsyncEnumerable<string> ChatStreamAsync(string userContent, AppConfig config, string? systemPrompt = null)
         {
             return ChatStreamAsync(userContent, config.AiApiKey, config.AiBaseUrl, config.AiModel, systemPrompt);

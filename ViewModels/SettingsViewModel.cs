@@ -211,36 +211,30 @@ namespace PromptMasterv5.ViewModels
         public Task<(bool Success, string Message)> TestAiConnectionAsync() =>
             _aiService.TestConnectionAsync(Config);
 
-        public Task<(bool Success, string Message)> TestAiTranslationConnectionAsync()
+        public async Task<(bool Success, string Message)> TestAiTranslationConnectionAsync()
         {
-            string apiKey = Config.AiTranslateApiKey;
-            string baseUrl = Config.AiTranslateBaseUrl;
-            string modelId = Config.AiTranslateModel;
+            var enabledModels = Config.SavedModels.Where(m => m.IsEnableForTranslation).ToList();
+            if (enabledModels.Count == 0)
+            {
+                return (false, "请先勾选至少一个参与翻译的 AI 模型");
+            }
 
-            // 1. Try Specific Translation Model
-            if (!string.IsNullOrWhiteSpace(Config.TranslationModelId))
+            int successCount = 0;
+            string lastError = "";
+
+            foreach (var model in enabledModels)
             {
-                var model = Config.SavedModels.FirstOrDefault(m => m.Id == Config.TranslationModelId);
-                if (model != null)
-                {
-                    apiKey = model.ApiKey;
-                    baseUrl = model.BaseUrl;
-                    modelId = model.ModelName;
-                }
+                var result = await _aiService.TestConnectionAsync(model.ApiKey, model.BaseUrl, model.ModelName);
+                if (result.Success) successCount++;
+                else lastError = result.Message;
             }
-            // 2. Fallback to Active Model (if manual keys are empty)
-            else if (string.IsNullOrWhiteSpace(apiKey) && !string.IsNullOrWhiteSpace(Config.ActiveModelId))
-            {
-                var model = Config.SavedModels.FirstOrDefault(m => m.Id == Config.ActiveModelId);
-                if (model != null)
-                {
-                    apiKey = model.ApiKey;
-                    baseUrl = model.BaseUrl;
-                    modelId = model.ModelName;
-                }
-            }
-            
-            return _aiService.TestConnectionAsync(apiKey, baseUrl, modelId);
+
+            if (successCount == enabledModels.Count)
+                return (true, $"全部 {successCount} 个模型连接成功");
+            else if (successCount > 0)
+                return (true, $"部分成功 ({successCount}/{enabledModels.Count})\n失败示例: {lastError}");
+            else
+                return (false, $"全部失败。\n错误示例: {lastError}");
         }
 
         [RelayCommand]
