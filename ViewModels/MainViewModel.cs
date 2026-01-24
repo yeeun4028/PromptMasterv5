@@ -1017,7 +1017,11 @@ public partial class MainViewModel : ObservableObject
             }
         }
 
-        if (!IsFullMode) ChatVM.MiniInputText = "";
+        if (!IsFullMode) 
+        {
+            ChatVM.MiniInputText = "";
+            LocalConfig.MiniSelectedPinnedPromptId = "";
+        }
         else AdditionalInput = "";
 
         if (wasMiniMode && window != null)
