@@ -1176,7 +1176,8 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void ToggleGlobalPromptList()
     {
-        IsGlobalPromptListOpen = !IsGlobalPromptListOpen;
+        // IsGlobalPromptListOpen is toggled by the UI binding (ToggleButton.IsChecked)
+        // We only need to react to the state change
         if (IsGlobalPromptListOpen)
         {
             // Update with partial or empty filter
