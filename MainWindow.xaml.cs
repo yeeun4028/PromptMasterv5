@@ -31,6 +31,9 @@ using WinFormsCursor = System.Windows.Forms.Cursor;
 using MessageBox = System.Windows.MessageBox;
 using Application = System.Windows.Application;
 
+using CommunityToolkit.Mvvm.Messaging;
+using PromptMasterv5.ViewModels.Messages;
+
 namespace PromptMasterv5
 {
     public partial class MainWindow : Window
@@ -346,7 +349,14 @@ namespace PromptMasterv5
             this.Closing += MainWindow_Closing;
 
             StartGlobalMouseActivityMonitor();
+
             StartMiniUrlMonitor();
+
+            // Register message handler
+            WeakReferenceMessenger.Default.Register<InsertTextToMiniInputMessage>(this, (_, m) =>
+            {
+                RebuildMiniInputDocument(m.Value, true);
+            });
         }
 
         private void StartGlobalMouseActivityMonitor()

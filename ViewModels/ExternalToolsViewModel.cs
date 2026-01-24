@@ -478,7 +478,7 @@ namespace PromptMasterv5.ViewModels
                 return await _aiService.ChatAsync(text, model.ApiKey, model.BaseUrl, model.ModelName, systemPrompt).ConfigureAwait(false) 
                        ?? "";
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Optionally log error
                 return "";
