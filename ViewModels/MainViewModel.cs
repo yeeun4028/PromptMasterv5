@@ -643,8 +643,90 @@ public partial class MainViewModel : ObservableObject
     private static string NormalizeSymbols(string s) =>
         new string((s ?? "").Select(NormalizeSymbol).ToArray());
 
+    // ... (existing code) ...
+
+    #region Mini Window Global Prompt List
+
+    public class GlobalPromptGroup : ObservableObject
+    {
+        public string FolderName { get; set; } = "";
+        public List<PromptItem> Prompts { get; set; } = new();
+    }
+
+    [ObservableProperty]
+    private ObservableCollection<GlobalPromptGroup> globalPromptList = new();
+
+    [ObservableProperty]
+    private bool isGlobalPromptListOpen;
+
+    [RelayCommand]
+    private void ToggleGlobalPromptList()
+    {
+        IsGlobalPromptListOpen = !IsGlobalPromptListOpen;
+        if (IsGlobalPromptListOpen)
+        {
+            BuildGlobalPromptList(ChatVM.MiniInputText);
+        }
+    }
+
+    private void BuildGlobalPromptList(string filterText)
+    {
+        var result = new List<GlobalPromptGroup>();
+        
+        // Use normalized filter
+        string filter = NormalizeSymbols(filterText?.Trim() ?? "");
+
+        foreach (var folder in SidebarVM.Folders)
+        {
+            var promptsInFolder = Files.Where(f => f.FolderId == folder.Id).ToList();
+            
+            if (!string.IsNullOrWhiteSpace(filter))
+            {
+                promptsInFolder = promptsInFolder
+                    .Where(p => 
+                        NormalizeSymbols(p.Title).Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                        NormalizeSymbols(p.Content ?? "").Contains(filter, StringComparison.OrdinalIgnoreCase)
+                    )
+                    .ToList();
+            }
+
+            if (promptsInFolder.Count > 0)
+            {
+                result.Add(new GlobalPromptGroup
+                {
+                    FolderName = folder.Name,
+                    Prompts = promptsInFolder
+                });
+            }
+        }
+
+        GlobalPromptList = new ObservableCollection<GlobalPromptGroup>(result);
+    }
+
+    [RelayCommand]
+    private void SelectGlobalPrompt(PromptItem prompt)
+    {
+        if (prompt == null) return;
+        
+        // Execute the same logic as if it was pasted/selected
+        // For now, let's just insert content to input box
+        if (!string.IsNullOrWhiteSpace(prompt.Content))
+        {
+            // If Mini Mode, we might want to fill chat input
+             ChatVM.MiniInputText = prompt.Content;
+             IsGlobalPromptListOpen = false;
+        }
+    }
+
+    #endregion
+
     private void HandleMiniInputTextChangedFromChat(string value)
     {
+        if (IsGlobalPromptListOpen)
+        {
+            BuildGlobalPromptList(value);
+        }
+
         if (!LocalConfig.MiniAiOnlyChatEnabled)
         {
             Variables.Clear();
@@ -657,7 +739,15 @@ public partial class MainViewModel : ObservableObject
                 return;
             }
 
-            ChatVM.UpdateSearchPopup(value.Trim());
+            // Only show search popup if Global List is NOT open to avoid clutter
+            if (!IsGlobalPromptListOpen)
+            {
+                ChatVM.UpdateSearchPopup(value.Trim());
+            }
+            else
+            {
+                ChatVM.IsSearchPopupOpen = false; 
+            }
             return;
         }
 
@@ -679,6 +769,7 @@ public partial class MainViewModel : ObservableObject
         ChatVM.IsSearchPopupOpen = false;
         ParseVariablesRealTime(value ?? "");
     }
+
 
     private void ParseVariablesRealTime(string content)
     {
