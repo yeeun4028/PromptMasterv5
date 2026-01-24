@@ -16,6 +16,7 @@ namespace PromptMasterv5.ViewModels
 {
     public partial class ExternalToolsViewModel : ObservableObject
     {
+        private bool _isCapturing; // Prevent re-entrant screenshot calls
         private readonly ISettingsService _settingsService;
         private readonly IAiService _aiService;
         private readonly BaiduService _baiduService;
@@ -100,73 +101,93 @@ namespace PromptMasterv5.ViewModels
         [RelayCommand]
         private async Task TriggerOcr()
         {
-            var enabledProfiles = OcrProfiles.Where(p => p.IsEnabled).ToList();
-            if (enabledProfiles.Count == 0)
+            if (_isCapturing) return;
+
+            try
             {
-                _dialogService.ShowAlert("请先在设置中勾选至少一个 OCR 服务商。", "未配置 OCR");
-                return;
+                _isCapturing = true;
+                var enabledProfiles = OcrProfiles.Where(p => p.IsEnabled).ToList();
+                if (enabledProfiles.Count == 0)
+                {
+                    _dialogService.ShowAlert("请先在设置中勾选至少一个 OCR 服务商。", "未配置 OCR");
+                    return;
+                }
+
+                // Use WindowManager
+                var capturedBytes = _windowManager.ShowCaptureWindow();
+                if (capturedBytes == null) return;
+
+                // Execute OCR Racing
+                var result = await RaceOcrAsync(capturedBytes, enabledProfiles);
+
+                if (!string.IsNullOrWhiteSpace(result))
+                {
+                    if (result.StartsWith("OCR 错误") || result.StartsWith("错误") || result.StartsWith("OCR 失败"))
+                    {
+                        _dialogService.ShowAlert(result, "OCR 失败");
+                    }
+                    else
+                    {
+                        System.Windows.Clipboard.SetText(result);
+                        Growl.SuccessGlobal("文字识别成功，已复制到剪贴板。");
+                    }
+                }
             }
-
-            // Use WindowManager
-            var capturedBytes = _windowManager.ShowCaptureWindow();
-            if (capturedBytes == null) return;
-
-            // Execute OCR Racing
-            var result = await RaceOcrAsync(capturedBytes, enabledProfiles);
-
-            if (!string.IsNullOrWhiteSpace(result))
+            finally
             {
-                if (result.StartsWith("OCR 错误") || result.StartsWith("错误") || result.StartsWith("OCR 失败"))
-                {
-                    _dialogService.ShowAlert(result, "OCR 失败");
-                }
-                else
-                {
-                    System.Windows.Clipboard.SetText(result);
-                    Growl.SuccessGlobal("文字识别成功，已复制到剪贴板。");
-                }
+                _isCapturing = false;
             }
         }
     
         [RelayCommand]
         private async Task TriggerTranslate()
         {
-            var enabledOcrProfiles = OcrProfiles.Where(p => p.IsEnabled).ToList();
-            var enabledTransProfiles = TranslateProfiles.Where(p => p.IsEnabled).ToList();
+            if (_isCapturing) return;
 
-            if (enabledOcrProfiles.Count == 0)
+            try
             {
-                _dialogService.ShowAlert("请先在设置中勾选至少一个 OCR 服务商。", "未配置 OCR");
-                return;
+                _isCapturing = true;
+                var enabledOcrProfiles = OcrProfiles.Where(p => p.IsEnabled).ToList();
+                var enabledTransProfiles = TranslateProfiles.Where(p => p.IsEnabled).ToList();
+
+                if (enabledOcrProfiles.Count == 0)
+                {
+                    _dialogService.ShowAlert("请先在设置中勾选至少一个 OCR 服务商。", "未配置 OCR");
+                    return;
+                }
+                if (enabledTransProfiles.Count == 0)
+                {
+                    _dialogService.ShowAlert("请先在设置中勾选至少一个翻译服务商。", "未配置翻译");
+                    return;
+                }
+
+                var capturedBytes = _windowManager.ShowCaptureWindow();
+                if (capturedBytes == null) return;
+
+                // 1. OCR Racing
+                var text = await RaceOcrAsync(capturedBytes, enabledOcrProfiles);
+                
+                if (string.IsNullOrWhiteSpace(text) || text.StartsWith("OCR 错误") || text.StartsWith("错误"))
+                {
+                    _dialogService.ShowAlert(text ?? "无法识别文字", "文字识别失败");
+                    return;
+                }
+
+                // 2. Translation Racing
+                var translated = await RaceTranslateAsync(text, enabledTransProfiles);
+
+                if (Config.AutoCopyTranslationResult && !string.IsNullOrWhiteSpace(translated))
+                {
+                    try { System.Windows.Clipboard.SetText(translated); } catch { }
+                }
+
+                // 3. Show Result
+                _windowManager.ShowTranslationPopup(translated ?? "翻译失败");
             }
-            if (enabledTransProfiles.Count == 0)
+            finally
             {
-                _dialogService.ShowAlert("请先在设置中勾选至少一个翻译服务商。", "未配置翻译");
-                return;
+                _isCapturing = false;
             }
-
-            var capturedBytes = _windowManager.ShowCaptureWindow();
-            if (capturedBytes == null) return;
-
-            // 1. OCR Racing
-            var text = await RaceOcrAsync(capturedBytes, enabledOcrProfiles);
-            
-            if (string.IsNullOrWhiteSpace(text) || text.StartsWith("OCR 错误") || text.StartsWith("错误"))
-            {
-                _dialogService.ShowAlert(text ?? "无法识别文字", "文字识别失败");
-                return;
-            }
-
-            // 2. Translation Racing
-            var translated = await RaceTranslateAsync(text, enabledTransProfiles);
-
-            if (Config.AutoCopyTranslationResult && !string.IsNullOrWhiteSpace(translated))
-            {
-                try { System.Windows.Clipboard.SetText(translated); } catch { }
-            }
-
-            // 3. Show Result
-            _windowManager.ShowTranslationPopup(translated ?? "翻译失败");
         }
 
         [RelayCommand]
