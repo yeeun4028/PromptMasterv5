@@ -1192,14 +1192,17 @@ public partial class MainViewModel : ObservableObject
         
         IsGlobalPromptListOpen = false;
 
-        // 1. Set as Selected Pinned Prompt (Chip)
-        LocalConfig.MiniSelectedPinnedPromptId = prompt.Id;
-
-        // 2. Determine Text based on configuration
-        string textToInsert = ChatVM.MiniInputText ?? ""; 
+        string textToInsert = ChatVM.MiniInputText ?? "";
         if (LocalConfig.MiniPinnedPromptClickShowsFullContent)
         {
+             // Full Content Mode: Show Text ONLY (No Chip)
+             LocalConfig.MiniSelectedPinnedPromptId = "";
              textToInsert = prompt.Content ?? "";
+        }
+        else
+        {
+             // Combo Mode: Show Chip + Preserve Text
+             LocalConfig.MiniSelectedPinnedPromptId = prompt.Id;
         }
 
         // 3. Insert prompt content/chip to mini window input

@@ -1155,12 +1155,18 @@ namespace PromptMasterv5
             }
             else
             {
-                ViewModel.LocalConfig.MiniSelectedPinnedPromptId = id;
                 if (ViewModel.LocalConfig.MiniPinnedPromptClickShowsFullContent)
                 {
+                    // Full Content Mode: Show Text ONLY (No Chip)
+                    ViewModel.LocalConfig.MiniSelectedPinnedPromptId = ""; 
                     var p = ViewModel.Files.FirstOrDefault(f => f.Id == id);
                     userText = p?.Content ?? "";
                     ViewModel.ChatVM.MiniInputText = userText;
+                }
+                else
+                {
+                    // Combo Mode: Show Chip + Preserve Text
+                    ViewModel.LocalConfig.MiniSelectedPinnedPromptId = id;
                 }
             }
 
