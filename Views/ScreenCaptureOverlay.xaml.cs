@@ -19,9 +19,16 @@ namespace PromptMasterv5.Views
         
         public byte[]? CapturedImageBytes { get; private set; }
 
-        public ScreenCaptureOverlay()
+        public ScreenCaptureOverlay(Bitmap? capturedScreen = null)
         {
             InitializeComponent();
+            
+            if (capturedScreen != null)
+            {
+                // Clone the bitmap so we own this instance
+                _screenBitmap = new Bitmap(capturedScreen);
+            }
+
             Loaded += ScreenCaptureOverlay_Loaded;
             PreviewKeyDown += (s, e) =>
             {
@@ -35,11 +42,14 @@ namespace PromptMasterv5.Views
 
         private void ScreenCaptureOverlay_Loaded(object sender, RoutedEventArgs e)
         {
-            // Capture the screen before showing overlay
-            CaptureFullScreen();
+            if (_screenBitmap == null)
+            {
+                // Fallback if no bitmap passed (shouldn't happen with new logic, but safe)
+                 CaptureFullScreenFallback();
+            }
         }
 
-        private void CaptureFullScreen()
+        private void CaptureFullScreenFallback()
         {
             try
             {

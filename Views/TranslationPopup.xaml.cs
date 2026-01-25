@@ -66,6 +66,5 @@ namespace PromptMasterv5.Views
             ResultBox.Text = text;
         }
 
-
     }
 }
