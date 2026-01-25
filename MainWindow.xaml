@@ -329,6 +329,31 @@
             <Setter Property="Opacity" Value="0"/>
         </Style>
 
+        <Style x:Key="Block2ScrollBarStyle" TargetType="ScrollBar" BasedOn="{StaticResource HiddenScrollBarStyle}">
+            <Setter Property="Width" Value="1"/>
+            <Setter Property="Background" Value="{DynamicResource Block2Background}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Grid>
+                            <Border Background="{TemplateBinding Background}"/>
+                            <Track x:Name="PART_Track" IsDirectionReversed="true">
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border Background="Transparent" CornerRadius="2" Opacity="0"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="MiniRichTextBoxStyle" TargetType="RichTextBox">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="#B8BFC6"/>
@@ -905,9 +930,12 @@
                                       Margin="10,23,5,10"
                                       dd:DragDrop.IsDragSource="True"
                                       dd:DragDrop.IsDropTarget="True">
+                                <ListBox.Resources>
+                                    <Style TargetType="ScrollBar" BasedOn="{StaticResource Block2ScrollBarStyle}"/>
+                                </ListBox.Resources>
 
                                 <ListBox.InputBindings>
-                                    <KeyBinding Key="Delete" Command="{Binding DeleteFileCommand}"/>
+                                    <KeyBinding Key="Delete" Command="{Binding DeleteFileCommand}" CommandParameter="{Binding SelectedFile}"/>
                                 </ListBox.InputBindings>
 
                                 <ListBox.ItemTemplate>
