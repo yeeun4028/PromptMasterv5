@@ -4,17 +4,21 @@ namespace PromptMasterv5.Core.Models
 {
     public partial class AiModelConfig : CommunityToolkit.Mvvm.ComponentModel.ObservableObject
     {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
+        [property: JsonPropertyName("id")]
+        private string id = Guid.NewGuid().ToString();
 
-        [JsonPropertyName("baseUrl")]
-        public string BaseUrl { get; set; } = "";
+        [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
+        [property: JsonPropertyName("baseUrl")]
+        private string baseUrl = "";
 
-        [JsonPropertyName("apiKey")]
-        public string ApiKey { get; set; } = "";
+        [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
+        [property: JsonPropertyName("apiKey")]
+        private string apiKey = "";
 
-        [JsonPropertyName("modelName")]
-        public string ModelName { get; set; } = "";
+        [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
+        [property: JsonPropertyName("modelName")]
+        private string modelName = "";
 
         [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
         [property: JsonPropertyName("isEnableForTranslation")]

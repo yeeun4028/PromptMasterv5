@@ -277,6 +277,19 @@ namespace PromptMasterv5.ViewModels
             _settingsService.SaveConfig();
         }
 
+        [RelayCommand]
+        private void RenameAiModel(AiModelConfig? model)
+        {
+            if (model == null) return;
+
+            var dialog = new NameInputDialog(model.ModelName);
+            if (dialog.ShowDialog() == true)
+            {
+                model.ModelName = dialog.ResultName;
+                _settingsService.SaveConfig();
+            }
+        }
+
         #endregion
 
         #region Commands - Hotkey Management

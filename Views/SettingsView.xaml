@@ -874,6 +874,7 @@
 
                                                                         <Border.ContextMenu>
                                                                             <ContextMenu>
+                                                                                <MenuItem Header="重命名" Command="{Binding PlacementTarget.Tag.SettingsVM.RenameAiModelCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}"/>
                                                                                 <MenuItem Header="删除" Command="{Binding PlacementTarget.Tag.SettingsVM.DeleteAiModelCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}"/>
                                                                             </ContextMenu>
                                                                         </Border.ContextMenu>
