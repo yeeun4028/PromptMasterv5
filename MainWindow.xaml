@@ -465,7 +465,7 @@
                                         <ItemsControl x:Name="MiniPinnedPromptBar" 
                                                       Grid.Column="0" 
                                                       ItemsSource="{Binding ChatVM.MiniPinnedPrompts}" 
-                                                      HorizontalAlignment="Left" 
+                                                      HorizontalAlignment="Center" 
                                                       VerticalAlignment="Center">
                                             <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
