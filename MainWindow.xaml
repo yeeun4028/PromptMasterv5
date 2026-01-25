@@ -485,14 +485,19 @@
                                                                 </Style>
                                                             </Button.Style>
                                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                                <Path Width="12" Height="12" Stretch="Uniform" Data="{Binding IconGeometry}" Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" Margin="0,0,1,0"/>
+                                                                <Path Width="12" Height="12" Stretch="Uniform" 
+                                                                      Data="{Binding IconGeometry}" 
+                                                                      Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" 
+                                                                      Margin="0,0,1,0"
+                                                                      Visibility="{Binding DataContext.LocalConfig.MiniPinnedPromptShowIcons, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}"/>
                                                                 <TextBlock Text="{Binding Title}" 
                                                                            Foreground="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" 
                                                                            FontSize="12" 
                                                                            FontWeight="Normal" 
                                                                            FontFamily="Microsoft YaHei"
                                                                            TextTrimming="CharacterEllipsis" 
-                                                                           MaxWidth="200"/>
+                                                                           MaxWidth="200"
+                                                                           Visibility="{Binding DataContext.LocalConfig.MiniPinnedPromptShowIcons, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBoolToVis}}"/>
                                                             </StackPanel>
                                                         </Button>
                                                         <!-- Separator -->
