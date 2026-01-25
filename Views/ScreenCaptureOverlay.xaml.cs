@@ -42,6 +42,13 @@ namespace PromptMasterv5.Views
 
         private void ScreenCaptureOverlay_Loaded(object sender, RoutedEventArgs e)
         {
+            // Ensure we are active and focused
+            this.Activate();
+            this.Focus();
+            
+            // Hide cursor for custom crosshair
+            Mouse.OverrideCursor = System.Windows.Input.Cursors.None;
+
             if (_screenBitmap == null)
             {
                 // Fallback if no bitmap passed (shouldn't happen with new logic, but safe)
@@ -87,9 +94,22 @@ namespace PromptMasterv5.Views
 
         private void Canvas_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
+            var currentPoint = e.GetPosition(SelectionCanvas);
+
+            // Update Full-screen Crosshair
+            HorizontalGuide.X1 = 0;
+            HorizontalGuide.X2 = SelectionCanvas.ActualWidth;
+            HorizontalGuide.Y1 = currentPoint.Y;
+            HorizontalGuide.Y2 = currentPoint.Y;
+
+            VerticalGuide.X1 = currentPoint.X;
+            VerticalGuide.X2 = currentPoint.X;
+            VerticalGuide.Y1 = 0;
+            VerticalGuide.Y2 = SelectionCanvas.ActualHeight;
+
             if (!_isSelecting) return;
 
-            var currentPoint = e.GetPosition(SelectionCanvas);
+
             
             double x = Math.Min(_startPoint.X, currentPoint.X);
             double y = Math.Min(_startPoint.Y, currentPoint.Y);

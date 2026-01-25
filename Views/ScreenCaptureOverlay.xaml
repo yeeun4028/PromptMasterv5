@@ -9,7 +9,7 @@
         ShowInTaskbar="False"
         WindowState="Maximized"
         ResizeMode="NoResize"
-        Cursor="Cross">
+        Cursor="None">
     
     <Grid>
         <!-- Semi-transparent overlay (technically almost transparent to keep hit-test visible) -->
@@ -20,6 +20,11 @@
                 MouseLeftButtonDown="Canvas_MouseLeftButtonDown"
                 MouseMove="Canvas_MouseMove"
                 MouseLeftButtonUp="Canvas_MouseLeftButtonUp">
+            
+            <!-- Full-screen Crosshair Guides -->
+            <Line x:Name="HorizontalGuide" Stroke="#00BFFF" StrokeThickness="1" SnapsToDevicePixels="True" IsHitTestVisible="False"/>
+            <Line x:Name="VerticalGuide" Stroke="#00BFFF" StrokeThickness="1" SnapsToDevicePixels="True" IsHitTestVisible="False"/>
+
             <Rectangle x:Name="SelectionRect" 
                        Stroke="#00BFFF" 
                        StrokeThickness="2"
