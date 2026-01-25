@@ -144,7 +144,7 @@
                                   Data="{Binding IconGeometry}" 
                                   Fill="{DynamicResource ActionIconBrush}" 
                                   Stretch="Uniform" 
-                                  Width="20" Height="20" 
+                                  Width="18" Height="18" 
                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -256,8 +256,8 @@
         <Style x:Key="ActionIconPathStyle" TargetType="Path">
             <Setter Property="Fill" Value="{DynamicResource ActionIconBrush}"/>
             <Setter Property="Stretch" Value="Uniform"/>
-            <Setter Property="Width" Value="22"/>
-            <Setter Property="Height" Value="22"/>
+            <Setter Property="Width" Value="18"/>
+            <Setter Property="Height" Value="18"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Button}}" Value="True">
                     <Setter Property="Fill" Value="{DynamicResource ActionIconHoverBrush}"/>
