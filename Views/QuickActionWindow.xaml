@@ -91,8 +91,10 @@
     </Window.Resources>
     
     <Border x:Name="MainBorder"
-            Background="#E6363B40" 
+            Background="{StaticResource WindowBackBrush}" 
             CornerRadius="4"
+            BorderBrush="{StaticResource BorderBrush}"
+            BorderThickness="1"
             Padding="15">
         <Border.Effect>
             <DropShadowEffect Color="Black" BlurRadius="15" ShadowDepth="3" Opacity="0.3"/>
