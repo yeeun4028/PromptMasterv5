@@ -20,6 +20,7 @@ namespace PromptMasterv5.ViewModels
         private readonly ISettingsService _settingsService;
         private readonly IAiService _aiService;
         private readonly BaiduService _baiduService;
+        private readonly TencentService _tencentService;
         private readonly GoogleService _googleService;
 
         public ObservableCollection<ApiProfile> OcrProfiles => 
@@ -52,6 +53,7 @@ namespace PromptMasterv5.ViewModels
             ISettingsService settingsService,
             IAiService aiService,
             BaiduService baiduService,
+            TencentService tencentService,
             GoogleService googleService,
             IDialogService dialogService,
             IWindowManager windowManager)
@@ -59,6 +61,7 @@ namespace PromptMasterv5.ViewModels
             _settingsService = settingsService;
             _aiService = aiService;
             _baiduService = baiduService;
+            _tencentService = tencentService;
             _googleService = googleService;
             _dialogService = dialogService;
             _windowManager = windowManager;
@@ -314,7 +317,9 @@ namespace PromptMasterv5.ViewModels
                     {
                         return profile!.Provider switch
                         {
+
                             ApiProvider.Baidu => await _baiduService.OcrAsync(imageBytes, profile).ConfigureAwait(false),
+                            ApiProvider.Tencent => await _tencentService.OcrAsync(imageBytes, profile).ConfigureAwait(false),
                             // Add other providers here when implemented
                             _ => ""
                         };
@@ -405,6 +410,7 @@ namespace PromptMasterv5.ViewModels
                         {
                             ApiProvider.Google => await _googleService.TranslateAsync(text, profile).ConfigureAwait(false),
                             ApiProvider.Baidu => await _baiduService.TranslateAsync(text, profile, "auto", "zh").ConfigureAwait(false),
+                            ApiProvider.Tencent => await _tencentService.TranslateAsync(text, profile, "auto", "zh").ConfigureAwait(false),
                             // ApiProvider.AI is now handled separately below
                             _ => ""
                         };

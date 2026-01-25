@@ -156,6 +156,7 @@ namespace PromptMasterv5
             services.AddSingleton<IWindowManager, WindowManager>();
             services.AddHttpClient<BaiduService>();
             services.AddHttpClient<GoogleService>();
+            services.AddHttpClient<TencentService>();
             
             // 全局划词助手服务
             services.AddSingleton<WindowPositionService>();

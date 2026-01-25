@@ -47,6 +47,7 @@ namespace PromptMasterv5.Views
 
             // Load Baidu credentials from AppConfig
             LoadBaiduCredentials();
+            LoadTencentCredentials();
         }
 
         private void LoadBaiduCredentials()
@@ -142,6 +143,92 @@ namespace PromptMasterv5.Views
             // But better: let's modifying ExternalToolsViewModel to actually use a filtering mechanism, 
             // OR just re-fetch the list here if we can access ExternalToolsVM.
             
+            if (ViewModel.ExternalToolsVM != null)
+            {
+                ViewModel.ExternalToolsVM.RefreshProfiles();
+            }
+        }
+
+        private void LoadTencentCredentials()
+        {
+            if (ViewModel == null) return;
+
+            var tencentOcrProfile = ViewModel.Config.ApiProfiles.FirstOrDefault(p => 
+                p.Provider == ApiProvider.Tencent && p.ServiceType == ServiceType.OCR);
+            var tencentTransProfile = ViewModel.Config.ApiProfiles.FirstOrDefault(p => 
+                p.Provider == ApiProvider.Tencent && p.ServiceType == ServiceType.Translation);
+
+            if (tencentOcrProfile != null && TencentOcrSecretId != null && TencentOcrSecretKey != null)
+            {
+                TencentOcrSecretId.Text = tencentOcrProfile.Key1;
+                TencentOcrSecretKey.Text = tencentOcrProfile.Key2;
+            }
+
+            if (tencentTransProfile != null && TencentTranslateSecretId != null && TencentTranslateSecretKey != null)
+            {
+                TencentTranslateSecretId.Text = tencentTransProfile.Key1;
+                TencentTranslateSecretKey.Text = tencentTransProfile.Key2;
+            }
+        }
+
+        private void SaveTencentCredentials()
+        {
+            if (ViewModel == null) return;
+
+            // OCR Profile
+            var tencentOcrProfile = ViewModel.Config.ApiProfiles.FirstOrDefault(p => 
+                p.Provider == ApiProvider.Tencent && p.ServiceType == ServiceType.OCR);
+            
+            if (tencentOcrProfile == null)
+            {
+                tencentOcrProfile = new ApiProfile
+                {
+                    Name = "腾讯云 OCR",
+                    Provider = ApiProvider.Tencent,
+                    ServiceType = ServiceType.OCR
+                };
+                ViewModel.Config.ApiProfiles.Add(tencentOcrProfile);
+            }
+
+            if (TencentOcrSecretId != null && TencentOcrSecretKey != null)
+            {
+                tencentOcrProfile.Key1 = TencentOcrSecretId.Text;
+                tencentOcrProfile.Key2 = TencentOcrSecretKey.Text;
+            }
+
+            // Translation Profile
+            var tencentTransProfile = ViewModel.Config.ApiProfiles.FirstOrDefault(p => 
+                p.Provider == ApiProvider.Tencent && p.ServiceType == ServiceType.Translation);
+            
+            if (tencentTransProfile == null)
+            {
+                tencentTransProfile = new ApiProfile
+                {
+                    Name = "腾讯云翻译",
+                    Provider = ApiProvider.Tencent,
+                    ServiceType = ServiceType.Translation
+                };
+                ViewModel.Config.ApiProfiles.Add(tencentTransProfile);
+            }
+
+            if (TencentTranslateSecretId != null && TencentTranslateSecretKey != null)
+            {
+                tencentTransProfile.Key1 = TencentTranslateSecretId.Text;
+                tencentTransProfile.Key2 = TencentTranslateSecretKey.Text;
+            }
+
+            // Auto-set as active profiles if undefined
+            if (string.IsNullOrEmpty(ViewModel.Config.OcrProfileId))
+            {
+                ViewModel.Config.OcrProfileId = tencentOcrProfile.Id;
+            }
+            if (string.IsNullOrEmpty(ViewModel.Config.TranslateProfileId))
+            {
+                ViewModel.Config.TranslateProfileId = tencentTransProfile.Id;
+            }
+
+            ConfigService.Save(ViewModel.Config);
+
             if (ViewModel.ExternalToolsVM != null)
             {
                 ViewModel.ExternalToolsVM.RefreshProfiles();
@@ -678,10 +765,12 @@ namespace PromptMasterv5.Views
 
             // Load credentials when switching to Baidu tab
             if (tabIndex == 1) LoadBaiduCredentials();
+            if (tabIndex == 2) LoadTencentCredentials();
             if (tabIndex == 4) LoadGoogleCredentials();
 
             // Sync credentials when leaving Baidu tab
             if (previousTab == 1 && tabIndex != 1) SaveBaiduCredentials();
+            if (previousTab == 2 && tabIndex != 2) SaveTencentCredentials();
             if (previousTab == 4 && tabIndex != 4) SaveGoogleCredentials();
         }
 
@@ -990,9 +1079,34 @@ namespace PromptMasterv5.Views
 
 
 
-        private void TestTencentCloud_Click(object sender, RoutedEventArgs e)
+        private async void TestTencentCloud_Click(object sender, RoutedEventArgs e)
         {
-            System.Windows.MessageBox.Show("腾讯云连接测试功能将在未来版本中实现。", "提示");
+            if (ViewModel == null) return;
+
+            SaveTencentCredentials();
+
+            var profile = ViewModel.Config.ApiProfiles.FirstOrDefault(p =>
+                p.Provider == ApiProvider.Tencent && p.ServiceType == ServiceType.Translation);
+
+            if (profile == null || string.IsNullOrWhiteSpace(profile.Key1) || string.IsNullOrWhiteSpace(profile.Key2))
+            {
+                System.Windows.MessageBox.Show("请先填写 Secret ID 和 Secret Key", "测试失败");
+                return;
+            }
+
+            using var httpClient = new HttpClient();
+            var tencentService = new TencentService(httpClient);
+            
+            var result = await tencentService.TranslateAsync("Hello", profile, "auto", "zh");
+
+            if (result.StartsWith("Error") || result.StartsWith("Tencent Error"))
+            {
+                System.Windows.MessageBox.Show($"连接失败：{result}", "腾讯云测试结果");
+            }
+            else
+            {
+                System.Windows.MessageBox.Show($"连接成功！\n\n测试翻译结果：{result}", "腾讯云测试结果");
+            }
         }
 
         private void TestYoudao_Click(object sender, RoutedEventArgs e)

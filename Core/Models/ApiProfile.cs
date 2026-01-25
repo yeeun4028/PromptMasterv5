@@ -10,7 +10,8 @@ namespace PromptMasterv5.Core.Models
         TencentCloud = 1,
         Youdao = 2,
         AI = 3,
-        Google = 4
+        Google = 4,
+        Tencent = 5
     }
 
     public enum ServiceType
