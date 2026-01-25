@@ -17,7 +17,7 @@
         Deactivated="Window_Deactivated">
 
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="0" ResizeBorderThickness="0" GlassFrameThickness="1" CornerRadius="0" />
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="0" GlassFrameThickness="0" CornerRadius="0" />
     </WindowChrome.WindowChrome>
     
     <Window.Resources>
@@ -99,7 +99,7 @@
             BorderThickness="1"
             Padding="15">
 
-        <!-- DropShadow Removed -->
+
         
         <Grid>
             <Grid.RowDefinitions>
