@@ -149,7 +149,7 @@ namespace PromptMasterv5.Views
             {
                 From = this.ActualHeight,
                 To = targetHeight,
-                Duration = TimeSpan.FromMilliseconds(300),
+                Duration = TimeSpan.FromSeconds(0.25),
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             };
 
@@ -163,7 +163,7 @@ namespace PromptMasterv5.Views
             {
                 From = this.Top,
                 To = newTop,
-                Duration = TimeSpan.FromMilliseconds(300),
+                Duration = TimeSpan.FromSeconds(0.25),
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             };
 
@@ -201,7 +201,7 @@ namespace PromptMasterv5.Views
             {
                 From = this.ActualWidth,
                 To = targetWidth,
-                Duration = TimeSpan.FromMilliseconds(300),
+                Duration = TimeSpan.FromSeconds(0.25),
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             };
 
@@ -210,7 +210,7 @@ namespace PromptMasterv5.Views
             {
                 From = this.ActualHeight,
                 To = targetHeight,
-                Duration = TimeSpan.FromMilliseconds(300),
+                Duration = TimeSpan.FromSeconds(0.25),
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             };
 
@@ -225,7 +225,7 @@ namespace PromptMasterv5.Views
             {
                 From = this.Left,
                 To = newLeft,
-                Duration = TimeSpan.FromMilliseconds(300),
+                Duration = TimeSpan.FromSeconds(0.25),
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             };
 
@@ -233,7 +233,7 @@ namespace PromptMasterv5.Views
             {
                 From = this.Top,
                 To = newTop,
-                Duration = TimeSpan.FromMilliseconds(300),
+                Duration = TimeSpan.FromSeconds(0.25),
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             };
 
