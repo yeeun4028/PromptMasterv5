@@ -27,7 +27,7 @@
 
             <Rectangle x:Name="SelectionRect" 
                        Stroke="#00BFFF" 
-                       StrokeThickness="2"
+                       StrokeThickness="1"
                        Fill="Transparent"
                        Visibility="Collapsed"/>
         </Canvas>
