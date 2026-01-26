@@ -17,11 +17,12 @@ namespace PromptMasterv5.Views
         private System.Windows.Point _startPoint;
         private bool _isSelecting;
         private Bitmap? _screenBitmap;
-        private readonly Func<byte[], System.Windows.Point, Task>? _processingCallback;
+
+        private readonly Func<byte[], System.Windows.Rect, Task>? _processingCallback;
         
         public byte[]? CapturedImageBytes { get; private set; }
 
-        public ScreenCaptureOverlay(Bitmap? capturedScreen = null, Func<byte[], System.Windows.Point, Task>? processingCallback = null)
+        public ScreenCaptureOverlay(Bitmap? capturedScreen = null, Func<byte[], System.Windows.Rect, Task>? processingCallback = null)
         {
             InitializeComponent();
             _processingCallback = processingCallback;
@@ -160,16 +161,24 @@ namespace PromptMasterv5.Views
             {
                 EnterProcessingState();
                 
-                // Calculate spinner position (Action Point)
-                double rectX = Canvas.GetLeft(SelectionRect);
-                double rectY = Canvas.GetTop(SelectionRect);
-                double rectW = SelectionRect.Width;
-                double rectH = SelectionRect.Height;
-                var actionPoint = new System.Windows.Point(rectX + rectW, rectY + rectH); // Bottom-Right corner
-                
+                // Calculate Spinner Position (logic for UI remains same)
+                // But we pass the logical Rect to ViewModel
+                // Get DPI scale factor
+                var source = PresentationSource.FromVisual(this);
+                double dpiX = 1.0;
+                double dpiY = 1.0;
+                if (source?.CompositionTarget != null) 
+                {
+                    dpiX = source.CompositionTarget.TransformToDevice.M11;
+                    dpiY = source.CompositionTarget.TransformToDevice.M22;
+                }
+
+                // x, y, width, height are already Lognical because they come from Canvas.GetLeft (WPF coordinates)
+                var selectionRect = new Rect(x, y, width, height);
+
                 // We use Dispatcher to ensure UI update logic happens before we await (EnterProcessingState is sync)
                 // But we act async here.
-                await _processingCallback(CapturedImageBytes, actionPoint);
+                await _processingCallback(CapturedImageBytes, selectionRect);
             }
 
             DialogResult = true;

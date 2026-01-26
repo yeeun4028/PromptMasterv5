@@ -122,7 +122,7 @@ namespace PromptMasterv5.ViewModels
                 // Use WindowManager with callback for Processing State
                 string? ocrResult = null;
                 
-                var capturedBytes = _windowManager.ShowCaptureWindow(async (byte[] bytes, System.Windows.Point point) => 
+                var capturedBytes = _windowManager.ShowCaptureWindow(async (byte[] bytes, System.Windows.Rect rect) => 
                 {
                     // Execute OCR Racing inside the Processing State
                     ocrResult = await RaceOcrAsync(bytes, enabledProfiles);
@@ -174,11 +174,11 @@ namespace PromptMasterv5.ViewModels
                 }
 
                 string? translatedResult = null;
-                System.Windows.Point? actionLocation = null;
+                System.Windows.Rect? actionRect = null;
 
-                var capturedBytes = _windowManager.ShowCaptureWindow(async (byte[] bytes, System.Windows.Point point) =>
+                var capturedBytes = _windowManager.ShowCaptureWindow(async (byte[] bytes, System.Windows.Rect rect) =>
                 {
-                    actionLocation = point;
+                    actionRect = rect;
                     // 1. OCR Racing
                     var text = await RaceOcrAsync(bytes, enabledOcrProfiles);
                     
@@ -221,7 +221,7 @@ namespace PromptMasterv5.ViewModels
                 await _audioService.PlayShutterSoundAsync();
 
                 // 3. Show Result
-                _windowManager.ShowTranslationPopup(translatedResult ?? "翻译失败", actionLocation);
+                _windowManager.ShowTranslationPopup(translatedResult ?? "翻译失败", actionRect);
             }
             finally
             {

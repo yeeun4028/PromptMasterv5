@@ -17,6 +17,13 @@ namespace PromptMasterv5.Views
             this.Deactivated += (s, e) => this.Close();
         }
 
+        private Rect? _placementTarget;
+
+        public void SetPlacementTarget(Rect target)
+        {
+            _placementTarget = target;
+        }
+
         private void TranslationPopup_Loaded(object sender, RoutedEventArgs e)
         {
             // 跟随鼠标位置显示，但确保不超出屏幕
@@ -53,22 +60,74 @@ namespace PromptMasterv5.Views
             }
             
             // 默认显示在鼠标右下方
-            double left = mouseX + 15;
-            double top = mouseY + 15;
-
-            // 独立检查水平方向：如果超出右边界，则显示在鼠标左侧
-            if (left + windowWidth > workArea.Right)
+            // 如果有选区信息，优先使用选区右下角作为锚点
+            double anchorX = mouseX;
+            double anchorY = mouseY;
+            
+            if (_placementTarget.HasValue)
             {
-                left = mouseX - windowWidth - 15;
+                // 使用选区的右下角代替鼠标坐标
+                anchorX = _placementTarget.Value.Right;
+                anchorY = _placementTarget.Value.Bottom;
             }
 
-            // 独立检查垂直方向：如果超出下边界，则显示在鼠标上方
-            if (top + windowHeight > workArea.Bottom)
+            double left = anchorX + 10;
+            double top = anchorY + 10;
+
+            // 智能避让逻辑
+            bool overflowRight = (left + windowWidth > workArea.Right);
+            bool overflowBottom = (top + windowHeight > workArea.Bottom);
+
+            if (_placementTarget.HasValue)
             {
-                top = mouseY - windowHeight - 15;
+                var target = _placementTarget.Value;
+
+                // 策略 1: 默认 (Target 右下) -> (left, top)
+                
+                // 策略 2: 如果右边缘溢出 -> 尝试 Target 左下
+                // (Target.Left - windowWidth - 10, Target.Bottom + 10)
+                if (overflowRight && !overflowBottom)
+                {
+                    double tryLeft = target.Left - windowWidth - 10;
+                    if (tryLeft >= workArea.Left)
+                    {
+                         left = tryLeft;
+                         // top 保持不变
+                    }
+                    else
+                    {
+                         // 左边也放不下？那就依然用原来的逻辑（会被强制拉回屏幕内，或者尝试上方）
+                    }
+                }
+
+                // 策略 3: 如果下边缘溢出 -> 尝试 Target 右上
+                // (Target.Right + 10, Target.Top - windowHeight - 10)
+                if (!overflowRight && overflowBottom)
+                {
+                     double tryTop = target.Top - windowHeight - 10;
+                     if (tryTop >= workArea.Top)
+                     {
+                         top = tryTop;
+                         // left 保持不变
+                     }
+                }
+
+                // 策略 4: 如果右下都溢出 -> 尝试 Target 左上
+                // (Target.Left - windowWidth - 10, Target.Top - windowHeight - 10)
+                if (overflowRight && overflowBottom)
+                {
+                    left = target.Left - windowWidth - 10;
+                    top = target.Top - windowHeight - 10;
+                }
+            }
+            else
+            {
+                // 旧逻辑：仅基于鼠标点的简单避让
+                if (overflowRight) left = mouseX - windowWidth - 15;
+                if (overflowBottom) top = mouseY - windowHeight - 15;
             }
             
-            // 最终确保窗口完全在工作区域内
+            // 最终兜底：强制限制在屏幕工作区内
             left = System.Math.Max(workArea.Left, System.Math.Min(left, workArea.Right - windowWidth));
             top = System.Math.Max(workArea.Top, System.Math.Min(top, workArea.Bottom - windowHeight));
             
