@@ -244,7 +244,7 @@
                             <ContextMenu ItemsSource="{Binding AvailableModels}" Background="{StaticResource MenuBackBrush}" BorderBrush="{StaticResource BorderBrush}">
                                 <ContextMenu.ItemContainerStyle>
                                     <Style TargetType="MenuItem">
-                                        <Setter Property="Header" Value="{Binding ModelName}"/>
+                                        <Setter Property="Header" Value="{Binding DisplayName}"/>
                                         <Setter Property="Foreground" Value="{StaticResource TextMainBrush}"/>
                                         <Setter Property="Command" Value="{Binding DataContext.SelectModelCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                         <Setter Property="CommandParameter" Value="{Binding}"/>
