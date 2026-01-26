@@ -47,17 +47,13 @@
                 <!-- Blue Arc (Right Side extended) -->
                 <Path Data="M 11,2.5 A 7,7 0 0 1 11,15.5" 
                       Stroke="#87CEFA" StrokeThickness="2" StrokeEndLineCap="Round" StrokeStartLineCap="Round">
-                    <Path.Effect>
-                        <DropShadowEffect Color="#87CEFA" BlurRadius="6" ShadowDepth="0" Opacity="0.8"/>
-                    </Path.Effect>
+
                 </Path>
                 
                 <!-- Red Arc (Left Side extended) -->
                 <Path Data="M 7,15.5 A 7,7 0 0 1 7,2.5" 
                       Stroke="#F08080" StrokeThickness="2" StrokeEndLineCap="Round" StrokeStartLineCap="Round">
-                    <Path.Effect>
-                        <DropShadowEffect Color="#F08080" BlurRadius="6" ShadowDepth="0" Opacity="0.8"/>
-                    </Path.Effect>
+
                 </Path>
             </Grid>
 
