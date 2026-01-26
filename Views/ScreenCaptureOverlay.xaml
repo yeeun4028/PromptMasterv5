@@ -27,9 +27,9 @@
             <Line x:Name="VerticalGuide" Stroke="#00BFFF" StrokeThickness="1" SnapsToDevicePixels="True" IsHitTestVisible="False"/>
 
             <!-- Loading Animation -->
-            <Grid x:Name="LoadingSpinner" Width="18" Height="18" Visibility="Collapsed">
+            <Grid x:Name="LoadingSpinner" Width="16" Height="16" Visibility="Collapsed">
                 <Grid.RenderTransform>
-                    <RotateTransform x:Name="SpinnerRotate" CenterX="9" CenterY="9"/>
+                    <RotateTransform x:Name="SpinnerRotate" CenterX="8" CenterY="8"/>
                 </Grid.RenderTransform>
                 <Grid.Triggers>
                     <EventTrigger RoutedEvent="Loaded">
@@ -45,21 +45,21 @@
                 </Grid.Triggers>
                 
                 <!-- Blue Arc (Right Side extended) -->
-                <Path Data="M 11,2.5 A 7,7 0 0 1 11,15.5" 
+                <Path Data="M 10,2.5 A 6,6 0 0 1 10,13.5" 
                       Stroke="#007ACC" StrokeThickness="1.5" StrokeEndLineCap="Round" StrokeStartLineCap="Round">
 
                 </Path>
                 
                 <!-- Red Arc (Left Side extended) -->
-                <Path Data="M 7,15.5 A 7,7 0 0 1 7,2.5" 
+                <Path Data="M 6,13.5 A 6,6 0 0 1 6,2.5" 
                       Stroke="#DC143C" StrokeThickness="1.5" StrokeEndLineCap="Round" StrokeStartLineCap="Round">
                 </Path>
 
                 <!-- Blue Arrow -->
-                <Polygon Points="11,15.5 13.5,13 9.5,13.5" Fill="#007ACC"/>
+                <Polygon Points="10,13.5 12,11.5 8.5,12" Fill="#007ACC"/>
 
                 <!-- Red Arrow -->
-                <Polygon Points="7,2.5 4.5,5 8.5,4.5" Fill="#DC143C"/>
+                <Polygon Points="6,2.5 4,4.5 7.5,4" Fill="#DC143C"/>
             </Grid>
 
             <Rectangle x:Name="SelectionRect" 
