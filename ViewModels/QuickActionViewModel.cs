@@ -95,6 +95,7 @@ namespace PromptMasterv5.ViewModels
 
             // Trigger window expansion
             IsExpanded = true;
+            IsRightToolbarVisible = true; // Show tools immediately, hiding prompt buttons
             OnExpandWindow?.Invoke();
 
             // Save current prompt for retry
@@ -140,9 +141,6 @@ namespace PromptMasterv5.ViewModels
                 }
 
                 Messages.Add(new ChatMessage("assistant", CurrentResult));
-                
-                // Show right toolbar buttons after first response
-                IsRightToolbarVisible = true;
             }
             catch (Exception ex)
             {
