@@ -191,9 +191,9 @@ namespace PromptMasterv5.Views
             // Cursor remains None as per requirement
             
             // Show Loading Spinner at bottom-right of selection
-            // Align center of spinner (24x24) to the corner
-            Canvas.SetLeft(LoadingSpinner, rectX + rectW - 12);
-            Canvas.SetTop(LoadingSpinner, rectY + rectH - 12);
+            // Align center of spinner (18x18) to the corner
+            Canvas.SetLeft(LoadingSpinner, rectX + rectW - 9);
+            Canvas.SetTop(LoadingSpinner, rectY + rectH - 9);
             LoadingSpinner.Visibility = Visibility.Visible;
 
             // Force redraw/update

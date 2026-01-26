@@ -27,9 +27,9 @@
             <Line x:Name="VerticalGuide" Stroke="#00BFFF" StrokeThickness="1" SnapsToDevicePixels="True" IsHitTestVisible="False"/>
 
             <!-- Loading Animation -->
-            <Grid x:Name="LoadingSpinner" Width="24" Height="24" Visibility="Collapsed">
+            <Grid x:Name="LoadingSpinner" Width="18" Height="18" Visibility="Collapsed">
                 <Grid.RenderTransform>
-                    <RotateTransform x:Name="SpinnerRotate" CenterX="12" CenterY="12"/>
+                    <RotateTransform x:Name="SpinnerRotate" CenterX="9" CenterY="9"/>
                 </Grid.RenderTransform>
                 <Grid.Triggers>
                     <EventTrigger RoutedEvent="Loaded">
@@ -44,19 +44,19 @@
                     </EventTrigger>
                 </Grid.Triggers>
                 
-                <!-- Blue Arc -->
-                <Path Data="M 12,2 A 10,10 0 0 1 22,12" 
-                      Stroke="#87CEFA" StrokeThickness="3" StrokeEndLineCap="Round" StrokeStartLineCap="Round">
+                <!-- Blue Arc (Right Side extended) -->
+                <Path Data="M 11,2.5 A 7,7 0 0 1 11,15.5" 
+                      Stroke="#87CEFA" StrokeThickness="2" StrokeEndLineCap="Round" StrokeStartLineCap="Round">
                     <Path.Effect>
-                        <DropShadowEffect Color="#87CEFA" BlurRadius="8" ShadowDepth="0" Opacity="0.8"/>
+                        <DropShadowEffect Color="#87CEFA" BlurRadius="6" ShadowDepth="0" Opacity="0.8"/>
                     </Path.Effect>
                 </Path>
                 
-                <!-- Red Arc -->
-                <Path Data="M 12,22 A 10,10 0 0 1 2,12" 
-                      Stroke="#F08080" StrokeThickness="3" StrokeEndLineCap="Round" StrokeStartLineCap="Round">
+                <!-- Red Arc (Left Side extended) -->
+                <Path Data="M 7,15.5 A 7,7 0 0 1 7,2.5" 
+                      Stroke="#F08080" StrokeThickness="2" StrokeEndLineCap="Round" StrokeStartLineCap="Round">
                     <Path.Effect>
-                        <DropShadowEffect Color="#F08080" BlurRadius="8" ShadowDepth="0" Opacity="0.8"/>
+                        <DropShadowEffect Color="#F08080" BlurRadius="6" ShadowDepth="0" Opacity="0.8"/>
                     </Path.Effect>
                 </Path>
             </Grid>
