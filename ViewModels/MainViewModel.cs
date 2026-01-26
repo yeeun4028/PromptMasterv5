@@ -120,6 +120,7 @@ public partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(HasVariables));
         OnPropertyChanged(nameof(Variables));
         IsEditMode = false; // Always default to preview mode when selecting a file
+        ParseVariablesRealTime(value?.Content ?? "");
     }
 
     [ObservableProperty] private bool isEditMode;
@@ -920,6 +921,11 @@ public partial class MainViewModel : ObservableObject
         if (e.PropertyName == nameof(PromptItem.LastModified)) 
             return;
         
+        if (e.PropertyName == nameof(PromptItem.Content) && sender == SelectedFile)
+        {
+             ParseVariablesRealTime(SelectedFile?.Content ?? "");
+        }
+
         RequestSave();
     }
 
