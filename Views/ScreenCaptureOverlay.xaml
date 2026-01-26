@@ -53,8 +53,13 @@
                 <!-- Red Arc (Left Side extended) -->
                 <Path Data="M 7,15.5 A 7,7 0 0 1 7,2.5" 
                       Stroke="#F08080" StrokeThickness="2" StrokeEndLineCap="Round" StrokeStartLineCap="Round">
-
                 </Path>
+
+                <!-- Blue Arrow -->
+                <Polygon Points="11,15.5 13.5,13 9.5,13.5" Fill="#87CEFA"/>
+
+                <!-- Red Arrow -->
+                <Polygon Points="7,2.5 4.5,5 8.5,4.5" Fill="#F08080"/>
             </Grid>
 
             <Rectangle x:Name="SelectionRect" 
