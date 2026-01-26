@@ -278,7 +278,7 @@ namespace PromptMasterv5.ViewModels
                 ApiKey = Config.AiApiKey
             };
 
-            Config.SavedModels.Add(newModel);
+            Config.SavedModels.Insert(0, newModel);
             Config.ActiveModelId = newModel.Id;
             _settingsService.SaveConfig();
         }
