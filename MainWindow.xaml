@@ -1006,7 +1006,8 @@
                                                  TextBlock.LineHeight="26"
                                                  TextOptions.TextFormattingMode="Ideal"
                                                  TextOptions.TextRenderingMode="ClearType"
-                                                 FontFamily="Segoe UI, Microsoft YaHei UI">
+                                                 FontFamily="Segoe UI, Microsoft YaHei UI"
+                                                 LostFocus="Block3TitleEditor_LostFocus">
                                         <TextBox.Style>
                                             <Style TargetType="TextBox">
                                                 <Setter Property="Visibility" Value="Collapsed"/>
