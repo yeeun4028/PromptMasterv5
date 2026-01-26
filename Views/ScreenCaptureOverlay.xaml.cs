@@ -92,6 +92,10 @@ namespace PromptMasterv5.Views
             SelectionRect.Height = 0;
             SelectionRect.Visibility = Visibility.Visible;
 
+            // Hide guides when selection starts - they will not reappear for this session
+            HorizontalGuide.Visibility = Visibility.Collapsed;
+            VerticalGuide.Visibility = Visibility.Collapsed;
+
             SelectionCanvas.CaptureMouse();
         }
 
@@ -99,16 +103,19 @@ namespace PromptMasterv5.Views
         {
             var currentPoint = e.GetPosition(SelectionCanvas);
 
-            // Update Full-screen Crosshair
-            HorizontalGuide.X1 = 0;
-            HorizontalGuide.X2 = SelectionCanvas.ActualWidth;
-            HorizontalGuide.Y1 = currentPoint.Y;
-            HorizontalGuide.Y2 = currentPoint.Y;
+            // Update Full-screen Crosshair only if visible
+            if (HorizontalGuide.Visibility == Visibility.Visible)
+            {
+                HorizontalGuide.X1 = 0;
+                HorizontalGuide.X2 = SelectionCanvas.ActualWidth;
+                HorizontalGuide.Y1 = currentPoint.Y;
+                HorizontalGuide.Y2 = currentPoint.Y;
 
-            VerticalGuide.X1 = currentPoint.X;
-            VerticalGuide.X2 = currentPoint.X;
-            VerticalGuide.Y1 = 0;
-            VerticalGuide.Y2 = SelectionCanvas.ActualHeight;
+                VerticalGuide.X1 = currentPoint.X;
+                VerticalGuide.X2 = currentPoint.X;
+                VerticalGuide.Y1 = 0;
+                VerticalGuide.Y2 = SelectionCanvas.ActualHeight;
+            }
 
             if (!_isSelecting) return;
 
