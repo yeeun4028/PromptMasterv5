@@ -327,6 +327,7 @@ public partial class MainViewModel : ObservableObject
         }
 
         SyncMiniPinnedPrompts();
+        IsDirty = false; // Initial load is consistent with source
     }
 
     public void UpdateFilesViewFilter()
@@ -924,8 +925,30 @@ public partial class MainViewModel : ObservableObject
 
     private void UpdateTimeDisplay()
     {
-        var now = DateTime.Now;
-        SyncTimeDisplay = now.ToString("HH:mm:ss");
+        if (LocalConfig?.LastCloudSyncTime == null)
+        {
+            SyncTimeDisplay = "-";
+            return;
+        }
+
+        var diff = DateTime.Now - LocalConfig.LastCloudSyncTime.Value;
+        
+        if (diff.TotalSeconds < 60)
+        {
+            SyncTimeDisplay = $"{(int)diff.TotalSeconds}s";
+        }
+        else if (diff.TotalMinutes < 60)
+        {
+            SyncTimeDisplay = $"{(int)diff.TotalMinutes}min";
+        }
+        else if (diff.TotalHours < 24)
+        {
+            SyncTimeDisplay = $"{(int)diff.TotalHours}H";
+        }
+        else
+        {
+            SyncTimeDisplay = $"{(int)diff.TotalDays}d";
+        }
     }
 
     private string CompileContent()

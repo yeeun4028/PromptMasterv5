@@ -117,6 +117,9 @@ namespace PromptMasterv5.Core.Models
         // Quick Action prompts for 划词 feature
         [ObservableProperty]
         private ObservableCollection<QuickActionPrompt> quickActionPrompts = new();
+
+        [ObservableProperty]
+        private DateTime? lastCloudSyncTime;
     }
 
     // Model for Quick Action prompts with individual model selection
