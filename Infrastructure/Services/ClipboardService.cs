@@ -77,7 +77,21 @@ namespace PromptMasterv5.Infrastructure.Services
                     if (focusedElement.TryGetCurrentPattern(ValuePattern.Pattern, out patternObj))
                     {
                         var valuePattern = (ValuePattern)patternObj;
-                        return valuePattern.Current.Value;
+                        var val = valuePattern.Current.Value;
+                        
+                        // 过滤规则：
+                        // 1. VS Code 等 Electron 应用有时会把 document 的 URI 作为 Value 返回 (如 vscode-file://, file://)
+                        // 2. 如果包含 "://" 且看起来像个 URL 或者是极长的系统路径，可能是误报，放弃之，让 Clipboard 方式接管
+                        if (!string.IsNullOrWhiteSpace(val))
+                        {
+                            if (val.StartsWith("vscode-file://", StringComparison.OrdinalIgnoreCase) ||
+                                val.StartsWith("file://", StringComparison.OrdinalIgnoreCase))
+                            {
+                                LoggerService.Instance.LogWarning($"UI Automation 过滤: 忽略疑似文件 URI 的值: {val}", "ClipboardService");
+                                return null;
+                            }
+                        }
+                        return val;
                     }
 
                     return null;
