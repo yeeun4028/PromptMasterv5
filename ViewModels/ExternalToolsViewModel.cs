@@ -58,7 +58,8 @@ namespace PromptMasterv5.ViewModels
             GoogleService googleService,
             IDialogService dialogService,
             IWindowManager windowManager,
-            IAudioService audioService)
+            IAudioService audioService,
+            ClipboardService clipboardService)
         {
             _settingsService = settingsService;
             _aiService = aiService;
@@ -68,12 +69,15 @@ namespace PromptMasterv5.ViewModels
             _dialogService = dialogService;
             _windowManager = windowManager;
             _audioService = audioService;
+            _clipboardService = clipboardService;
             
             LoggerService.Instance.LogInfo("ExternalToolsViewModel initialized", "ExternalToolsViewModel.ctor");
             
             EnsureAiProfileExists();
         }
 
+        private readonly ClipboardService _clipboardService;
+        
         private void EnsureAiProfileExists()
         {
             // Ensure there is at least one AI profile for selection
@@ -240,96 +244,61 @@ namespace PromptMasterv5.ViewModels
 
             try
             {
-                // 1. Clear clipboard
-                try { System.Windows.Clipboard.Clear(); } catch { }
-
-                // 2. Simulate Ctrl+C via SendInput (Robust method)
                 // Notify MainViewModel to ignore key events
                 if (_mainViewModel != null) _mainViewModel.SetSimulatingKeys(true);
                 
+                string? text = null;
+
                 try 
                 {
-                    InputHelper.SendCopyCommand();
-                    
-                    // 3. Loop check clipboard
-                    string text = "";
-                    for (int i = 0; i < 10; i++)
-                    {
-                        await Task.Delay(50);
-                        try 
-                        {
-                            if (System.Windows.Clipboard.ContainsText())
-                            {
-                                text = System.Windows.Clipboard.GetText();
-                                if (!string.IsNullOrWhiteSpace(text)) break;
-                            }
-                        }
-                        catch { }
-                    }
-
-                    // 4. Secondary Attempt: WM_COPY (if Ctrl+C failed)
-                    if (string.IsNullOrWhiteSpace(text))
-                    {
-                        if (InputHelper.TrySendWmCopy())
-                        {
-                             // Wait briefly for message to process
-                             await Task.Delay(100);
-                             try 
-                             {
-                                 if (System.Windows.Clipboard.ContainsText())
-                                 {
-                                     text = System.Windows.Clipboard.GetText();
-                                 }
-                             }
-                             catch { }
-                        }
-                    }
-
-                    if (string.IsNullOrWhiteSpace(text))
-                    {
-                        // 5. Auto-Screenshot Fallback (Perfect Solution)
-                        // If text copy fails, seamlessly assume it's non-selectable text and switch to screenshot mode.
-                        
-                        Growl.InfoGlobal(new GrowlInfo
-                        {
-                            Message = "无法直接取词，已自动切换至截图模式...",
-                            ShowDateTime = false,
-                            WaitTime = 2
-                        });
-
-                        await Task.Delay(200);
-
-                        if (TriggerTranslateCommand.CanExecute(null))
-                        {
-                            TriggerTranslateCommand.Execute(null);
-                        }
-                        return;
-                    }
-
-                    if (enabledTransProfiles.Count == 0)
-                    {
-                        _dialogService.ShowAlert("请先在设置中勾选至少一个翻译服务商。", "未配置翻译");
-                        return;
-                    }
-
-                    var translated = await RaceTranslateAsync(text, enabledTransProfiles);
-
-                    if (string.IsNullOrWhiteSpace(translated)) return;
-
-                    if (Config.AutoCopyTranslationResult)
-                    {
-                        try { await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => System.Windows.Clipboard.SetText(translated)); } catch { }
-                    }
-
-                    // 6. Show Result
-                    _windowManager.ShowTranslationPopup(translated);
+                    // Use ClipboardService (UI Automation -> Ctrl+C -> Fallback)
+                    text = await _clipboardService.GetSelectedTextAsync();
                 }
                 finally
                 {
-                    // Delay reset
+                    // Delay reset to avoid key interference
                     await Task.Delay(200);
                     if (_mainViewModel != null) _mainViewModel.SetSimulatingKeys(false);
                 }
+
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    // Auto-Screenshot Fallback (Perfect Solution)
+                    // If text copy fails, seamlessly assume it's non-selectable text and switch to screenshot mode.
+                    
+                    Growl.InfoGlobal(new GrowlInfo
+                    {
+                        Message = "无法直接取词，已自动切换至截图模式...",
+                        ShowDateTime = false,
+                        WaitTime = 2
+                    });
+
+                    await Task.Delay(200);
+
+                    if (TriggerTranslateCommand.CanExecute(null))
+                    {
+                        TriggerTranslateCommand.Execute(null);
+                    }
+                    return;
+                }
+
+                if (enabledTransProfiles.Count == 0)
+                {
+                    _dialogService.ShowAlert("请先在设置中勾选至少一个翻译服务商。", "未配置翻译");
+                    return;
+                }
+
+                var translated = await RaceTranslateAsync(text, enabledTransProfiles);
+
+                if (string.IsNullOrWhiteSpace(translated)) return;
+
+                if (Config.AutoCopyTranslationResult)
+                {
+                    try { await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => System.Windows.Clipboard.SetText(translated)); } catch { }
+                }
+
+                // Show Result
+                _windowManager.ShowTranslationPopup(translated);
             }
             catch (Exception ex)
             {
