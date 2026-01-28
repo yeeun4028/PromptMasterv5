@@ -42,6 +42,7 @@ public partial class MainViewModel : ObservableObject
     private readonly IDialogService _dialogService;
     private readonly ClipboardService _clipboardService;
     private readonly WindowPositionService _windowPositionService;
+    private readonly IWindowManager _windowManager; // Injected
     private readonly ISettingsService _settingsService;
 
     private DispatcherTimer _timer;
@@ -146,7 +147,8 @@ public partial class MainViewModel : ObservableObject
         ExternalToolsViewModel externalToolsVM,
         IDialogService dialogService,
         ClipboardService clipboardService,
-        WindowPositionService windowPositionService)
+        WindowPositionService windowPositionService,
+        IWindowManager windowManager) // Added parameter
     {
         _aiService = aiService;
         _dataService = dataService;
@@ -157,6 +159,7 @@ public partial class MainViewModel : ObservableObject
         _clipboardService = clipboardService;
         _windowPositionService = windowPositionService;
         _settingsService = settingsService;
+        _windowManager = windowManager; // Assigned
         
         SidebarVM = sidebarVM;
         ChatVM = chatVM;
@@ -1092,12 +1095,18 @@ public partial class MainViewModel : ObservableObject
             // 1. 获取选中文本
             var selectedText = await _clipboardService.GetSelectedTextAsync();
             
+            // 1.1 清理文本 (移除不可见字符、控制符)
+            if (selectedText != null)
+            {
+                selectedText = selectedText.Trim().Trim('\0', '\uFEFF', '\u200B');
+            }
+
             if (string.IsNullOrWhiteSpace(selectedText))
             {
-                // Toast 提示用户选中文本
+                // 优化：使用统一的 TranslationPopup 展示警告
                 await Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    _dialogService.ShowAlert("请先选中文本", "提示");
+                    _windowManager.ShowTranslationPopup("未能获取选中文本...");
                 });
                 return;
             }
