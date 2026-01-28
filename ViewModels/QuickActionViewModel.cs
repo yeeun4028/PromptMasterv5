@@ -93,37 +93,59 @@ namespace PromptMasterv5.ViewModels
         {
             if (IsProcessing) return;
 
-            // Trigger window expansion
+            // 1. Trigger Visual State Changes immediately (UI Thread)
             IsExpanded = true;
             IsRightToolbarVisible = true; // Show tools immediately, hiding prompt buttons
             OnExpandWindow?.Invoke();
 
-            // Save current prompt for retry
+            // 2. Yield to UI thread to allow animations to start and layout to update
+            // This removes the "perceived" lag by making the click instant
+            await Task.Delay(50);
+
+            // 3. Prepare Data (Off-thread to avoid any hitching during animation)
+            // Capture necessary data to pass to background thread
+            string rawPromptContent = prompt.Content ?? "";
+            string currentSelectedText = SelectedText;
+            
+            // We need to keep CurrentPrompt update on UI thread later if it triggers UI binding changes, 
+            // strictly speaking ObservableObject is thread-agnostic for the event but WPF handling is better on UI thread.
+            // However, we want to save it. Let's do it here as it's quick assignment.
             CurrentPrompt = prompt;
-
-            // Assembly prompt with selected text
-            string assembledPrompt = AssemblePrompt(prompt.Content ?? "", SelectedText);
-
-            // Resolve model
-            var (apiKey, baseUrl, model, systemPrompt) = ResolveModel(prompt);
-
-            // Store for subsequent messages in this conversation
-            _lastUsedApiKey = apiKey;
-            _lastUsedBaseUrl = baseUrl;
-            _lastUsedModel = model;
-
-            // Add user message
-            Messages.Clear();
-            Messages.Add(new ChatMessage("user", SelectedText));
-
-            // Start AI streaming
-            IsProcessing = true;
-            CurrentResult = "";
-            CurrentLineCount = 0;
-            _longTextHandled = false; // Reset for new action
 
             try
             {
+                // Run heavy logic in background
+                var processingTask = Task.Run(() =>
+                {
+                    // Assembly prompt with selected text
+                    string assembled = AssemblePrompt(rawPromptContent, currentSelectedText);
+
+                    // Resolve model
+                    // Note: accessing _settingsService.Config is assumed thread-safe for reading string properties
+                    var modelInfo = ResolveModel(prompt);
+
+                    return (assembled, modelInfo);
+                });
+
+                var (assembledPrompt, (apiKey, baseUrl, model, systemPrompt)) = await processingTask;
+
+                // 4. Update State with Results (Back on UI Thread)
+                
+                // Store for subsequent messages in this conversation
+                _lastUsedApiKey = apiKey;
+                _lastUsedBaseUrl = baseUrl;
+                _lastUsedModel = model;
+
+                // Add user message
+                Messages.Clear();
+                Messages.Add(new ChatMessage("user", SelectedText));
+
+                // Start AI streaming
+                IsProcessing = true;
+                CurrentResult = "";
+                CurrentLineCount = 0;
+                _longTextHandled = false; // Reset for new action
+
                 var apiMessages = new System.Collections.Generic.List<ChatMessage>();
                 if (!string.IsNullOrEmpty(systemPrompt))
                 {
