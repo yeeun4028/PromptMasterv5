@@ -8,6 +8,8 @@ using OpenAI.ObjectModels.RequestModels;
 using OpenAI.ObjectModels;
 using PromptMasterv5.Core.Models;
 using PromptMasterv5.Core.Interfaces;
+using System.Net.Http;
+using System.Threading;
 
 namespace PromptMasterv5.Infrastructure.Services
 {
@@ -25,13 +27,7 @@ namespace PromptMasterv5.Infrastructure.Services
                 return "[设置错误] 请先在设置中配置 API Key";
             }
 
-            var options = new OpenAiOptions
-            {
-                ApiKey = apiKey,
-                BaseDomain = baseUrl
-            };
-
-            var openAiService = new OpenAIService(options);
+            var openAiService = CreateOpenAiService(apiKey, baseUrl);
 
             string finalSystemPrompt = systemPrompt ?? "You are a helpful assistant. Output result directly without unnecessary conversational filler. IMPORTANT: Always answer in Simplified Chinese unless the user explicitly asks for another language.";
 
@@ -78,8 +74,7 @@ namespace PromptMasterv5.Infrastructure.Services
             if (string.IsNullOrWhiteSpace(apiKey)) return "[设置错误] 请先配置 API Key";
             if (imageBytes == null || imageBytes.Length == 0) return "[输入错误] 图片数据为空";
 
-            var options = new OpenAiOptions { ApiKey = apiKey, BaseDomain = baseUrl };
-            var openAiService = new OpenAIService(options);
+            var openAiService = CreateOpenAiService(apiKey, baseUrl);
 
             string finalSystemPrompt = systemPrompt ?? "You are a helpful assistant. Please perform OCR on the provided image.";
             string base64Image = Convert.ToBase64String(imageBytes);
@@ -141,13 +136,7 @@ namespace PromptMasterv5.Infrastructure.Services
                 yield break;
             }
 
-            var options = new OpenAiOptions
-            {
-                ApiKey = apiKey,
-                BaseDomain = baseUrl
-            };
-
-            var openAiService = new OpenAIService(options);
+            var openAiService = CreateOpenAiService(apiKey, baseUrl);
 
             string finalSystemPrompt = systemPrompt ?? "You are a helpful assistant. Output result directly without unnecessary conversational filler. IMPORTANT: Always answer in Simplified Chinese unless the user explicitly asks for another language.";
 
@@ -198,13 +187,7 @@ namespace PromptMasterv5.Infrastructure.Services
                 yield break;
             }
 
-            var options = new OpenAiOptions
-            {
-                ApiKey = apiKey,
-                BaseDomain = baseUrl
-            };
-
-            var openAiService = new OpenAIService(options);
+            var openAiService = CreateOpenAiService(apiKey, baseUrl);
 
             var request = new ChatCompletionCreateRequest
             {
@@ -250,13 +233,7 @@ namespace PromptMasterv5.Infrastructure.Services
 
             try
             {
-                var options = new OpenAiOptions
-                {
-                    ApiKey = apiKey,
-                    BaseDomain = baseUrl
-                };
-
-                var openAiService = new OpenAIService(options);
+                var openAiService = CreateOpenAiService(apiKey, baseUrl);
 
                 var request = new ChatCompletionCreateRequest
                 {
@@ -283,6 +260,47 @@ namespace PromptMasterv5.Infrastructure.Services
             catch (Exception ex)
             {
                 return (false, $"连接异常: {ex.Message}");
+            }
+        }
+        private OpenAIService CreateOpenAiService(string apiKey, string baseUrl)
+        {
+            var options = new OpenAiOptions
+            {
+                ApiKey = apiKey,
+                BaseDomain = baseUrl
+            };
+
+            // 使用自定义 Handler 处理智谱 AI 的 URL 兼容性问题
+            // 智谱 API 虽然号称兼容 OpenAI，但 path 使用 /api/paas/v4/
+            // 标准 SDK 会自动追加 /v1/chat/completions，导致路径变为 /api/paas/v4/v1/... (404)
+            var httpClient = new HttpClient(new ZhipuCompatHandler(new HttpClientHandler()))
+            {
+                Timeout = TimeSpan.FromMinutes(2) // 增加超时时间以防万一
+            };
+
+            return new OpenAIService(options, httpClient);
+        }
+
+        /// <summary>
+        /// 智谱 AI URL 兼容性处理器
+        /// </summary>
+        private class ZhipuCompatHandler : DelegatingHandler
+        {
+            public ZhipuCompatHandler(HttpMessageHandler innerHandler) : base(innerHandler) { }
+
+            protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            {
+                if (request.RequestUri != null && request.RequestUri.Host.Contains("bigmodel.cn", StringComparison.OrdinalIgnoreCase))
+                {
+                    var uriStr = request.RequestUri.ToString();
+                    // 如果 SDK 自动追加了 /v1/ 导致路径错误 (如 .../v4/v1/...)，则手动修正为 .../v4/...
+                    if (uriStr.Contains("/v4/v1/"))
+                    {
+                        var newUri = uriStr.Replace("/v4/v1/", "/v4/");
+                        request.RequestUri = new Uri(newUri);
+                    }
+                }
+                return await base.SendAsync(request, cancellationToken);
             }
         }
     }
