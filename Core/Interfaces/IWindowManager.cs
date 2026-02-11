@@ -6,7 +6,7 @@ namespace PromptMasterv5.Core.Interfaces
 {
     public interface IWindowManager
     {
-        byte[]? ShowCaptureWindow(Func<byte[], System.Windows.Rect, Task>? onCaptureProcessing = null);
+        Task<byte[]?> ShowCaptureWindowAsync(Func<byte[], System.Windows.Rect, Task>? onCaptureProcessing = null);
         void ShowTranslationPopup(string text, System.Windows.Rect? placementTarget = null);
     }
 }

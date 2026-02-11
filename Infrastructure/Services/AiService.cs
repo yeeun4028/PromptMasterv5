@@ -168,7 +168,14 @@ namespace PromptMasterv5.Infrastructure.Services
                 {
                     if (completionResult.Error != null)
                     {
-                        yield return $"[AI 错误] {completionResult.Error.Message}";
+                        var errorMsg = $"[AI 错误] {completionResult.Error.Message} (Type: {completionResult.Error.Type}, Code: {completionResult.Error.Code})";
+                        LoggerService.Instance.LogError($"Stream Error: {errorMsg}", "AiService.ChatStreamAsync");
+                        yield return errorMsg;
+                    }
+                    else
+                    {
+                         LoggerService.Instance.LogError("Stream Error: Unknown error (Successful=false, Error=null)", "AiService.ChatStreamAsync");
+                         yield return "[AI 错误] 未知错误";
                     }
                 }
             }
@@ -211,7 +218,14 @@ namespace PromptMasterv5.Infrastructure.Services
                 {
                     if (completionResult.Error != null)
                     {
-                        yield return $"[AI 错误] {completionResult.Error.Message}";
+                        var errorMsg = $"[AI 错误] {completionResult.Error.Message} (Type: {completionResult.Error.Type}, Code: {completionResult.Error.Code})";
+                        LoggerService.Instance.LogError($"Stream Error: {errorMsg}", "AiService.ChatStreamAsync");
+                        yield return errorMsg;
+                    }
+                    else
+                    {
+                         LoggerService.Instance.LogError("Stream Error: Unknown error (Successful=false, Error=null)", "AiService.ChatStreamAsync");
+                         yield return "[AI 错误] 未知错误";
                     }
                 }
             }
@@ -292,12 +306,26 @@ namespace PromptMasterv5.Infrastructure.Services
             {
                 if (request.RequestUri != null && request.RequestUri.Host.Contains("bigmodel.cn", StringComparison.OrdinalIgnoreCase))
                 {
-                    var uriStr = request.RequestUri.ToString();
-                    // 如果 SDK 自动追加了 /v1/ 导致路径错误 (如 .../v4/v1/...)，则手动修正为 .../v4/...
-                    if (uriStr.Contains("/v4/v1/"))
+                    var uriStr = request.RequestUri.AbsoluteUri;
+                    
+                    // 1. 处理 SDK 自动追加 /v1/ 导致路径错误 (如 .../v4/v1/...)
+                    // 同时处理可能的双斜杠问题 (.../v4//v1/...)
+                    if (uriStr.Contains("/v4/v1/") || uriStr.Contains("/v4//v1/"))
                     {
-                        var newUri = uriStr.Replace("/v4/v1/", "/v4/");
-                        request.RequestUri = new Uri(newUri);
+                        var originalUri = uriStr;
+                        
+                        // 替换错误的 v1 路径，修正为 v4 直接衔接后续路径
+                        var newUriStr = uriStr.Replace("/v4//v1/", "/v4/").Replace("/v4/v1/", "/v4/");
+                        
+                        request.RequestUri = new Uri(newUriStr);
+                        
+                        // Log the fix for debugging
+                        LoggerService.Instance.LogInfo($"[ZhipuFix] Rewrote URL from {originalUri} to {newUriStr}", "AiService.ZhipuCompatHandler");
+                    }
+                    else
+                    {
+                         // Log normal requests to verify host match
+                         // LoggerService.Instance.LogInfo($"[ZhipuCheck] URL pass-through: {uriStr}", "AiService.ZhipuCompatHandler");
                     }
                 }
                 return await base.SendAsync(request, cancellationToken);

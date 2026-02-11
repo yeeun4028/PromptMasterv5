@@ -126,7 +126,7 @@ namespace PromptMasterv5.ViewModels
                 // Use WindowManager with callback for Processing State
                 string? ocrResult = null;
                 
-                var capturedBytes = _windowManager.ShowCaptureWindow(async (byte[] bytes, System.Windows.Rect rect) => 
+                var capturedBytes = await _windowManager.ShowCaptureWindowAsync(async (byte[] bytes, System.Windows.Rect rect) => 
                 {
                     // Execute OCR Racing inside the Processing State
                     ocrResult = await RaceOcrAsync(bytes, enabledProfiles);
@@ -180,7 +180,7 @@ namespace PromptMasterv5.ViewModels
                 string? translatedResult = null;
                 System.Windows.Rect? actionRect = null;
 
-                var capturedBytes = _windowManager.ShowCaptureWindow(async (byte[] bytes, System.Windows.Rect rect) =>
+                var capturedBytes = await _windowManager.ShowCaptureWindowAsync(async (byte[] bytes, System.Windows.Rect rect) =>
                 {
                     actionRect = rect;
                     // 1. OCR Racing

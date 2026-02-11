@@ -4,6 +4,8 @@ namespace PromptMasterv5.Views
 {
     public partial class TranslationPopup : Window
     {
+        public bool IsClosing { get; private set; }
+
         public TranslationPopup(string initialText)
         {
             InitializeComponent();
@@ -14,7 +16,12 @@ namespace PromptMasterv5.Views
             this.Loaded += TranslationPopup_Loaded;
             
             // 失去焦点自动关闭
-            this.Deactivated += (s, e) => this.Close();
+            this.Deactivated += (s, e) => 
+            {
+                if (!IsClosing) Close();
+            };
+
+            this.Closing += (s, e) => IsClosing = true;
         }
 
         private Rect? _placementTarget;
