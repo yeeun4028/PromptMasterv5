@@ -4,6 +4,7 @@ using PromptMasterv5;
 using PromptMasterv5.Core.Interfaces;
 using PromptMasterv5.Core.Models;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -141,13 +142,21 @@ namespace PromptMasterv5.ViewModels
                 // Usually this means replacing the old result with the new one.
                 
                 var fullResponseBuilder = new System.Text.StringBuilder();
+                var sw = Stopwatch.StartNew();
                 
                 // Use new overload supporting message list
                 await foreach (var chunk in _aiService.ChatStreamAsync(_conversationHistory, config.Config))
                 {
-                    ResultText += chunk;
                     fullResponseBuilder.Append(chunk);
+
+                    if (sw.ElapsedMilliseconds >= 50)
+                    {
+                        ResultText = fullResponseBuilder.ToString();
+                        sw.Restart();
+                    }
                 }
+                
+                ResultText = fullResponseBuilder.ToString();
                 
                 var fullResponse = fullResponseBuilder.ToString();
                 _conversationHistory.Add(ChatMessage.FromAssistant(fullResponse));
@@ -197,14 +206,21 @@ namespace PromptMasterv5.ViewModels
             {
                 ResultText = ""; // Clear before streaming
                 
-                // We need to capture the full response to add to history later
                 var fullResponseBuilder = new System.Text.StringBuilder();
+                var sw = Stopwatch.StartNew();
                 
                 await foreach (var chunk in _aiService.ChatStreamAsync(finalText, config.Config))
                 {
-                    ResultText += chunk;
                     fullResponseBuilder.Append(chunk);
+
+                    if (sw.ElapsedMilliseconds >= 50)
+                    {
+                        ResultText = fullResponseBuilder.ToString();
+                        sw.Restart();
+                    }
                 }
+                
+                ResultText = fullResponseBuilder.ToString();
                 
                 var fullResponse = fullResponseBuilder.ToString();
                 _conversationHistory.Add(ChatMessage.FromAssistant(fullResponse));

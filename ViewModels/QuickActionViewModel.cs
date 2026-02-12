@@ -6,8 +6,12 @@ using PromptMasterv5.Core.Models;
 using PromptMasterv5.Infrastructure.Services;
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+
+using System.Windows;
 
 namespace PromptMasterv5.ViewModels
 {
@@ -153,21 +157,48 @@ namespace PromptMasterv5.ViewModels
                 var apiMessages = new System.Collections.Generic.List<ChatMessage>();
                 if (!string.IsNullOrEmpty(systemPrompt))
                 {
-                    apiMessages.Add(new ChatMessage("system", systemPrompt));
+                    apiMessages.Add(ChatMessage.FromSystem(systemPrompt));
                 }
-                apiMessages.Add(new ChatMessage("user", assembledPrompt));
+                apiMessages.Add(ChatMessage.FromUser(assembledPrompt));
 
-                await foreach (var chunk in _aiService.ChatStreamAsync(apiMessages, apiKey, baseUrl, model))
+                var sb = new StringBuilder();
+                var sw = Stopwatch.StartNew();
+                int lineCount = 1;
+
+                await Task.Run(async () =>
                 {
-                    CurrentResult += chunk;
-                    assistantMessage.Content = CurrentResult; // Real-time update
-                    
-                    // Optimized line counting (simple approximation for perf during streaming)
-                    CurrentLineCount = CurrentResult.Count(c => c == '\n') + 1;
-                    
-                    // Check for long text threshold
-                    CheckLongTextThreshold();
-                }
+                    await foreach (var chunk in _aiService.ChatStreamAsync(apiMessages, apiKey, baseUrl, model).ConfigureAwait(false))
+                    {
+                        sb.Append(chunk);
+                        lineCount += chunk.Count(c => c == '\n');
+
+                        // 节流：每 50ms 才刷新一次 UI，避免频繁更新导致卡顿
+                        if (sw.ElapsedMilliseconds >= 50)
+                        {
+                            var text = sb.ToString();
+                            var currentCount = lineCount;
+                            
+                            System.Windows.Application.Current.Dispatcher.Invoke(() => 
+                            {
+                                CurrentResult = text;
+                                assistantMessage.Content = text;
+                                CurrentLineCount = currentCount;
+                                CheckLongTextThreshold();
+                            });
+                            sw.Restart();
+                        }
+                    }
+
+                    // 最终刷新：确保所有内容显示
+                    var finalText = sb.ToString();
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        CurrentResult = finalText;
+                        assistantMessage.Content = finalText;
+                        CurrentLineCount = lineCount;
+                        CheckLongTextThreshold();
+                    });
+                });
             }
             catch (Exception ex)
             {
@@ -240,17 +271,42 @@ namespace PromptMasterv5.ViewModels
 
                 var apiMessages = Messages.Select(m => new ChatMessage(m.Role, m.Content)).ToList();
 
-                await foreach (var chunk in _aiService.ChatStreamAsync(apiMessages, apiKey, baseUrl, model))
-                {
-                    CurrentResult += chunk;
-                    assistantMessage.Content = CurrentResult; // Real-time update
+                var sb = new StringBuilder();
+                var sw = Stopwatch.StartNew();
+                int lineCount = 1;
 
-                    // Optimized line count
-                    CurrentLineCount = CurrentResult.Count(c => c == '\n') + 1;
-                    
-                    // Check for long text threshold
-                    CheckLongTextThreshold();
-                }
+                await Task.Run(async () =>
+                {
+                    await foreach (var chunk in _aiService.ChatStreamAsync(apiMessages, apiKey, baseUrl, model).ConfigureAwait(false))
+                    {
+                        sb.Append(chunk);
+                        lineCount += chunk.Count(c => c == '\n');
+
+                        if (sw.ElapsedMilliseconds >= 50)
+                        {
+                            var text = sb.ToString();
+                            var currentCount = lineCount;
+                            
+                            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                CurrentResult = text;
+                                assistantMessage.Content = text;
+                                CurrentLineCount = currentCount;
+                                CheckLongTextThreshold();
+                            });
+                            sw.Restart();
+                        }
+                    }
+
+                    var finalText = sb.ToString();
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        CurrentResult = finalText;
+                        assistantMessage.Content = finalText;
+                        CurrentLineCount = lineCount;
+                        CheckLongTextThreshold();
+                    });
+                });
             }
             catch (Exception ex)
             {

@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using OpenAI;
 using OpenAI.Managers;
@@ -9,12 +12,18 @@ using OpenAI.ObjectModels;
 using PromptMasterv5.Core.Models;
 using PromptMasterv5.Core.Interfaces;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading;
 
 namespace PromptMasterv5.Infrastructure.Services
 {
     public class AiService : IAiService
     {
+        // 静态 HttpClient 避免每次请求都创建新连接（DNS/TCP/TLS 开销 + 端口耗尽风险）
+        private static readonly HttpClient _nativeHttpClient = new HttpClient
+        {
+            Timeout = TimeSpan.FromMinutes(2)
+        };
         public Task<string> ChatAsync(string userContent, AppConfig config, string? systemPrompt = null)
         {
             return ChatAsync(userContent, config.AiApiKey, config.AiBaseUrl, config.AiModel, systemPrompt);
@@ -46,7 +55,7 @@ namespace PromptMasterv5.Infrastructure.Services
 
             try
             {
-                var completionResult = await openAiService.ChatCompletion.CreateCompletion(request);
+                var completionResult = await openAiService.ChatCompletion.CreateCompletion(request).ConfigureAwait(false);
 
                 if (completionResult.Successful)
                 {
@@ -101,7 +110,7 @@ namespace PromptMasterv5.Infrastructure.Services
 
             try
             {
-                var completionResult = await openAiService.ChatCompletion.CreateCompletion(request);
+                var completionResult = await openAiService.ChatCompletion.CreateCompletion(request).ConfigureAwait(false);
                 if (completionResult.Successful)
                 {
                     var choice = completionResult.Choices?.FirstOrDefault();
@@ -151,10 +160,14 @@ namespace PromptMasterv5.Infrastructure.Services
                 Messages = messages,
                 Model = model,
                 Temperature = 0.7f,
+                MaxTokens = 4096, // GLM requires this parameter
                 Stream = true // Enable streaming
             };
 
-            await foreach (var completionResult in openAiService.ChatCompletion.CreateCompletionAsStream(request))
+            // Enhanced logging for debugging
+            LoggerService.Instance.LogInfo($"Starting stream request: Model={model}, BaseUrl={baseUrl}, MessageCount={messages.Count}, MaxTokens=4096", "AiService.ChatStreamAsync");
+
+            await foreach (var completionResult in openAiService.ChatCompletion.CreateCompletionAsStream(request).ConfigureAwait(false))
             {
                 if (completionResult.Successful)
                 {
@@ -168,8 +181,19 @@ namespace PromptMasterv5.Infrastructure.Services
                 {
                     if (completionResult.Error != null)
                     {
-                        var errorMsg = $"[AI 错误] {completionResult.Error.Message} (Type: {completionResult.Error.Type}, Code: {completionResult.Error.Code})";
-                        LoggerService.Instance.LogError($"Stream Error: {errorMsg}", "AiService.ChatStreamAsync");
+                        // Handle null/empty error properties (common with GLM models)
+                        string errorMessage = !string.IsNullOrWhiteSpace(completionResult.Error.Message) 
+                            ? completionResult.Error.Message 
+                            : "未知错误";
+                        string errorType = !string.IsNullOrWhiteSpace(completionResult.Error.Type) 
+                            ? completionResult.Error.Type 
+                            : "Unknown";
+                        string errorCode = !string.IsNullOrWhiteSpace(completionResult.Error.Code) 
+                            ? completionResult.Error.Code 
+                            : "N/A";
+                        
+                        var errorMsg = $"[AI 错误] {errorMessage} (Type: {errorType}, Code: {errorCode})";
+                        LoggerService.Instance.LogError($"Stream Error: {errorMsg}, Full Error Object: Type={completionResult.Error.Type}, Code={completionResult.Error.Code}, Message={completionResult.Error.Message}", "AiService.ChatStreamAsync");
                         yield return errorMsg;
                     }
                     else
@@ -194,6 +218,28 @@ namespace PromptMasterv5.Infrastructure.Services
                 yield break;
             }
 
+            // Ensure there's a system message (GLM may require it)
+            var hasSystemMessage = messages.Any(m => m.Role == "system");
+            if (!hasSystemMessage)
+            {
+                var defaultSystemMessage = ChatMessage.FromSystem("You are a helpful assistant. Output result directly without unnecessary conversational filler. IMPORTANT: Always answer in Simplified Chinese unless the user explicitly asks for another language.");
+                messages.Insert(0, defaultSystemMessage);
+                LoggerService.Instance.LogInfo("Added default system message (GLM requirement)", "AiService.ChatStreamAsync");
+            }
+
+            // GLM (bigmodel.cn) 需要绕过 SDK 的流式功能，因为 Betalgo SDK v8.7.2 的
+            // CreateCompletionAsStream 不使用注入的 HttpClient/Handler，导致 URL 重写不生效
+            if (baseUrl.Contains("bigmodel.cn", StringComparison.OrdinalIgnoreCase))
+            {
+                LoggerService.Instance.LogInfo($"Using native HttpClient for GLM stream: Model={model}", "AiService.ChatStreamAsync");
+                
+                await foreach (var chunk in NativeStreamAsync(messages, apiKey, baseUrl, model).ConfigureAwait(false))
+                {
+                    yield return chunk;
+                }
+                yield break;
+            }
+
             var openAiService = CreateOpenAiService(apiKey, baseUrl);
 
             var request = new ChatCompletionCreateRequest
@@ -201,10 +247,13 @@ namespace PromptMasterv5.Infrastructure.Services
                 Messages = messages,
                 Model = model,
                 Temperature = 0.7f,
+                MaxTokens = 4096,
                 Stream = true
             };
 
-            await foreach (var completionResult in openAiService.ChatCompletion.CreateCompletionAsStream(request))
+            LoggerService.Instance.LogInfo($"Starting stream request: Model={model}, BaseUrl={baseUrl}, MessageCount={messages.Count}, MaxTokens=4096", "AiService.ChatStreamAsync");
+
+            await foreach (var completionResult in openAiService.ChatCompletion.CreateCompletionAsStream(request).ConfigureAwait(false))
             {
                 if (completionResult.Successful)
                 {
@@ -218,7 +267,17 @@ namespace PromptMasterv5.Infrastructure.Services
                 {
                     if (completionResult.Error != null)
                     {
-                        var errorMsg = $"[AI 错误] {completionResult.Error.Message} (Type: {completionResult.Error.Type}, Code: {completionResult.Error.Code})";
+                        string errorMessage = !string.IsNullOrWhiteSpace(completionResult.Error.Message) 
+                            ? completionResult.Error.Message 
+                            : "未知错误";
+                        string errorType = !string.IsNullOrWhiteSpace(completionResult.Error.Type) 
+                            ? completionResult.Error.Type 
+                            : "Unknown";
+                        string errorCode = !string.IsNullOrWhiteSpace(completionResult.Error.Code) 
+                            ? completionResult.Error.Code 
+                            : "N/A";
+                        
+                        var errorMsg = $"[AI 错误] {errorMessage} (Type: {errorType}, Code: {errorCode})";
                         LoggerService.Instance.LogError($"Stream Error: {errorMsg}", "AiService.ChatStreamAsync");
                         yield return errorMsg;
                     }
@@ -228,6 +287,146 @@ namespace PromptMasterv5.Infrastructure.Services
                          yield return "[AI 错误] 未知错误";
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// 原生 HttpClient SSE 流式请求 - 专为 GLM 等不兼容 Betalgo SDK 流式功能的 API 设计
+        /// </summary>
+        private async IAsyncEnumerable<string> NativeStreamAsync(List<ChatMessage> messages, string apiKey, string baseUrl, string model)
+        {
+            // 构建正确的 URL
+            var url = baseUrl.TrimEnd('/') + "/chat/completions";
+            LoggerService.Instance.LogInfo($"[GLM Native] Sending to: {url}", "AiService.NativeStreamAsync");
+
+            // 构建请求体
+            var requestBody = new
+            {
+                model = model,
+                messages = messages.Select(m => new { role = m.Role, content = m.Content }).ToArray(),
+                stream = true,
+                temperature = 0.7,
+                max_tokens = 4096
+            };
+
+            var jsonContent = JsonSerializer.Serialize(requestBody);
+            LoggerService.Instance.LogInfo($"[GLM Native] Request body: {jsonContent.Substring(0, Math.Min(200, jsonContent.Length))}...", "AiService.NativeStreamAsync");
+
+            // 发送请求（非迭代器方法，可以使用 try-catch）
+            var (response, httpError) = await NativeStreamSendAsync(url, apiKey, jsonContent).ConfigureAwait(false);
+            
+            if (httpError != null)
+            {
+                yield return httpError;
+                yield break;
+            }
+
+            if (response == null)
+            {
+                yield return "[HTTP 错误] 无响应";
+                yield break;
+            }
+
+            LoggerService.Instance.LogInfo($"[GLM Native] Response status: {response.StatusCode}", "AiService.NativeStreamAsync");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                LoggerService.Instance.LogError($"[GLM Native] Error response: {errorBody}", "AiService.NativeStreamAsync");
+                yield return $"[AI 错误] HTTP {(int)response.StatusCode}: {errorBody}";
+                response.Dispose();
+                yield break;
+            }
+
+            // 读取 SSE 流
+            using (response)
+            {
+                using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+                using var reader = new StreamReader(stream, Encoding.UTF8);
+
+                while (!reader.EndOfStream)
+                {
+                    var line = await reader.ReadLineAsync().ConfigureAwait(false);
+                    if (string.IsNullOrEmpty(line)) continue;
+                    if (!line.StartsWith("data: ")) continue;
+
+                    var data = line.Substring(6); // 去掉 "data: " 前缀
+                    if (data == "[DONE]") break;
+
+                    // 解析 JSON（不使用 try-catch，改用 TryParse 模式）
+                    var parsed = ParseSseChunk(data);
+                    if (parsed.Error != null)
+                    {
+                        yield return parsed.Error;
+                        yield break;
+                    }
+                    if (parsed.Content != null)
+                    {
+                        yield return parsed.Content;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 发送原生 HTTP 请求（非迭代器方法，可以安全使用 try-catch）
+        /// </summary>
+        private async Task<(HttpResponseMessage? Response, string? Error)> NativeStreamSendAsync(string url, string apiKey, string jsonContent)
+        {
+            try
+            {
+                var request = new HttpRequestMessage(HttpMethod.Post, url);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+                request.Content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+                var response = await _nativeHttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+                return (response, null);
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Instance.LogError($"[GLM Native] HTTP error: {ex.Message}", "AiService.NativeStreamSendAsync");
+                return (null, $"[HTTP 错误] {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 解析 SSE 数据块（不使用异常处理来避免 yield 限制）
+        /// </summary>
+        private (string? Content, string? Error) ParseSseChunk(string data)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(data);
+                var root = doc.RootElement;
+                
+                // 检查是否有错误
+                if (root.TryGetProperty("error", out var error))
+                {
+                    var errorMsg = error.TryGetProperty("message", out var msg) ? msg.GetString() : "未知错误";
+                    LoggerService.Instance.LogError($"[GLM Native] API error in stream: {errorMsg}", "AiService.ParseSseChunk");
+                    return (null, $"[AI 错误] {errorMsg}");
+                }
+
+                if (root.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
+                {
+                    var firstChoice = choices[0];
+                    if (firstChoice.TryGetProperty("delta", out var delta) &&
+                        delta.TryGetProperty("content", out var content))
+                    {
+                        var text = content.GetString();
+                        if (!string.IsNullOrEmpty(text))
+                        {
+                            return (text, null);
+                        }
+                    }
+                }
+
+                return (null, null); // 没有内容也没有错误（可能是角色delta等）
+            }
+            catch (JsonException ex)
+            {
+                LoggerService.Instance.LogError($"[GLM Native] JSON parse error: {ex.Message}, Data: {data}", "AiService.ParseSseChunk");
+                return (null, null); // 跳过无法解析的行
             }
         }
 
@@ -260,7 +459,7 @@ namespace PromptMasterv5.Infrastructure.Services
                     MaxTokens = 5
                 };
 
-                var completionResult = await openAiService.ChatCompletion.CreateCompletion(request);
+                var completionResult = await openAiService.ChatCompletion.CreateCompletion(request).ConfigureAwait(false);
 
                 if (completionResult.Successful)
                 {
@@ -278,6 +477,8 @@ namespace PromptMasterv5.Infrastructure.Services
         }
         private OpenAIService CreateOpenAiService(string apiKey, string baseUrl)
         {
+            LoggerService.Instance.LogInfo($"Creating OpenAiService: BaseUrl={baseUrl}, ApiKey={(string.IsNullOrEmpty(apiKey) ? "Empty" : "Present")}", "AiService.CreateOpenAiService");
+            
             var options = new OpenAiOptions
             {
                 ApiKey = apiKey,
@@ -292,6 +493,7 @@ namespace PromptMasterv5.Infrastructure.Services
                 Timeout = TimeSpan.FromMinutes(2) // 增加超时时间以防万一
             };
 
+            LoggerService.Instance.LogInfo("OpenAiService created successfully with ZhipuCompatHandler", "AiService.CreateOpenAiService");
             return new OpenAIService(options, httpClient);
         }
 
@@ -300,10 +502,15 @@ namespace PromptMasterv5.Infrastructure.Services
         /// </summary>
         private class ZhipuCompatHandler : DelegatingHandler
         {
-            public ZhipuCompatHandler(HttpMessageHandler innerHandler) : base(innerHandler) { }
+            public ZhipuCompatHandler(HttpMessageHandler innerHandler) : base(innerHandler) 
+            { 
+                LoggerService.Instance.LogInfo("ZhipuCompatHandler instance created", "AiService.ZhipuCompatHandler");
+            }
 
             protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             {
+                LoggerService.Instance.LogInfo($"SendAsync called: URL={request.RequestUri}", "AiService.ZhipuCompatHandler");
+                
                 if (request.RequestUri != null && request.RequestUri.Host.Contains("bigmodel.cn", StringComparison.OrdinalIgnoreCase))
                 {
                     var uriStr = request.RequestUri.AbsoluteUri;
@@ -328,7 +535,22 @@ namespace PromptMasterv5.Infrastructure.Services
                          // LoggerService.Instance.LogInfo($"[ZhipuCheck] URL pass-through: {uriStr}", "AiService.ZhipuCompatHandler");
                     }
                 }
-                return await base.SendAsync(request, cancellationToken);
+                
+                // 记录 GLM 请求信息（用于调试）
+                if (request.RequestUri != null && request.RequestUri.Host.Contains("bigmodel.cn", StringComparison.OrdinalIgnoreCase))
+                {
+                    LoggerService.Instance.LogInfo($"[GLM Request] URL: {request.RequestUri}, Method: {request.Method}", "AiService.ZhipuCompatHandler");
+                }
+                
+                var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
+                
+                // 记录 GLM 响应状态（流式响应不能读取Body）
+                if (request.RequestUri != null && request.RequestUri.Host.Contains("bigmodel.cn", StringComparison.OrdinalIgnoreCase))
+                {
+                    LoggerService.Instance.LogInfo($"[GLM Response] Status: {response.StatusCode}, ContentType: {response.Content.Headers.ContentType}", "AiService.ZhipuCompatHandler");
+                }
+                
+                return response;
             }
         }
     }
