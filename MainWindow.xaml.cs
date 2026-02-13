@@ -609,8 +609,9 @@ namespace PromptMasterv5
                 this.Activate();
                 this.Focus();
 
-                // 唤醒时强制置顶
-                this.Topmost = true;
+                // 唤醒时强制置顶（仅mini模式）
+                if (ViewModel != null && !ViewModel.IsFullMode)
+                    this.Topmost = true;
                 NativeMethods.SetForegroundWindow(new System.Windows.Interop.WindowInteropHelper(this).Handle);
             }
         }
@@ -673,9 +674,9 @@ namespace PromptMasterv5
             // 1. 窗口被激活（唤醒）时，取消任何待执行的隐藏操作
             StopHideTimer();
 
-            // 2. 需求实现：唤醒时置顶显示
-            // 无论是极简还是完整模式，只要被激活，就应该在最上层
-            this.Topmost = true;
+            // 2. 需求实现：唤醒时置顶显示（仅mini模式）
+            if (ViewModel != null && !ViewModel.IsFullMode)
+                this.Topmost = true;
 
             // 3. 强制抢占前台焦点 (Win32 API)
             NativeMethods.SetForegroundWindow(new System.Windows.Interop.WindowInteropHelper(this).Handle);
@@ -770,7 +771,8 @@ namespace PromptMasterv5
         {
             SuppressMiniAutoHide(800);
             EnsureWindowOnScreen();
-            Topmost = true;
+            if (ViewModel == null || !ViewModel.IsFullMode)
+                Topmost = true;
             Show();
             Activate();
             Focus();
@@ -863,8 +865,8 @@ namespace PromptMasterv5
                 this.Top = _lastFullTop;
                 this.ResizeMode = ResizeMode.CanResize;
 
-                // 切换模式时，确保重置Topmost
-                this.Topmost = true;
+                // 完整模式不置顶
+                this.Topmost = false;
                 EnsureWindowOnScreen();
             }
             else

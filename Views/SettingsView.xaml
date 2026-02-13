@@ -712,8 +712,7 @@
                                         </Style>
                                     </StackPanel.Style>
                                     <StackPanel Margin="0,0,0,14">
-                                        <TextBlock Text="Ctrl+Enter：软件隐藏 → 焦点 → 上一个活动窗口 → 发送内容"
-                                                   Style="{StaticResource HintTextStyle}" Margin="0,0,0,8" TextWrapping="Wrap"/>
+
                                         
                                         <TextBlock Text="坐标点击模式：软件隐藏后，强制点击屏幕上的指定位置来激活输入框。"
                                                    Style="{StaticResource HintTextStyle}" Margin="0,0,0,10" TextWrapping="Wrap"/>

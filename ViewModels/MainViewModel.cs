@@ -680,7 +680,7 @@ public partial class MainViewModel : ObservableObject
             IsFullMode = _previousFullMode;
             win.Show();
             win.Activate();
-            win.Topmost = true;
+            if (!IsFullMode) win.Topmost = true;
             return;
         }
 
@@ -932,7 +932,7 @@ public partial class MainViewModel : ObservableObject
             IsFullMode = targetFull;
             win.Show();
             win.Activate();
-            win.Topmost = true;
+            if (!targetFull) win.Topmost = true;
             return;
         }
 
@@ -940,7 +940,7 @@ public partial class MainViewModel : ObservableObject
         {
             IsFullMode = targetFull;
             win.Activate();
-            win.Topmost = true;
+            if (!targetFull) win.Topmost = true;
             return;
         }
 
