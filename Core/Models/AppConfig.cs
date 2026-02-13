@@ -143,6 +143,12 @@ namespace PromptMasterv5.Core.Models
         [ObservableProperty]
         private ObservableCollection<WebTarget> webDirectTargets = new();
 
+        [ObservableProperty]
+        private string defaultWebTargetName = "Gemini";
+
+        [ObservableProperty]
+        private bool enableDoubleEnterSend = true;
+
         public string RemoteFolderName { get; set; } = "PromptMaster";
     }
 }

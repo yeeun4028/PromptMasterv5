@@ -779,6 +779,22 @@
                                         </StackPanel>
                                     </StackPanel>
 
+                                    <!-- Default Web Target & Shortcuts -->
+                                    <StackPanel Margin="0,0,0,20">
+                                        <TextBlock Text="默认网页 AI (快捷键目标)" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,6"/>
+                                        <ComboBox ItemsSource="{Binding Config.WebDirectTargets}"
+                                                  SelectedValue="{Binding Config.DefaultWebTargetName}"
+                                                  SelectedValuePath="Name"
+                                                  DisplayMemberPath="Name"
+                                                  Width="200" HorizontalAlignment="Left"
+                                                  Padding="6" Margin="0,0,0,10"/>
+
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="启用双击回车发送" Style="{StaticResource FieldLabelTextStyle}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                            <CheckBox IsChecked="{Binding Config.EnableDoubleEnterSend}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
                                     <!-- Block4 Icons Visibility -->
                                     <StackPanel Margin="20,20,0,0">
                                         <TextBlock Text="BLOCK4 快捷图标显示" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,10"/>

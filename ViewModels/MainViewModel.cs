@@ -554,6 +554,39 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task SendDefaultWebTarget()
+    {
+        if (SelectedFile == null) return;
+        var targetName = Config.DefaultWebTargetName;
+        var target = Config.WebDirectTargets.FirstOrDefault(t => t.Name == targetName);
+        
+        if (target != null)
+        {
+            if (!target.IsEnabled)
+            {
+                _dialogService.ShowAlert($"默认目标 '{targetName}' 已被禁用，请在设置中启用。", "目标不可用");
+                return;
+            }
+            await OpenWebTarget(target).ConfigureAwait(false);
+        }
+        else
+        {
+            // Fallback: try finding Gemini or first available
+            target = Config.WebDirectTargets.FirstOrDefault(t => t.Name == "Gemini" && t.IsEnabled) 
+                     ?? Config.WebDirectTargets.FirstOrDefault(t => t.IsEnabled);
+            
+            if (target != null)
+            {
+                 await OpenWebTarget(target).ConfigureAwait(false);
+            }
+            else
+            {
+                _dialogService.ShowAlert($"未找到默认网页目标: {targetName}，且无可用的备选目标。", "配置错误");
+            }
+        }
+    }
+
+    [RelayCommand]
     private async Task OpenWebTarget(WebTarget? target)
     {
         if (target == null || SelectedFile == null) return;

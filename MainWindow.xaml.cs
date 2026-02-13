@@ -1466,16 +1466,20 @@ namespace PromptMasterv5
                 bool isCtrlEnter = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
                 var now = DateTime.Now;
                 var span = (now - _lastVarEnterTime).TotalMilliseconds;
+
                 if (isCtrlEnter)
                 {
                     e.Handled = true;
-                    await TriggerSendProcess(textBox, InputMode.SmartFocus);
+                    // Execute Web Target Send
+                    ViewModel.SendDefaultWebTargetCommand.Execute(null);
                     return;
                 }
-                if (span < 500)
+                
+                if (span < 500 && ViewModel.Config.EnableDoubleEnterSend)
                 {
                     e.Handled = true;
-                    await TriggerSendProcess(textBox, InputMode.CoordinateClick);
+                    // Execute Web Target Send
+                    ViewModel.SendDefaultWebTargetCommand.Execute(null);
                     _lastVarEnterTime = DateTime.MinValue;
                     return;
                 }
@@ -1495,12 +1499,12 @@ namespace PromptMasterv5
                 if (isCtrlEnter)
                 {
                     e.Handled = true;
-                    await TriggerSendProcess(textBox, InputMode.SmartFocus);
+                    ViewModel.SendDefaultWebTargetCommand.Execute(null);
                 }
-                else if (span < 500)
+                else if (span < 500 && ViewModel.Config.EnableDoubleEnterSend)
                 {
                     e.Handled = true;
-                    await TriggerSendProcess(textBox, InputMode.CoordinateClick);
+                    ViewModel.SendDefaultWebTargetCommand.Execute(null);
                     _lastAddEnterTime = DateTime.MinValue;
                 }
                 else
