@@ -408,6 +408,137 @@
             </Setter>
         </Style>
 
+        <!-- Modern ComboBox Style -->
+        <Style x:Key="ModernComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Background" Value="{DynamicResource ShellBackground}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource DividerBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource InputTextBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton x:Name="ToggleButton" 
+                                          Background="{TemplateBinding Background}" 
+                                          BorderBrush="{TemplateBinding BorderBrush}" 
+                                          BorderThickness="{TemplateBinding BorderThickness}" 
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" 
+                                          Focusable="False"
+                                          ClickMode="Press">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border x:Name="border" 
+                                                Background="{TemplateBinding Background}" 
+                                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                                CornerRadius="4">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition />
+                                                    <ColumnDefinition Width="30" />
+                                                </Grid.ColumnDefinitions>
+                                                <Path x:Name="Arrow" 
+                                                      Grid.Column="1" 
+                                                      Fill="{DynamicResource TextSecondary}" 
+                                                      HorizontalAlignment="Center" 
+                                                      VerticalAlignment="Center" 
+                                                      Data="M0,0 L4,4 L8,0 Z" />
+                                            </Grid>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ListItemHoverBackgroundBrush}"/>
+                                                <Setter TargetName="Arrow" Property="Fill" Value="{DynamicResource TextPrimary}"/>
+                                            </Trigger>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentColor}"/>
+                                                <Setter TargetName="border" Property="Background" Value="{DynamicResource InputFocusBackgroundBrush}"/>
+                                                <Setter TargetName="border" Property="Effect">
+                                                    <Setter.Value>
+                                                        <DropShadowEffect Color="{StaticResource AccentColorValue}" Opacity="0.2" BlurRadius="4" ShadowDepth="0"/>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <ContentPresenter x:Name="ContentSite" 
+                                              IsHitTestVisible="False" 
+                                              Content="{TemplateBinding SelectionBoxItem}" 
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" 
+                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" 
+                                              Margin="12,8,30,8" 
+                                              VerticalAlignment="Center" 
+                                              HorizontalAlignment="Left" />
+                            <Popup x:Name="Popup" 
+                                   Placement="Bottom" 
+                                   IsOpen="{TemplateBinding IsDropDownOpen}" 
+                                   AllowsTransparency="True" 
+                                   Focusable="False" 
+                                   PopupAnimation="Slide">
+                                <Grid x:Name="DropDown" 
+                                      SnapsToDevicePixels="True" 
+                                      MinWidth="{TemplateBinding ActualWidth}" 
+                                      MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <Border x:Name="DropDownBorder" 
+                                            Background="{DynamicResource ShellBackground}" 
+                                            BorderBrush="{DynamicResource DividerBrush}" 
+                                            BorderThickness="1" 
+                                            CornerRadius="4" 
+                                            Margin="0,2,0,4">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="Black" Opacity="0.2" BlurRadius="10" ShadowDepth="2"/>
+                                        </Border.Effect>
+                                        <ScrollViewer SnapsToDevicePixels="True">
+                                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
+                                        </ScrollViewer>
+                                    </Border>
+                                </Grid>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="HasItems" Value="False">
+                                <Setter TargetName="DropDownBorder" Property="Height" Value="95" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="Padding" Value="10,8"/>
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Foreground" Value="{DynamicResource InputTextBrush}"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ComboBoxItem">
+                                    <Border x:Name="Bd" 
+                                            Background="{TemplateBinding Background}" 
+                                            Padding="{TemplateBinding Padding}" 
+                                            SnapsToDevicePixels="True">
+                                        <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ListItemHoverBackgroundBrush}" />
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ListItemSelectedBackgroundBrush}" />
+                                            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
     </UserControl.Resources>
 
     <Grid>
@@ -785,8 +916,8 @@
                                                   SelectedValue="{Binding Config.DefaultWebTargetName}"
                                                   SelectedValuePath="Name"
                                                   DisplayMemberPath="Name"
-                                                  Width="200" HorizontalAlignment="Left"
-                                                  Padding="6" Margin="0,0,0,10"/>
+                                                  Style="{StaticResource ModernComboBoxStyle}"
+                                                  Width="200" HorizontalAlignment="Left"/>
 
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="启用双击回车发送" Style="{StaticResource FieldLabelTextStyle}" VerticalAlignment="Center" Margin="0,0,12,0"/>
@@ -808,13 +939,13 @@
                                                     <DataTemplate>
                                                         <Grid Margin="0,0,20,8" Width="140">
                                                             <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="*"/>
                                                                 <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
                                                             </Grid.ColumnDefinitions>
-                                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                                                 <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimary}" TextTrimming="CharacterEllipsis"/>
                                                             </StackPanel>
-                                                            <CheckBox Grid.Column="1" IsChecked="{Binding IsEnabled}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand"/>
                                                         </Grid>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
@@ -944,7 +1075,7 @@
                                                       SelectedValuePath="Id"
                                                       SelectedValue="{Binding Config.MiniWindowModelId, Mode=TwoWay}"
                                                       DisplayMemberPath="DisplayName"
-                                                      Height="32"
+                                                      Style="{StaticResource ModernComboBoxStyle}"
                                                       MinWidth="250"/>
                                         </StackPanel>
 
@@ -966,7 +1097,7 @@
                                                           ItemsSource="{Binding FilesView}"
                                                           SelectedValuePath="Id"
                                                           DisplayMemberPath="Title"
-                                                          Height="32"/>
+                                                          Style="{StaticResource ModernComboBoxStyle}"/>
                                                 
                                                 <Button Grid.Column="1" Content="添加" Margin="10,0,0,0" Padding="12,6"
                                                         Click="AddQuickAction_Click"
@@ -1017,6 +1148,7 @@
                                                                       SelectedValue="{Binding BoundModelId, Mode=TwoWay}"
                                                                       DisplayMemberPath="DisplayName"
                                                                       SelectionChanged="QuickActionModel_SelectionChanged"
+                                                                      Style="{StaticResource ModernComboBoxStyle}"
                                                                       Margin="10,0"
                                                                       VerticalAlignment="Center"
                                                                       ToolTip="选择专用模型 (留空则使用全局默认)"/>
@@ -1392,7 +1524,8 @@
                                                           ItemsSource="{Binding FilesView}"
                                                           SelectedValuePath="Id"
                                                           SelectedValue="{Binding LocalConfig.MiniPinnedPromptCandidateId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                          DisplayMemberPath="Title"/>
+                                                          DisplayMemberPath="Title"
+                                                          Style="{StaticResource ModernComboBoxStyle}"/>
                                                 <Button Grid.Column="1"
                                                         Width="34"
                                                         Height="28"
@@ -1713,7 +1846,10 @@
                                         <Rectangle Height="1" Fill="{DynamicResource DividerBrush}" Margin="0,0,0,20" Opacity="0.5"/>
                                         
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
-                                            <TextBlock Text="翻译后自动复制结果" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                                            <TextBlock Text="翻译后自动复制结果" 
+                                                       Style="{StaticResource FieldLabelTextStyle}"
+                                                       VerticalAlignment="Center" 
+                                                       Margin="0,0,20,0"/>
                                             <CheckBox IsChecked="{Binding Config.AutoCopyTranslationResult}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand" VerticalAlignment="Center"/>
                                         </StackPanel>
 
