@@ -625,25 +625,8 @@ public partial class MainViewModel : ObservableObject
                 Application.Current.MainWindow.WindowState = WindowState.Minimized;
             }
 
-            // 6. Auto-paste for clipboard-only targets
-            if (autoPaste)
-            {
-                // Wait for browser to load and focus input field
-                await Task.Delay(3000);
-
-                // Simulate Ctrl+V
-                NativeMethods.keybd_event(NativeMethods.VK_CONTROL, 0, 0, 0);
-                NativeMethods.keybd_event(0x56 /* V */, 0, 0, 0);
-                await Task.Delay(50);
-                NativeMethods.keybd_event(0x56 /* V */, 0, NativeMethods.KEYEVENTF_KEYUP, 0);
-                NativeMethods.keybd_event(NativeMethods.VK_CONTROL, 0, NativeMethods.KEYEVENTF_KEYUP, 0);
-
-                // Wait for paste to complete, then press Enter to send
-                await Task.Delay(500);
-                NativeMethods.keybd_event(NativeMethods.VK_RETURN, 0, 0, 0);
-                await Task.Delay(20);
-                NativeMethods.keybd_event(NativeMethods.VK_RETURN, 0, NativeMethods.KEYEVENTF_KEYUP, 0);
-            }
+            // 6. Auto-paste is no longer needed as we use Userscript to handle ?q= parameter
+            // The Userscript will intercept the URL, extract the prompt, and fill the input box.
         }
         catch (System.Exception ex)
         {

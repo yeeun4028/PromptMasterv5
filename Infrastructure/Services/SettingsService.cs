@@ -28,48 +28,69 @@ namespace PromptMasterv5.Infrastructure.Services
         private void InitializeDefaultWebTargets()
         {
             if (Config.WebDirectTargets == null) Config.WebDirectTargets = new();
-            
-            if (Config.WebDirectTargets.Count == 0)
+
+            void AddIfMissing(string name, string url, string icon)
             {
-                // ChatGPT (Hexagon-like)
-                Config.WebDirectTargets.Add(new WebTarget { 
-                    Name = "ChatGPT", 
-                    UrlTemplate = "https://chat.openai.com/?q={0}", 
-                    IconData = "M12,2L20.66,7V17L12,22L3.34,17V7L12,2Z" 
-                });
-                
-                // Claude (C shape)
-                Config.WebDirectTargets.Add(new WebTarget { 
-                    Name = "Claude", 
-                    UrlTemplate = "https://claude.ai/new?q={0}", 
-                    IconData = "M12,2A10,10 0 1,0 22,12A10,10 0 0,0 12,2M17,15.5L15.5,17A8,8 0 1,1 15.5,7L17,8.5A6,6 0 1,0 17,15.5Z" 
-                });
-                
-                // Gemini (Sparkle)
-                Config.WebDirectTargets.Add(new WebTarget { 
-                    Name = "Gemini", 
-                    UrlTemplate = "https://gemini.google.com/app", 
-                    IconData = "M12,2L14.5,9.5L22,12L14.5,14.5L12,22L9.5,14.5L2,12L9.5,9.5Z" 
-                });
-                
-                // Perplexity (Asterisk)
-                Config.WebDirectTargets.Add(new WebTarget { 
-                    Name = "Perplexity", 
-                    UrlTemplate = "https://www.perplexity.ai/?q={0}", 
-                    IconData = "M12,2V6M12,18V22M4.93,4.93L7.76,7.76M16.24,16.24L19.07,19.07M2,12H6M18,12H22M4.93,19.07L7.76,16.24M16.24,7.76L19.07,4.93" 
-                });
-                
-                // Save immediately to persist defaults
-                SaveConfig();
+                if (!Config.WebDirectTargets.Any(t => t.Name.Equals(name, System.StringComparison.OrdinalIgnoreCase)))
+                {
+                    Config.WebDirectTargets.Add(new WebTarget { Name = name, UrlTemplate = url, IconData = icon });
+                }
             }
 
-            // Migration: fix Gemini URL for existing configs
-            var gemini = Config.WebDirectTargets.FirstOrDefault(t => t.Name == "Gemini");
-            if (gemini != null && gemini.UrlTemplate.Contains("?q={0}"))
+            // 1. ChatGPT
+            AddIfMissing("ChatGPT", "https://chat.openai.com/?q={0}", 
+                "M12,2L20.66,7V17L12,22L3.34,17V7L12,2Z");
+
+            // 2. Claude
+            AddIfMissing("Claude", "https://claude.ai/new?q={0}", 
+                "M12,2A10,10 0 1,0 22,12A10,10 0 0,0 12,2M17,15.5L15.5,17A8,8 0 1,1 15.5,7L17,8.5A6,6 0 1,0 17,15.5Z");
+
+            // 3. Gemini (Google)
+            AddIfMissing("Gemini", "https://gemini.google.com/app?q={0}", 
+                "M12,2L14.5,9.5L22,12L14.5,14.5L12,22L9.5,14.5L2,12L9.5,9.5Z");
+
+            // 4. Perplexity
+            AddIfMissing("Perplexity", "https://www.perplexity.ai/?q={0}", 
+                "M12,2V6M12,18V22M4.93,4.93L7.76,7.76M16.24,16.24L19.07,19.07M2,12H6M18,12H22M4.93,19.07L7.76,16.24M16.24,7.76L19.07,4.93");
+
+            // 5. DeepSeek (深度求索)
+            AddIfMissing("DeepSeek", "https://chat.deepseek.com?q={0}", 
+                "M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10-4.48 10-10S17.52,2 12,2zm0,18c-4.41,0-8-3.59-8-8s3.59-8 8-8 8,3.59 8,8-3.59,8-8,8z M12,6c-3.31,0-6,2.69-6,6s2.69,6 6,6 6-2.69 6-6-2.69-6-6-6z");
+
+            // 6. GLM (智谱清言)
+            AddIfMissing("GLM", "https://chatglm.cn/main/all?q={0}", 
+                "M20,2H4C2.9,2 2,2.9 2,4V22L6,18H20C21.1,18 22,17.1 22,16V4C22,2.9 21.1,2 20,2M20,16H5.17L4,17.17V4H20V16Z");
+
+            // 7. Qwen (通义千问)
+            AddIfMissing("Qwen", "https://tongyi.aliyun.com/qianwen?q={0}", 
+                "M12,2A10,10 0 0,1 22,12C22,14.25 21.17,16.31 19.82,17.85L22.61,20.64L21.2,22.05L18.41,19.26C16.97,20.34 15.1,21 13,21A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8,0,0,0,20,12A8,8,0,0,0,12,4Z");
+
+            // 8. Doubao (豆包)
+            AddIfMissing("Doubao", "https://www.doubao.com/chat/?q={0}", 
+                "M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10-4.48 10-10S17.52,2 12,2zm0,18c-4.41,0-8-3.59-8-8s3.59-8 8-8 8,3.59 8,8-3.59,8-8,8z M12,8c-2.21,0-4,1.79-4,4s1.79,4 4,4 4-1.79 4-4-1.79-4-4-4z");
+
+            // Save updates
+            SaveConfig();
+
+            // Migration: Ensure all targets have ?q={0} (for Userscript support)
+            bool needsSave = false;
+            foreach (var target in Config.WebDirectTargets)
             {
-                gemini.UrlTemplate = "https://gemini.google.com/app";
-                SaveConfig();
+                // List of targets that should have query params now
+                var scriptTargets = new[] { "Gemini", "DeepSeek", "GLM", "Qwen", "Doubao" };
+                
+                if (scriptTargets.Contains(target.Name, StringComparer.OrdinalIgnoreCase) && !target.UrlTemplate.Contains("{0}"))
+                {
+                    if (target.Name == "Gemini") target.UrlTemplate = "https://gemini.google.com/app?q={0}";
+                    if (target.Name == "DeepSeek") target.UrlTemplate = "https://chat.deepseek.com?q={0}";
+                    if (target.Name == "GLM") target.UrlTemplate = "https://chatglm.cn/main/all?q={0}";
+                    if (target.Name == "Qwen") target.UrlTemplate = "https://tongyi.aliyun.com/qianwen?q={0}";
+                    if (target.Name == "Doubao") target.UrlTemplate = "https://www.doubao.com/chat/?q={0}";
+                    needsSave = true;
+                }
             }
+
+            if (needsSave) SaveConfig();
         }
 
         public void SaveConfig()
