@@ -48,7 +48,7 @@ namespace PromptMasterv5.Infrastructure.Services
                 // Gemini (Sparkle)
                 Config.WebDirectTargets.Add(new WebTarget { 
                     Name = "Gemini", 
-                    UrlTemplate = "https://gemini.google.com/app?q={0}", 
+                    UrlTemplate = "https://gemini.google.com/app", 
                     IconData = "M12,2L14.5,9.5L22,12L14.5,14.5L12,22L9.5,14.5L2,12L9.5,9.5Z" 
                 });
                 
@@ -60,6 +60,14 @@ namespace PromptMasterv5.Infrastructure.Services
                 });
                 
                 // Save immediately to persist defaults
+                SaveConfig();
+            }
+
+            // Migration: fix Gemini URL for existing configs
+            var gemini = Config.WebDirectTargets.FirstOrDefault(t => t.Name == "Gemini");
+            if (gemini != null && gemini.UrlTemplate.Contains("?q={0}"))
+            {
+                gemini.UrlTemplate = "https://gemini.google.com/app";
                 SaveConfig();
             }
         }

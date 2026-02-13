@@ -554,7 +554,7 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenWebTarget(WebTarget? target)
+    private async Task OpenWebTarget(WebTarget? target)
     {
         if (target == null || SelectedFile == null) return;
 
@@ -579,9 +579,10 @@ public partial class MainViewModel : ObservableObject
              return;
         }
 
-        // 3. Length Check & Clipboard Fallback
-        // URL limit is roughly 2000 chars for safety in some browsers, though modern ones support more.
-        bool useClipboard = content.Length > 2000;
+        // 3. Determine URL strategy
+        bool supportsUrlParam = target.UrlTemplate.Contains("{0}");
+        bool useClipboard = !supportsUrlParam || content.Length > 2000;
+        bool autoPaste = !supportsUrlParam; // Auto Ctrl+V for clipboard-only targets (e.g. Gemini)
         string url;
 
         try
@@ -590,19 +591,20 @@ public partial class MainViewModel : ObservableObject
             {
                 // Copy to clipboard
                 _clipboardService.SetClipboard(content);
-                
-                // Use base URL (remove query param part)
-                // Simple heuristic: take substring before '?' or just replace {0} with empty
-                try 
-                {
-                    url = string.Format(target.UrlTemplate, "");
-                }
-                catch
-                {
-                    url = target.UrlTemplate.Split('?')[0];
-                }
 
-                _dialogService.ShowAlert("提示词过长，已复制到剪贴板，请手动粘贴。", "提示");
+                if (supportsUrlParam)
+                {
+                    // Has {0} but content too long, strip query
+                    try { url = string.Format(target.UrlTemplate, ""); }
+                    catch { url = target.UrlTemplate.Split('?')[0]; }
+                    _dialogService.ShowAlert("提示词过长，已复制到剪贴板，请手动粘贴。", "提示");
+                }
+                else
+                {
+                    // No {0} placeholder — use URL as-is (e.g. Gemini)
+                    url = target.UrlTemplate;
+                    // No dialog here — we will auto-paste after delay
+                }
             }
             else
             {
@@ -621,6 +623,26 @@ public partial class MainViewModel : ObservableObject
             if (Application.Current.MainWindow != null)
             {
                 Application.Current.MainWindow.WindowState = WindowState.Minimized;
+            }
+
+            // 6. Auto-paste for clipboard-only targets
+            if (autoPaste)
+            {
+                // Wait for browser to load and focus input field
+                await Task.Delay(3000);
+
+                // Simulate Ctrl+V
+                NativeMethods.keybd_event(NativeMethods.VK_CONTROL, 0, 0, 0);
+                NativeMethods.keybd_event(0x56 /* V */, 0, 0, 0);
+                await Task.Delay(50);
+                NativeMethods.keybd_event(0x56 /* V */, 0, NativeMethods.KEYEVENTF_KEYUP, 0);
+                NativeMethods.keybd_event(NativeMethods.VK_CONTROL, 0, NativeMethods.KEYEVENTF_KEYUP, 0);
+
+                // Wait for paste to complete, then press Enter to send
+                await Task.Delay(500);
+                NativeMethods.keybd_event(NativeMethods.VK_RETURN, 0, 0, 0);
+                await Task.Delay(20);
+                NativeMethods.keybd_event(NativeMethods.VK_RETURN, 0, NativeMethods.KEYEVENTF_KEYUP, 0);
             }
         }
         catch (System.Exception ex)
