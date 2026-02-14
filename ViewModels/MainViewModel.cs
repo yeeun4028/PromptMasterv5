@@ -660,6 +660,9 @@ public partial class MainViewModel : ObservableObject
 
             // 6. Auto-paste is no longer needed as we use Userscript to handle ?q= parameter
             // The Userscript will intercept the URL, extract the prompt, and fill the input box.
+
+            // 7. Clear Input
+            AdditionalInput = "";
         }
         catch (System.Exception ex)
         {
