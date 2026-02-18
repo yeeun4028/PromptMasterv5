@@ -22,6 +22,7 @@ namespace PromptMasterv5.Infrastructure.Services
         public event EventHandler? OnAlwaysOnTopSequenceDetected;
         public event EventHandler<KeyEventArgs>? OnAnyKeyDown;
         public event EventHandler? OnQuickActionTriggered; // Alt+Q 快捷键
+        public event EventHandler? OnLauncherTriggered; // Alt+S 快捷键
 
         private bool _altPressed = false;
 
@@ -61,6 +62,14 @@ namespace PromptMasterv5.Infrastructure.Services
             if (_altPressed && e.KeyCode == Keys.Q)
             {
                 OnQuickActionTriggered?.Invoke(this, EventArgs.Empty);
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+            }
+
+            // Detect Alt+S (Launcher)
+            if (_altPressed && e.KeyCode == Keys.S)
+            {
+                OnLauncherTriggered?.Invoke(this, EventArgs.Empty);
                 e.Handled = true;
                 e.SuppressKeyPress = true;
             }

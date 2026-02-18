@@ -258,7 +258,9 @@ public partial class MainViewModel : ObservableObject
             if (!IsFullMode) ChatVM.MiniInputText = "";
         });
         _keyService.OnQuickActionTriggered += async (_, __) => await HandleQuickActionTriggered();
-        if (Config.EnableDoubleCtrl) try { _keyService.Start(); } catch { }
+        _keyService.OnLauncherTriggered += (_, __) => HandleLauncherTriggered();
+        // Initialize GlobalKeyService unconditionally to support Launcher
+        try { _keyService.Start(); } catch { }
 
         // 委托给 SettingsViewModel 处理主题和快捷键
         SettingsVM.SetMainViewModel(this);
@@ -1361,6 +1363,35 @@ public partial class MainViewModel : ObservableObject
             LoggerService.Instance.LogError($"快捷助手触发失败: {ex.Message}", "MainViewModel.HandleQuickActionTriggered");
         }
     }
+
+    private void HandleLauncherTriggered()
+    {
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            // Close any existing launcher windows to avoid stacking
+            foreach (Window w in Application.Current.Windows)
+            {
+                if (w is Views.LauncherWindow)
+                {
+                    w.Close();
+                    return; // Toggle behavior? Or just restart? Let's just restart/focus.
+                }
+            }
+
+            var vm = new LauncherViewModel();
+            var win = new Views.LauncherWindow
+            {
+                DataContext = vm
+            };
+
+            vm.RequestClose = () => win.Close();
+
+            win.Show();
+            win.Activate();
+            win.Focus();
+        });
+    }
+
 
     [RelayCommand]
     private void ToggleQuickAction(PromptItem? file)
