@@ -64,7 +64,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private LocalSettings localConfig;
     [ObservableProperty] private bool isFullMode = true;
     [ObservableProperty] private bool isMiniVarsExpanded;
-    
+
     // 委托属性：转发到 SettingsViewModel（保持 XAML 兼容性）
     public bool IsSettingsOpen
     {
@@ -161,7 +161,7 @@ public partial class MainViewModel : ObservableObject
         _windowPositionService = windowPositionService;
         _settingsService = settingsService;
         _windowManager = windowManager; // Assigned
-        
+
         SidebarVM = sidebarVM;
         ChatVM = chatVM;
         SettingsVM = settingsVM;
@@ -241,14 +241,14 @@ public partial class MainViewModel : ObservableObject
 
         LocalConfig.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(LocalSettings.Block1Width) || 
+            if (e.PropertyName == nameof(LocalSettings.Block1Width) ||
                 e.PropertyName == nameof(LocalSettings.Block2Width))
             {
                 _saveLocalSettingsSubject.OnNext(System.Reactive.Unit.Default);
             }
         };
 
-        _keyService.OnDoubleCtrlDetected += (_, __) => Application.Current.Dispatcher.Invoke(() => 
+        _keyService.OnDoubleCtrlDetected += (_, __) => Application.Current.Dispatcher.Invoke(() =>
         {
             if (_isSimulatingKeys) return;
             ToggleMainWindow();
@@ -294,14 +294,14 @@ public partial class MainViewModel : ObservableObject
         }
 
         Files = new ObservableCollection<PromptItem>(data.Files ?? new());
-        
+
         // 附加自动保存监听器
         Files.CollectionChanged += OnFilesCollectionChanged;
         foreach (var item in Files)
         {
             item.PropertyChanged += OnFilePropertyChanged;
         }
-        
+
         SidebarVM.Files = Files;
 
         // ⚠️ 关键修复：使用同一个集合引用，而不是创建新集合
@@ -316,7 +316,7 @@ public partial class MainViewModel : ObservableObject
         {
             SidebarVM.SelectedFolder = Folders.FirstOrDefault();
         }
-        
+
         // 将同一个集合引用赋值给 SidebarVM
         SidebarVM.Folders = Folders;
 
@@ -394,7 +394,7 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
-    public string SelectedSettingsTabName =>SelectedSettingsTab switch
+    public string SelectedSettingsTabName => SelectedSettingsTab switch
     {
         0 => "基础",
         1 => "发送方式",
@@ -574,7 +574,7 @@ public partial class MainViewModel : ObservableObject
         if (SelectedFile == null) return;
         var targetName = Config.DefaultWebTargetName;
         var target = Config.WebDirectTargets.FirstOrDefault(t => t.Name == targetName);
-        
+
         if (target != null)
         {
             if (!target.IsEnabled)
@@ -587,12 +587,12 @@ public partial class MainViewModel : ObservableObject
         else
         {
             // Fallback: try finding Gemini or first available
-            target = Config.WebDirectTargets.FirstOrDefault(t => t.Name == "Gemini" && t.IsEnabled) 
+            target = Config.WebDirectTargets.FirstOrDefault(t => t.Name == "Gemini" && t.IsEnabled)
                      ?? Config.WebDirectTargets.FirstOrDefault(t => t.IsEnabled);
-            
+
             if (target != null)
             {
-                 await OpenWebTarget(target).ConfigureAwait(false);
+                await OpenWebTarget(target).ConfigureAwait(false);
             }
             else
             {
@@ -623,8 +623,8 @@ public partial class MainViewModel : ObservableObject
         var content = CompileContent();
         if (string.IsNullOrWhiteSpace(content))
         {
-             _dialogService.ShowAlert("提示词内容为空。", "无法打开");
-             return;
+            _dialogService.ShowAlert("提示词内容为空。", "无法打开");
+            return;
         }
 
         // 3. Determine URL strategy
@@ -683,6 +683,40 @@ public partial class MainViewModel : ObservableObject
         {
             Infrastructure.Services.LoggerService.Instance.LogException(ex, "OpenWebTarget Failed", "MainViewModel");
             _dialogService.ShowAlert($"打开网页失败: {ex.Message}", "错误");
+        }
+    }
+
+    [RelayCommand]
+    private void SearchOnGitHub()
+    {
+        // 1. Get content from Block4 input only
+        var query = AdditionalInput?.Trim();
+
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            _dialogService.ShowAlert("请输入要搜索的内容。", "输入为空");
+            return;
+        }
+
+        try
+        {
+            // 2. Construct GitHub Search URL
+            var url = $"https://github.com/search?q={System.Uri.EscapeDataString(query)}";
+
+            // 3. Open Browser
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            });
+
+            // 4. Clear input (consistent with other "send" actions)
+            AdditionalInput = "";
+        }
+        catch (System.Exception ex)
+        {
+            Infrastructure.Services.LoggerService.Instance.LogException(ex, "SearchOnGitHub Failed", "MainViewModel");
+            _dialogService.ShowAlert($"打开 GitHub 失败: {ex.Message}", "错误");
         }
     }
 
@@ -832,7 +866,7 @@ public partial class MainViewModel : ObservableObject
             }
             else
             {
-                ChatVM.IsSearchPopupOpen = false; 
+                ChatVM.IsSearchPopupOpen = false;
             }
             return;
         }
@@ -1036,7 +1070,7 @@ public partial class MainViewModel : ObservableObject
                 item.PropertyChanged += OnFilePropertyChanged;
             }
         }
-        
+
         // 从移除的项目上卸载监听器
         if (e.OldItems != null)
         {
@@ -1045,7 +1079,7 @@ public partial class MainViewModel : ObservableObject
                 item.PropertyChanged -= OnFilePropertyChanged;
             }
         }
-        
+
         // 集合变化时触发保存
         RequestSave();
     }
@@ -1056,12 +1090,12 @@ public partial class MainViewModel : ObservableObject
     private void OnFilePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         // 避免因更新 LastModified 导致的循环触发
-        if (e.PropertyName == nameof(PromptItem.LastModified)) 
+        if (e.PropertyName == nameof(PromptItem.LastModified))
             return;
-        
+
         if (e.PropertyName == nameof(PromptItem.Content) && sender == SelectedFile)
         {
-             ParseVariablesRealTime(SelectedFile?.Content ?? "");
+            ParseVariablesRealTime(SelectedFile?.Content ?? "");
         }
 
         RequestSave();
@@ -1076,7 +1110,7 @@ public partial class MainViewModel : ObservableObject
         }
 
         var diff = DateTime.Now - LocalConfig.LastCloudSyncTime.Value;
-        
+
         if (diff.TotalSeconds < 60)
         {
             SyncTimeDisplay = $"{(int)diff.TotalSeconds}s";
@@ -1194,7 +1228,7 @@ public partial class MainViewModel : ObservableObject
             }
         }
 
-        if (!IsFullMode) 
+        if (!IsFullMode)
         {
             ChatVM.MiniInputText = "";
             LocalConfig.MiniSelectedPinnedPromptId = "";
@@ -1229,7 +1263,7 @@ public partial class MainViewModel : ObservableObject
         {
             // 1. 获取选中文本
             var selectedText = await _clipboardService.GetSelectedTextAsync();
-            
+
             // 1.1 清理文本 (移除不可见字符、控制符)
             if (selectedText != null)
             {
@@ -1279,14 +1313,14 @@ public partial class MainViewModel : ObservableObject
             if (quickActions.Count == 0)
             {
                 var legacyItems = Files.Where(f => f.IsQuickAction).ToList();
-                
+
                 // 如果为空，尝试自动初始化默认指令
                 if (legacyItems.Count == 0)
                 {
                     InitializeQuickActions();
                     legacyItems = Files.Where(f => f.IsQuickAction).ToList();
                 }
-                
+
                 foreach (var item in legacyItems) quickActions.Add(item);
             }
 
@@ -1376,20 +1410,20 @@ public partial class MainViewModel : ObservableObject
     private void SelectGlobalPrompt(PromptItem prompt)
     {
         if (prompt == null) return;
-        
+
         IsGlobalPromptListOpen = false;
 
         string textToInsert = ChatVM.MiniInputText ?? "";
         if (LocalConfig.MiniPinnedPromptClickShowsFullContent)
         {
-             // Full Content Mode: Show Text ONLY (No Chip)
-             LocalConfig.MiniSelectedPinnedPromptId = "";
-             textToInsert = prompt.Content ?? "";
+            // Full Content Mode: Show Text ONLY (No Chip)
+            LocalConfig.MiniSelectedPinnedPromptId = "";
+            textToInsert = prompt.Content ?? "";
         }
         else
         {
-             // Combo Mode: Show Chip + Preserve Text
-             LocalConfig.MiniSelectedPinnedPromptId = prompt.Id;
+            // Combo Mode: Show Chip + Preserve Text
+            LocalConfig.MiniSelectedPinnedPromptId = prompt.Id;
         }
 
         // 3. Insert prompt content/chip to mini window input
@@ -1406,7 +1440,7 @@ public partial class MainViewModel : ObservableObject
         if (!string.IsNullOrWhiteSpace(filter))
         {
             rootPrompts = rootPrompts
-                .Where(p => 
+                .Where(p =>
                     NormalizeSymbols(p.Title).Contains(filter, StringComparison.OrdinalIgnoreCase) ||
                     NormalizeSymbols(p.Content ?? "").Contains(filter, StringComparison.OrdinalIgnoreCase)
                 )
@@ -1422,11 +1456,11 @@ public partial class MainViewModel : ObservableObject
         foreach (var folder in Folders)
         {
             var folderPrompts = Files.Where(f => f.FolderId == folder.Id).ToList();
-            
+
             if (!string.IsNullOrWhiteSpace(filter))
             {
                 folderPrompts = folderPrompts
-                    .Where(p => 
+                    .Where(p =>
                         NormalizeSymbols(p.Title).Contains(filter, StringComparison.OrdinalIgnoreCase) ||
                         NormalizeSymbols(p.Content ?? "").Contains(filter, StringComparison.OrdinalIgnoreCase)
                     )
