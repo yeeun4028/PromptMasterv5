@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using GongSolutions.Wpf.DragDrop;
+using Microsoft.Extensions.DependencyInjection;
 using NHotkey;
 using NHotkey.Wpf;
 using PromptMasterv5.Core.Interfaces;
@@ -1373,12 +1374,15 @@ public partial class MainViewModel : ObservableObject
             {
                 if (w is Views.LauncherWindow)
                 {
-                    w.Close();
-                    return; // Toggle behavior? Or just restart? Let's just restart/focus.
+                    w.Activate();
+                    w.Focus();
+                    return;
                 }
             }
 
-            var vm = new LauncherViewModel();
+            if (Application.Current is not App app) return;
+            
+            var vm = app.ServiceProvider.GetRequiredService<LauncherViewModel>();
             var win = new Views.LauncherWindow
             {
                 DataContext = vm

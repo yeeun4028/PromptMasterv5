@@ -142,9 +142,11 @@ namespace PromptMasterv5
             services.AddSingleton<SidebarViewModel>();
             services.AddSingleton<ChatViewModel>();
             services.AddSingleton<ExternalToolsViewModel>();
+            services.AddTransient<LauncherViewModel>(); 
             services.AddSingleton<MainViewModel>();
             services.AddSingleton<MainWindow>();
 
+            services.AddSingleton<ILauncherService, LauncherService>();
             services.AddSingleton<IAiService, AiService>();
             services.AddSingleton<IDataService>(sp => sp.GetRequiredService<WebDavDataService>());
             services.AddSingleton<WebDavDataService>();
