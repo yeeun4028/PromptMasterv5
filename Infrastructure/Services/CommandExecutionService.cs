@@ -84,6 +84,9 @@ namespace PromptMasterv5.Infrastructure.Services
             // Save to local file
             try
             {
+                // Temporarily disable watcher to prevent our own write from triggering CommandsChanged
+                if (_watcher != null) _watcher.EnableRaisingEvents = false;
+
                 var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _settingsService.Config.VoiceCommandConfigPath);
                 var options = new JsonSerializerOptions 
                 { 
@@ -93,10 +96,18 @@ namespace PromptMasterv5.Infrastructure.Services
                 var json = JsonSerializer.Serialize(_commands, options);
                 File.WriteAllText(configPath, json);
                 LoggerService.Instance.LogInfo($"Saved {_commands.Count} voice commands to {configPath}", "CommandExecutionService.SetCommands");
+
+                // Reset debounce timer to ignore any residual events
+                _lastReadTime = DateTime.Now;
             }
             catch (Exception ex)
             {
                 LoggerService.Instance.LogException(ex, "Failed to save voice commands", "CommandExecutionService.SetCommands");
+            }
+            finally
+            {
+                // Re-enable watcher
+                if (_watcher != null) _watcher.EnableRaisingEvents = true;
             }
         }
 

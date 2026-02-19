@@ -52,6 +52,7 @@ namespace PromptMasterv5
 
         private System.Windows.Forms.NotifyIcon? _notifyIcon;
         private bool _isExiting = false;
+        private bool _isBackupExiting = false;
         private DispatcherTimer? _hideTimer;
         private DispatcherTimer? _miniPersistTimer;
 
@@ -618,6 +619,20 @@ namespace PromptMasterv5
 
         private void MainWindow_Closing(object? sender, CancelEventArgs e)
         {
+            // 如果正在执行备份后退出，直接跳到清理阶段
+            if (_isBackupExiting)
+            {
+                _isExiting = true;
+                // 清理托盘图标
+                if (_notifyIcon != null)
+                {
+                    _notifyIcon.Visible = false;
+                    _notifyIcon.Dispose();
+                }
+                StopGlobalMouseActivityMonitor();
+                return;
+            }
+
             // 检查是否有未保存的修改
             if (ViewModel.IsDirty)
             {
@@ -640,8 +655,9 @@ namespace PromptMasterv5
                     }
                     else if (result == MessageBoxResult.Yes)
                     {
-                        // 同步执行云端备份
-                        ViewModel.ManualBackupCommand.Execute(null);
+                        e.Cancel = true; // 取消本次关闭，等待备份完成后再关闭
+                        _ = BackupAndExitAsync();
+                        return;
                     }
                     // 如果选 No，继续执行（App.OnExit 会自动保存到本地）
                 }
@@ -667,6 +683,29 @@ namespace PromptMasterv5
                 _notifyIcon.Dispose();
             }
             StopGlobalMouseActivityMonitor();
+        }
+
+        /// <summary>
+        /// 执行云端备份，完成后自动退出应用
+        /// </summary>
+        private async Task BackupAndExitAsync()
+        {
+            try
+            {
+                Title = "正在备份到云端... 请勿关闭";
+                await ViewModel.BackupToCloudAsync();
+            }
+            catch (Exception ex)
+            {
+                Infrastructure.Services.LoggerService.Instance.LogException(ex, "Exit backup failed", "MainWindow.BackupAndExitAsync");
+            }
+            finally
+            {
+                // 设置标志位，下次 Close() 时直接跳过对话框
+                _isBackupExiting = true;
+                _isExiting = true;
+                this.Close();
+            }
         }
 
         private void Window_Activated(object sender, EventArgs e)

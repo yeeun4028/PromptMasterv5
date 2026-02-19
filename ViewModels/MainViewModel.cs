@@ -599,6 +599,14 @@ public partial class MainViewModel : ObservableObject
         window.Activate();
     }
 
+    public async Task BackupToCloudAsync()
+    {
+        if (SettingsVM?.ManualBackupCommand is IAsyncRelayCommand cmd)
+        {
+            await cmd.ExecuteAsync(null);
+        }
+    }
+
     [RelayCommand]
     private void ManualBackup() => SettingsVM.ManualBackupCommand.Execute(null);
 
