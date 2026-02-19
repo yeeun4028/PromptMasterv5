@@ -1235,8 +1235,6 @@
 
                                     <Border Style="{StaticResource CardStyle}">
                                         <StackPanel>
-                                            <TextBlock Text="云端同步" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,20"/>
-
                                             <StackPanel Margin="0,0,0,12">
                                                 <TextBlock Text="WebDAV 网址" Style="{StaticResource FieldLabelTextStyle}"/>
                                                 <TextBox Text="{Binding Config.WebDavUrl}" Style="{StaticResource ModernTextBoxStyle}"/>
