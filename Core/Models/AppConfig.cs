@@ -177,5 +177,8 @@ namespace PromptMasterv5.Core.Models
 
         [ObservableProperty]
         private string voiceCommandConfigPath = "voice_commands.json";
+
+        [ObservableProperty]
+        private string voiceModelId = "";
     }
 }

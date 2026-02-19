@@ -158,7 +158,7 @@ namespace PromptMasterv5.Infrastructure.Services
             _tempFilePath = "";
         }
 
-        private async Task<string> TranscribeFileAsync(string filePath)
+            private async Task<string> TranscribeFileAsync(string filePath)
         {
             try
             {
@@ -167,15 +167,31 @@ namespace PromptMasterv5.Infrastructure.Services
                 string baseUrl = config.VoiceApiBaseUrl;
                 string model = config.VoiceApiModel;
 
+                // Try to use centralized model config if VoiceModelId is set
+                if (!string.IsNullOrEmpty(config.VoiceModelId))
+                {
+                    var selectedModel = config.SavedModels.FirstOrDefault(m => m.Id == config.VoiceModelId);
+                    if (selectedModel != null)
+                    {
+                        apiKey = selectedModel.ApiKey;
+                        baseUrl = selectedModel.BaseUrl;
+                        model = selectedModel.ModelName;
+                    }
+                }
+
                 if (string.IsNullOrWhiteSpace(apiKey))
                     throw new Exception("Voice API Key is not configured.");
 
                 // Ensure BaseURL ends correctly
                 if (!baseUrl.EndsWith("/")) baseUrl += "/";
+                
                 // If the user provided the root (e.g. https://api.openai.com/v1), append 'audio/transcriptions'
+                // Some providers might need different endpoints, but assuming OpenAI compatible for now
                 string requestUrl = baseUrl;
                 if (!requestUrl.Contains("transcriptions"))
                 {
+                    // Handle cases where baseUrl might already include "v1" or not
+                    // Ideally, the user provides the base URL like "https://api.openai.com/v1/"
                     requestUrl = new Uri(new Uri(baseUrl), "audio/transcriptions").ToString();
                 }
 

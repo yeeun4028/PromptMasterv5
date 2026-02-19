@@ -13,7 +13,6 @@ namespace PromptMasterv5.ViewModels
     {
         private readonly IVoiceService _voiceService;
         private readonly ICommandExecutionService _commandExecutionService;
-        private readonly DispatcherTimer _silenceTimer;
 
         [ObservableProperty] private string statusText = "Listening...";
         [ObservableProperty] private bool isListening = false;

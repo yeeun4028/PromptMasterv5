@@ -93,6 +93,16 @@
             </Style.Triggers>
         </Style>
 
+        <!-- Empty Model Hint Style -->
+        <Style x:Key="EmptyModelHintStyle" TargetType="{x:Type TextBlock}">
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Config.SavedModels.Count}" Value="0">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- Modern TextBox Style -->
         <Style x:Key="ModernTextBoxStyle" TargetType="TextBox">
             <Setter Property="Padding" Value="10,8"/>
@@ -2210,18 +2220,8 @@
                                         <TextBlock Text="暂无可用模型，请前往“模型”设置页添加。" 
                                                    Foreground="{DynamicResource TextSecondary}" 
                                                    FontStyle="Italic"
-                                                   Margin="0,-10,0,20">
-                                            <TextBlock.Style>
-                                                <Style TargetType="{x:Type TextBlock}">
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Config.SavedModels.Count}" Value="0">
-                                                            <Setter Property="Visibility" Value="Visible"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
+                                                   Margin="0,-10,0,20"
+                                                   Style="{StaticResource EmptyModelHintStyle}"/>
 
 
                                         <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,0,0,20"/>
@@ -2291,23 +2291,20 @@
                                                Margin="0,0,0,15"/>
 
                                     <!-- API Configuration -->
-                                    <TextBlock Text="API 设置 (OpenAI Compatible)" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,12"/>
+                                    <TextBlock Text="AI 模型设置" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,12"/>
                                     
                                     <StackPanel Margin="0,0,0,12">
-                                        <TextBlock Text="API Base URL" Style="{StaticResource FieldLabelTextStyle}"/>
-                                        <TextBox Text="{Binding Config.VoiceApiBaseUrl}" Style="{StaticResource ModernTextBoxStyle}"
-                                                 ToolTip="例如: https://api.openai.com/v1"/>
-                                    </StackPanel>
-
-                                    <StackPanel Margin="0,0,0,12">
-                                        <TextBlock Text="API Key" Style="{StaticResource FieldLabelTextStyle}"/>
-                                        <TextBox Text="{Binding Config.VoiceApiKey}" Style="{StaticResource ApiKeyTextBoxStyle}"/>
-                                    </StackPanel>
-
-                                    <StackPanel Margin="0,0,0,12">
-                                        <TextBlock Text="Model Name (STT)" Style="{StaticResource FieldLabelTextStyle}"/>
-                                        <TextBox Text="{Binding Config.VoiceApiModel}" Style="{StaticResource ModernTextBoxStyle}"
-                                                 ToolTip="例如: whisper-1"/>
+                                        <TextBlock Text="选择用于语音识别的模型" Style="{StaticResource FieldLabelTextStyle}"/>
+                                        <ComboBox ItemsSource="{Binding Config.SavedModels}"
+                                                  DisplayMemberPath="DisplayName"
+                                                  SelectedValuePath="Id"
+                                                  SelectedValue="{Binding Config.VoiceModelId}"
+                                                  Style="{StaticResource ModernComboBoxStyle}"
+                                                  Height="35"
+                                                  Margin="0,5,0,0"/>
+                                        <TextBlock Text="请确保所选模型支持音频转录 (例如 whisper-1)。" 
+                                                   Style="{StaticResource HintTextStyle}" 
+                                                   Margin="0,5,0,0"/>
                                     </StackPanel>
 
                                     <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,8,0,20"/>
