@@ -26,7 +26,22 @@ namespace PromptMasterv5.Infrastructure.Services
         };
         public Task<string> ChatAsync(string userContent, AppConfig config, string? systemPrompt = null)
         {
-            return ChatAsync(userContent, config.AiApiKey, config.AiBaseUrl, config.AiModel, systemPrompt);
+            string apiKey = config.AiApiKey;
+            string baseUrl = config.AiBaseUrl;
+            string model = config.AiModel;
+
+            if (!string.IsNullOrEmpty(config.ActiveModelId))
+            {
+                var savedModel = config.SavedModels.FirstOrDefault(m => m.Id == config.ActiveModelId);
+                if (savedModel != null)
+                {
+                    apiKey = savedModel.ApiKey;
+                    baseUrl = savedModel.BaseUrl;
+                    model = savedModel.ModelName;
+                }
+            }
+
+            return ChatAsync(userContent, apiKey, baseUrl, model, systemPrompt);
         }
 
         public async Task<string> ChatAsync(string userContent, string apiKey, string baseUrl, string model, string? systemPrompt = null)
@@ -134,7 +149,22 @@ namespace PromptMasterv5.Infrastructure.Services
 
         public IAsyncEnumerable<string> ChatStreamAsync(string userContent, AppConfig config, string? systemPrompt = null)
         {
-            return ChatStreamAsync(userContent, config.AiApiKey, config.AiBaseUrl, config.AiModel, systemPrompt);
+            string apiKey = config.AiApiKey;
+            string baseUrl = config.AiBaseUrl;
+            string model = config.AiModel;
+
+            if (!string.IsNullOrEmpty(config.ActiveModelId))
+            {
+                var savedModel = config.SavedModels.FirstOrDefault(m => m.Id == config.ActiveModelId);
+                if (savedModel != null)
+                {
+                    apiKey = savedModel.ApiKey;
+                    baseUrl = savedModel.BaseUrl;
+                    model = savedModel.ModelName;
+                }
+            }
+
+            return ChatStreamAsync(userContent, apiKey, baseUrl, model, systemPrompt);
         }
 
         public async IAsyncEnumerable<string> ChatStreamAsync(string userContent, string apiKey, string baseUrl, string model, string? systemPrompt = null)
@@ -207,7 +237,22 @@ namespace PromptMasterv5.Infrastructure.Services
 
         public IAsyncEnumerable<string> ChatStreamAsync(List<ChatMessage> messages, AppConfig config)
         {
-            return ChatStreamAsync(messages, config.AiApiKey, config.AiBaseUrl, config.AiModel);
+            string apiKey = config.AiApiKey;
+            string baseUrl = config.AiBaseUrl;
+            string model = config.AiModel;
+
+            if (!string.IsNullOrEmpty(config.ActiveModelId))
+            {
+                var savedModel = config.SavedModels.FirstOrDefault(m => m.Id == config.ActiveModelId);
+                if (savedModel != null)
+                {
+                    apiKey = savedModel.ApiKey;
+                    baseUrl = savedModel.BaseUrl;
+                    model = savedModel.ModelName;
+                }
+            }
+
+            return ChatStreamAsync(messages, apiKey, baseUrl, model);
         }
 
         public async IAsyncEnumerable<string> ChatStreamAsync(List<ChatMessage> messages, string apiKey, string baseUrl, string model)

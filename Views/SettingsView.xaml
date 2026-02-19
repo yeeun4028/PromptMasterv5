@@ -1107,38 +1107,75 @@
                                     <StackPanel>
                                         <!-- 1. 主界面 Tab: Model Management -->
                                         <StackPanel x:Name="AiMainTab" Visibility="Visible">
-                                            <StackPanel Margin="0,0,0,14">
+                                            <!-- Default Model Selection -->
+                                            <StackPanel Margin="0,0,0,20">
+                                                <TextBlock Text="默认 AI 模型 (Default Model)" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                <ComboBox ItemsSource="{Binding Config.SavedModels}"
+                                                          SelectedValue="{Binding Config.ActiveModelId}"
+                                                          SelectedValuePath="Id"
+                                                          DisplayMemberPath="DisplayName"
+                                                          Style="{StaticResource ModernComboBoxStyle}"
+                                                          HorizontalAlignment="Stretch"/>
+                                                <TextBlock Text="全系统默认使用的模型。个别功能（如截图翻译）可单独配置覆盖此设置。" Style="{StaticResource HintTextStyle}" Margin="0,4,0,0"/>
+                                            </StackPanel>
+
+                                            <!-- Divider -->
+                                            <Rectangle Height="1" Fill="{DynamicResource DividerBrush}" Margin="0,0,0,20" Opacity="0.5"/>
+
+                                            <!-- Model Editor Layer -->
+                                            <StackPanel DataContext="{Binding SettingsVM}">
+                                                <StackPanel.Style>
+                                                    <Style TargetType="StackPanel">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding SelectedSavedModel}" Value="{x:Null}">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </StackPanel.Style>
+
+                                                <TextBlock Text="编辑选中的模型" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,12" FontSize="14" FontWeight="SemiBold"/>
+
                                                 <StackPanel Margin="0,0,0,12">
                                                     <TextBlock Text="API 地址 (Base URL)" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBox Text="{Binding Config.AiBaseUrl}" Style="{StaticResource ModernTextBoxStyle}"/>
+                                                    <TextBox Text="{Binding SelectedSavedModel.BaseUrl, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
                                                 </StackPanel>
 
                                                 <StackPanel Margin="0,0,0,12">
                                                     <TextBlock Text="API Key" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBox Text="{Binding Config.AiApiKey}" Style="{StaticResource ApiKeyTextBoxStyle}"/>
+                                                    <TextBox Text="{Binding SelectedSavedModel.ApiKey, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ApiKeyTextBoxStyle}"/>
                                                 </StackPanel>
 
                                                 <StackPanel Margin="0,0,0,12">
-                                                    <TextBlock Text="模型名称" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBox Text="{Binding Config.AiModel}" Style="{StaticResource ModernTextBoxStyle}"/>
+                                                    <TextBlock Text="模型名称 (Model ID)" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                    <TextBox Text="{Binding SelectedSavedModel.ModelName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
+                                                </StackPanel>
+                                                
+                                                 <StackPanel Margin="0,0,0,12">
+                                                    <TextBlock Text="备注名称 (Display Name)" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                    <TextBox Text="{Binding SelectedSavedModel.Remark, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
                                                 </StackPanel>
 
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                                     <TextBlock x:Name="TestStatusText"
-                                                               Text=""
+                                                               Text="{Binding TestStatus}"
                                                                VerticalAlignment="Center"
                                                                Margin="0,0,10,0"
                                                                Style="{StaticResource HintTextStyle}"/>
-                                                    <Button Content="测试连接" Click="TestAiConnection_Click" Style="{StaticResource TextLinkButtonStyle}" Foreground="{DynamicResource TextSecondary}" Margin="0,0,14,0"/>
-                                                    <Button Content="保存模型" Command="{Binding AddAiModelCommand}" Style="{StaticResource TextLinkButtonStyle}" Foreground="{DynamicResource TextSecondary}"/>
+                                                    <!-- Use CommandParameter to pass the model being edited -->
+                                                    <Button Content="测试连接" Command="{Binding TestAiConnectionCommand}" CommandParameter="{Binding SelectedSavedModel}" Style="{StaticResource TextLinkButtonStyle}" Foreground="{DynamicResource TextSecondary}" Margin="0,0,14,0"/>
+                                                    <!-- Save Model button is actually 'Add New', might need adjustment or removal if auto-save -->
+                                                    <!-- <Button Content="保存模型" Command="{Binding AddAiModelCommand}" Style="{StaticResource TextLinkButtonStyle}" Foreground="{DynamicResource TextSecondary}"/> -->
                                                 </StackPanel>
+                                            </StackPanel>
+                                            
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                                                 <Button Content="+ 新建模型" Command="{Binding SettingsVM.AddAiModelCommand}" Style="{StaticResource TextLinkButtonStyle}" FontWeight="Bold"/>
                                             </StackPanel>
 
                                             <TextBlock Text="已保存的模型" Style="{StaticResource FieldLabelTextStyle}" Margin="0,6,0,10"/>
 
                                             <ListBox ItemsSource="{Binding Config.SavedModels}"
-                                                     SelectedValue="{Binding Config.ActiveModelId}"
-                                                     SelectedValuePath="Id"
                                                      SelectedItem="{Binding SettingsVM.SelectedSavedModel, Mode=TwoWay}"
                                                      BorderThickness="0"
                                                      Background="Transparent"
@@ -2239,8 +2276,8 @@
 
                                         <!-- 保存 & 测试 -->
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,10,0,0">
-                                            <TextBlock x:Name="TestAiTranslationStatusText" Text="" VerticalAlignment="Center" Margin="0,0,15,0" FontWeight="Bold"/>
-                                            <Button Content="测试选中的模型" Click="TestAiTranslationConnection_Click" Width="120" Height="34">
+                                            <TextBlock Text="{Binding TranslationTestStatus}" VerticalAlignment="Center" Margin="0,0,15,0" FontWeight="Bold"/>
+                                            <Button Content="测试勾选的模型" Command="{Binding TestAiTranslationConnectionCommand}" Width="120" Height="34">
                                                 <Button.Style>
                                                     <Style TargetType="Button">
                                                         <Setter Property="Background" Value="{StaticResource AccentColor}"/>

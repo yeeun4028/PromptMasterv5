@@ -1555,16 +1555,7 @@ namespace PromptMasterv5
             }
             finally { btn.Content = org; btn.IsEnabled = true; }
         }
-        private void AiModelList_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            var listBox = sender as ListBox;
-            if (listBox == null) return;
 
-            if (listBox.SelectedItem is AiModelConfig selectedModel)
-            {
-                ViewModel.ActivateAiModelCommand.Execute(selectedModel);
-            }
-        }
 
         private void MiniModeButton_Click(object sender, RoutedEventArgs e)
         {

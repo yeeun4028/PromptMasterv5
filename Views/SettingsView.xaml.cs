@@ -678,104 +678,11 @@ namespace PromptMasterv5.Views
             }
         }
 
-        private async void TestAiConnection_Click(object sender, RoutedEventArgs e)
-        {
-            if (ViewModel == null) return;
 
-            var btn = sender as Button;
-            if (btn == null) return;
 
-            var statusText = this.FindName("AiChatTestStatusText") as TextBlock ?? this.FindName("TestStatusText") as TextBlock;
-            if (statusText == null) return;
 
-            try
-            {
-                statusText.Text = "🔄 测试中...";
-                statusText.Foreground = new SolidColorBrush(Color.FromRgb(102, 102, 102));
-                btn.IsEnabled = false;
 
-                (bool success, string message) = await ViewModel.TestAiConnectionAsync();
 
-                if (success)
-                {
-                    statusText.Text = "✅ 成功连通";
-                    statusText.Foreground = new SolidColorBrush(Color.FromRgb(67, 160, 71));
-
-                    await Task.Delay(3000);
-                    statusText.Text = "";
-                }
-                else
-                {
-                    statusText.Text = "❌ 连通失败";
-                    statusText.Foreground = new SolidColorBrush(Color.FromRgb(229, 57, 53));
-                }
-            }
-            catch (Exception)
-            {
-                statusText.Text = "❌ 连接异常";
-                statusText.Foreground = new SolidColorBrush(Color.FromRgb(229, 57, 53));
-            }
-            finally
-            {
-                btn.IsEnabled = true;
-            }
-        }
-
-        private async void TestAiTranslationConnection_Click(object sender, RoutedEventArgs e)
-        {
-            if (ViewModel == null) return;
-
-            var btn = sender as Button;
-            if (btn == null) return;
-
-            var statusText = this.FindName("TestAiTranslationStatusText") as TextBlock;
-            if (statusText == null) return;
-
-            try
-            {
-                statusText.Text = "🔄 测试中...";
-                statusText.Foreground = new SolidColorBrush(Color.FromRgb(102, 102, 102));
-                btn.IsEnabled = false;
-
-                (bool success, string message) = await ViewModel.TestAiTranslationConnectionAsync();
-
-                if (success)
-                {
-                    statusText.Text = "✅ 成功连通";
-                    statusText.Foreground = new SolidColorBrush(Color.FromRgb(67, 160, 71));
-
-                    await Task.Delay(3000);
-                    statusText.Text = "";
-                }
-                else
-                {
-                    statusText.Text = "❌ 连通失败";
-                    statusText.Foreground = new SolidColorBrush(Color.FromRgb(229, 57, 53));
-                }
-            }
-            catch (Exception)
-            {
-                statusText.Text = "❌ 连接异常";
-                statusText.Foreground = new SolidColorBrush(Color.FromRgb(229, 57, 53));
-            }
-            finally
-            {
-                btn.IsEnabled = true;
-            }
-        }
-
-        private void AiModelList_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (ViewModel == null) return;
-
-            var listBox = sender as ListBox;
-            if (listBox == null) return;
-
-            if (listBox.SelectedItem is AiModelConfig selectedModel)
-            {
-                ViewModel.ActivateAiModelCommand.Execute(selectedModel);
-            }
-        }
 
         // External Tools Sub-Tab Navigation
         private void ExternalToolsSubTab_Click(object sender, RoutedEventArgs e)

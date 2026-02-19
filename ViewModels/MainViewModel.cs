@@ -542,9 +542,7 @@ public partial class MainViewModel : ObservableObject
         SettingsVM.ToggleThemeCommand.Execute(null);
     }
 
-    // Settings Configuration Delegates
-    public Task<(bool Success, string Message)> TestAiConnectionAsync() => SettingsVM.TestAiConnectionAsync();
-    public Task<(bool Success, string Message)> TestAiTranslationConnectionAsync() => SettingsVM.TestAiTranslationConnectionAsync();
+
 
     [RelayCommand]
     private void AddAiModel() => SettingsVM.AddAiModelCommand.Execute(null);
@@ -552,8 +550,6 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void DeleteAiModel(AiModelConfig? model) => SettingsVM.DeleteAiModelCommand.Execute(model);
 
-    [RelayCommand]
-    private void ActivateAiModel(AiModelConfig? model) => SettingsVM.ActivateAiModelCommand.Execute(model);
 
     [RelayCommand]
     private void ShowRestoreConfirm() => SettingsVM.ShowRestoreConfirmCommand.Execute(null);

@@ -53,19 +53,13 @@ namespace PromptMasterv5.ViewModels
 
         partial void OnSelectedSavedModelChanged(AiModelConfig? value)
         {
-            if (value != null)
-            {
-                // Sync fields (do NOT overwrite if they are somehow bound to something else, but here they are simple strings)
-                Config.AiBaseUrl = value.BaseUrl;
-                Config.AiApiKey = value.ApiKey;
-                Config.AiModel = value.ModelName;
-                
-                // Also set active model ID if that's the desired behavior (it is currently)
-                ActivateAiModelCommand.Execute(value);
-            }
+            // Logic removed: We no longer sync to Config.Ai* fields automatically.
+            // Editing is done directly on the SelectedSavedModel via UI bindings.
         }
 
         #endregion
+
+
 
         #region Observable Properties - Sync & Restore
 
@@ -224,17 +218,20 @@ namespace PromptMasterv5.ViewModels
 
         #region Commands - AI Model Management
 
-        public Task<(bool Success, string Message)> TestAiConnectionAsync() =>
-            _aiService.TestConnectionAsync(Config);
+        [ObservableProperty] private string? translationTestStatus;
 
-        public async Task<(bool Success, string Message)> TestAiTranslationConnectionAsync()
+        [RelayCommand]
+        private async Task TestAiTranslationConnection()
         {
             var enabledModels = Config.SavedModels.Where(m => m.IsEnableForTranslation).ToList();
             if (enabledModels.Count == 0)
             {
-                return (false, "请先勾选至少一个参与翻译的 AI 模型");
+                TranslationTestStatus = "请先勾选至少一个参与翻译的 AI 模型";
+                return;
             }
 
+            TranslationTestStatus = "测试中...";
+            
             int successCount = 0;
             string lastError = "";
 
@@ -246,40 +243,52 @@ namespace PromptMasterv5.ViewModels
             }
 
             if (successCount == enabledModels.Count)
-                return (true, $"全部 {successCount} 个模型连接成功");
+                TranslationTestStatus = $"全部 {successCount} 个模型连接成功";
             else if (successCount > 0)
-                return (true, $"部分成功 ({successCount}/{enabledModels.Count})\n失败示例: {lastError}");
+                TranslationTestStatus = $"部分成功 ({successCount}/{enabledModels.Count})\n失败示例: {lastError}";
             else
-                return (false, $"全部失败。\n错误示例: {lastError}");
+                TranslationTestStatus = $"全部失败。\n错误示例: {lastError}";
         }
 
         [RelayCommand]
-        private void ActivateAiModel(AiModelConfig? model)
+        private async Task TestAiConnection(AiModelConfig? model)
         {
-            if (model == null) return;
-            Config.ActiveModelId = model.Id;
-            _settingsService.SaveConfig();
+            if (model == null)
+            {
+                 // Fallback to config if no specific model passed (though UI now passes parameter)
+                 var (_, msg) = await _aiService.TestConnectionAsync(Config);
+                 TestStatus = msg;
+                 return;
+            }
+
+            TestStatus = "测试中...";
+            var (success, message) = await _aiService.TestConnectionAsync(model.ApiKey, model.BaseUrl, model.ModelName);
+            TestStatus = message;
         }
 
         [RelayCommand]
         private void AddAiModel()
         {
-            if (string.IsNullOrWhiteSpace(Config.AiModel))
-            {
-                MessageBox.Show("请输入模型名称", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
             var newModel = new AiModelConfig
             {
                 Id = Guid.NewGuid().ToString(),
-                ModelName = Config.AiModel,
-                BaseUrl = Config.AiBaseUrl,
-                ApiKey = Config.AiApiKey
+                ModelName = "gpt-3.5-turbo",
+                BaseUrl = "https://api.openai.com/v1",
+                ApiKey = "",
+                Remark = "New Model"
             };
 
             Config.SavedModels.Insert(0, newModel);
-            Config.ActiveModelId = newModel.Id;
+            
+            // Select it for editing
+            SelectedSavedModel = newModel;
+            
+            // Optionally set as active if it's the first one
+            if (string.IsNullOrEmpty(Config.ActiveModelId))
+            {
+                Config.ActiveModelId = newModel.Id;
+            }
+            
             _settingsService.SaveConfig();
         }
 
@@ -289,7 +298,13 @@ namespace PromptMasterv5.ViewModels
             if (model == null) return;
             var idx = Config.SavedModels.IndexOf(model);
             if (idx >= 0) Config.SavedModels.RemoveAt(idx);
+            
+            // If we deleted the active model, clear the ID
             if (Config.ActiveModelId == model.Id) Config.ActiveModelId = "";
+            
+            // If we deleted the selected model, clear selection
+            if (SelectedSavedModel == model) SelectedSavedModel = null;
+            
             _settingsService.SaveConfig();
         }
 
