@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="选择备份文件" Height="450" Width="600"
+        WindowStartupLocation="CenterOwner"
         Style="{DynamicResource ModernDialogWindowStyle}">
     
     <Grid>

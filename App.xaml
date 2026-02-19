@@ -491,7 +491,6 @@
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="ResizeMode" Value="NoResize"/>
                 <Setter Property="SizeToContent" Value="WidthAndHeight"/>
-                <Setter Property="WindowStartupLocation" Value="CenterScreen"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Window">
