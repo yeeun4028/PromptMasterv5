@@ -551,7 +551,7 @@
                                         <!-- Group 1: General -->
                                         <Border Style="{StaticResource CardStyle}">
                                             <StackPanel>
-                                                <TextBlock Text="通用" Style="{StaticResource SectionHeaderTextStyle}"/>
+                                                
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*"/>
@@ -566,7 +566,6 @@
                                                     <!-- Row 0: Double Ctrl -->
                                                     <StackPanel Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
                                                         <TextBlock Text="双击 Ctrl 键唤醒" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                        <TextBlock Text="快速双击 Ctrl 键显示/隐藏主窗口" Style="{StaticResource HintTextStyle}"/>
                                                     </StackPanel>
                                                     <CheckBox Grid.Row="0" Grid.Column="1" 
                                                               IsChecked="{Binding Config.EnableDoubleCtrl}" 
@@ -576,7 +575,6 @@
                                                     <!-- Row 1: Full Window -->
                                                     <StackPanel Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
                                                         <TextBlock Text="完整窗口" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                        <TextBlock Text="显示完整的主窗口界面" Style="{StaticResource HintTextStyle}"/>
                                                     </StackPanel>
                                                     <TextBox Grid.Row="1" Grid.Column="1" 
                                                              Text="{Binding Config.FullWindowHotkey}" 
@@ -591,7 +589,6 @@
                                                     <!-- Row 2: Mini Window -->
                                                     <StackPanel Grid.Row="2" Grid.Column="0" VerticalAlignment="Center">
                                                         <TextBlock Text="迷你窗口" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                        <TextBlock Text="显示精简的悬浮对话窗口" Style="{StaticResource HintTextStyle}"/>
                                                     </StackPanel>
                                                     <TextBox Grid.Row="2" Grid.Column="1" 
                                                              Text="{Binding Config.MiniWindowHotkey}"
@@ -609,7 +606,7 @@
                                         <!-- Group 2: Translation -->
                                         <Border Style="{StaticResource CardStyle}">
                                             <StackPanel>
-                                                <TextBlock Text="翻译" Style="{StaticResource SectionHeaderTextStyle}"/>
+                                                
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*"/>
@@ -623,7 +620,6 @@
                                                     <!-- Row 0: Screenshot Translate -->
                                                     <StackPanel Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
                                                         <TextBlock Text="截图翻译" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                        <TextBlock Text="截取屏幕区域进行识别和翻译" Style="{StaticResource HintTextStyle}"/>
                                                     </StackPanel>
                                                     <TextBox Grid.Row="0" Grid.Column="1" 
                                                              x:Name="ScreenshotTranslateHotkeyTextBox" 
@@ -639,7 +635,6 @@
                                                     <!-- Row 1: Selected Text Translate -->
                                                     <StackPanel Grid.Row="1" Grid.Column="0" VerticalAlignment="Center">
                                                         <TextBlock Text="划词翻译" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                        <TextBlock Text="获取选中的文本进行翻译" Style="{StaticResource HintTextStyle}"/>
                                                     </StackPanel>
                                                     <TextBox Grid.Row="1" Grid.Column="1" 
                                                              x:Name="SelectedTextTranslateHotkeyTextBox"
@@ -658,7 +653,7 @@
                                         <!-- Group 3: Tools -->
                                         <Border Style="{StaticResource CardStyle}">
                                             <StackPanel>
-                                                <TextBlock Text="工具" Style="{StaticResource SectionHeaderTextStyle}"/>
+                                                
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*"/>
@@ -672,7 +667,6 @@
                                                     <!-- Row 0: OCR -->
                                                     <StackPanel Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
                                                         <TextBlock Text="OCR 识别" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                        <TextBlock Text="识别屏幕区域的文字" Style="{StaticResource HintTextStyle}"/>
                                                     </StackPanel>
                                                     <TextBox Grid.Row="0" Grid.Column="1" 
                                                              x:Name="OcrHotkeyTextBox" 
@@ -688,7 +682,6 @@
                                                     <!-- Row 1: Quick Action -->
                                                     <StackPanel Grid.Row="1" Grid.Column="0" VerticalAlignment="Center">
                                                         <TextBlock Text="划词扩展" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                        <TextBlock Text="对选中文本执行自定义扩展操作" Style="{StaticResource HintTextStyle}"/>
                                                     </StackPanel>
                                                     <TextBox Grid.Row="1" Grid.Column="1" 
                                                              x:Name="QuickActionHotkeyTextBox" 
@@ -820,8 +813,7 @@
                                         <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
                                             <StackPanel>
                                                 <TextBlock Text="坐标点击模式" Style="{StaticResource SectionHeaderTextStyle}"/>
-                                                <TextBlock Text="软件隐藏后，强制点击屏幕上的指定位置来激活输入框。"
-                                                           Style="{StaticResource HintTextStyle}" Margin="0,0,0,15" TextWrapping="Wrap"/>
+                                                
 
                                                 <ItemsControl ItemsSource="{Binding LocalConfig.CoordinateRules}" AlternationCount="1000">
                                                     <ItemsControl.ItemTemplate>
@@ -884,7 +876,7 @@
                                                 <TextBlock Text="默认网页与发送" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,15"/>
                                                 
                                                 <StackPanel Margin="0,0,0,20">
-                                                    <TextBlock Text="默认网页 AI (快捷键目标)" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,8"/>
+                                                
                                                     <ComboBox ItemsSource="{Binding Config.WebDirectTargets}"
                                                               SelectedValue="{Binding Config.DefaultWebTargetName}"
                                                               SelectedValuePath="Name"
@@ -904,7 +896,7 @@
                                         <Border Style="{StaticResource CardStyle}">
                                             <StackPanel>
                                                 <TextBlock Text="BLOCK4 快捷图标显示" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,15"/>
-                                                <TextBlock Text="选择在主界面 BLOCK4 区域显示的快捷图标。" Style="{StaticResource HintTextStyle}" Margin="0,0,0,15"/>
+                                                
 
                                                 <ItemsControl ItemsSource="{Binding Config.WebDirectTargets}">
                                                     <ItemsControl.ItemsPanel>
@@ -959,7 +951,7 @@
                                         <StackPanel x:Name="AiMainTab" Visibility="Visible">
                                             <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
                                                 <StackPanel>
-                                                    <TextBlock Text="默认 AI 模型 (Default Model)" Style="{StaticResource FieldLabelTextStyle}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,15"/>
+                                                    <TextBlock Text="默认 AI 模型" Style="{StaticResource FieldLabelTextStyle}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,15"/>
                                                     
                                                     <StackPanel Margin="0,0,0,20">
                                                         <ComboBox ItemsSource="{Binding Config.SavedModels}"
@@ -968,7 +960,7 @@
                                                                   DisplayMemberPath="DisplayName"
                                                                   Style="{StaticResource ModernComboBoxStyle}"
                                                                   HorizontalAlignment="Stretch"/>
-                                                        <TextBlock Text="全系统默认使用的模型。个别功能（如截图翻译）可单独配置覆盖此设置。" Style="{StaticResource HintTextStyle}" Margin="0,6,0,0"/>
+                                                        
                                                     </StackPanel>
 
                                                     <!-- Divider -->
@@ -1760,9 +1752,7 @@
                                         <Border Style="{StaticResource CardStyle}">
                                             <StackPanel>
                                                 <!-- OCR Providers Selection -->
-                                                <TextBlock Text="OCR 引擎选择 (OCR Providers)" 
-                                                           FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"
-                                                           Margin="0,0,0,15"/>
+                                                
                                                 
                                                 <ItemsControl ItemsSource="{Binding ExternalToolsVM.OcrProfiles}" Margin="0,0,0,10">
                                                     <ItemsControl.ItemTemplate>
@@ -1780,9 +1770,7 @@
                                                 <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,10,0,20"/>
 
                                                 <!-- Translation Providers Selection -->
-                                                <TextBlock Text="翻译引擎选择 (Translation Providers)" 
-                                                           FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"
-                                                           Margin="0,0,0,15"/>
+                                                
                                                 
                                                 <ItemsControl ItemsSource="{Binding ExternalToolsVM.TranslateProfiles}" Margin="0,0,0,10">
                                                     <ItemsControl.ItemTemplate>
@@ -1816,9 +1804,7 @@
                                                         <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,10,0,20"/>
 
                                                         <!-- AI Vision Translate Models Checklist -->
-                                                        <TextBlock Text="AI 截图翻译 (AI Vision Translate)" 
-                                                                   FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"
-                                                                   Margin="0,0,0,15"/>
+                                                        <TextBlock Text="" Visibility="Collapsed"/>
                                                         
                                                         <ItemsControl ItemsSource="{Binding Config.SavedModels}" Margin="0,0,0,0">
                                                             <ItemsControl.ItemTemplate>
@@ -2097,17 +2083,13 @@
 
                                     <Border Style="{StaticResource CardStyle}">
                                         <StackPanel>
-                                            <TextBlock Text="语音控制配置 (Voice Control)" 
-                                                       Style="{StaticResource FieldLabelTextStyle}" 
-                                                       FontSize="16"
-                                                       FontWeight="SemiBold"
-                                                       Margin="0,0,0,15"/>
+                                            
 
                                             <!-- API Configuration -->
                                             <TextBlock Text="AI 模型设置" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,12"/>
                                             
                                             <StackPanel Margin="0,0,0,12">
-                                                <TextBlock Text="选择用于语音识别的模型" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                
                                                 <ComboBox ItemsSource="{Binding Config.SavedModels}"
                                                           DisplayMemberPath="DisplayName"
                                                           SelectedValuePath="Id"
@@ -2115,15 +2097,13 @@
                                                           Style="{StaticResource ModernComboBoxStyle}"
                                                           Height="35"
                                                           Margin="0,5,0,0"/>
-                                                <TextBlock Text="请确保所选模型支持音频转录 (例如 whisper-1)。" 
-                                                           Style="{StaticResource HintTextStyle}" 
-                                                           Margin="0,5,0,0"/>
+                                                
                                             </StackPanel>
 
                                             <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,8,0,20"/>
 
                                             <!-- Trigger Configuration -->
-                                            <TextBlock Text="触发设置" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,12"/>
+                                            
 
                                             <StackPanel Margin="0,0,0,20">
                                                 <TextBlock Text="语音控制快捷键" Style="{StaticResource FieldLabelTextStyle}"/>
