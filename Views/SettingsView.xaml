@@ -61,12 +61,12 @@
         <!-- Card Style -->
         <Style x:Key="CardStyle" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="20"/>
-            <Setter Property="Margin" Value="0,0,0,15"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="24"/>
+            <Setter Property="Margin" Value="0,0,0,24"/>
             <Setter Property="Effect">
                 <Setter.Value>
-                    <DropShadowEffect Color="#000000" Opacity="0.03" BlurRadius="8" ShadowDepth="1" Direction="270"/>
+                    <DropShadowEffect Color="#000000" Opacity="0.1" BlurRadius="20" ShadowDepth="5" Direction="270"/>
                 </Setter.Value>
             </Setter>
         </Style>
@@ -106,189 +106,7 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Modern TextBox Style -->
-        <Style x:Key="ModernTextBoxStyle" TargetType="TextBox">
-            <Setter Property="Padding" Value="12,10"/>
-            <Setter Property="Background" Value="{DynamicResource ShellBackground}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource DividerBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Foreground" Value="{DynamicResource InputTextBrush}"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}" 
-                                CornerRadius="6">
-                            <ScrollViewer x:Name="PART_ContentHost"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ListItemHoverBackgroundBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsFocused" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentColor}"/>
-                                <Setter TargetName="border" Property="Background" Value="{DynamicResource InputFocusBackgroundBrush}"/>
-                                <Setter TargetName="border" Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect Color="{StaticResource AccentColorValue}" Opacity="0.15" BlurRadius="8" ShadowDepth="0"/>
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
 
-        <Style x:Key="ApiKeyTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource ModernTextBoxStyle}">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}" 
-                                CornerRadius="4">
-                            <Grid>
-                                <ScrollViewer x:Name="PART_ContentHost"/>
-                                <!-- 遮罩层：当失去焦点且文本不为空时显示 -->
-                                <TextBlock x:Name="MaskText"
-                                           Text="{Binding Text, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource ApiKeyMaskConverter}}"
-                                           Margin="12,8"
-                                           VerticalAlignment="Top"
-                                           Foreground="#DEDEDE"
-                                           IsHitTestVisible="False"
-                                           Visibility="Collapsed"/>
-                            </Grid>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ListItemHoverBackgroundBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsFocused" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentColor}"/>
-                                <Setter TargetName="border" Property="Background" Value="{DynamicResource InputFocusBackgroundBrush}"/>
-                                <Setter TargetName="border" Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect Color="{StaticResource AccentColorValue}" Opacity="0.2" BlurRadius="4" ShadowDepth="0"/>
-                                    </Setter.Value>
-                                </Setter>
-                                <!-- 聚焦时：隐藏遮罩，显示原始内容 -->
-                                <Setter TargetName="MaskText" Property="Visibility" Value="Collapsed"/>
-                                <Setter Property="Foreground" Value="#DEDEDE"/> 
-                            </Trigger>
-                            <MultiTrigger>
-                                <MultiTrigger.Conditions>
-                                    <Condition Property="IsFocused" Value="False"/>
-                                    <!-- 这里简单处理：只要没聚焦就显示遮罩，并将原始内容变透明 -->
-                                </MultiTrigger.Conditions>
-                                <Setter TargetName="MaskText" Property="Visibility" Value="Visible"/>
-                                <Setter Property="Foreground" Value="Transparent"/>
-                            </MultiTrigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="ModernPasswordBoxStyle" TargetType="PasswordBox">
-            <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="Background" Value="{DynamicResource ShellBackground}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource DividerBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Foreground" Value="#DEDEDE"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="PasswordBox">
-                        <Border x:Name="border"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4">
-                            <ScrollViewer x:Name="PART_ContentHost"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ListItemHoverBackgroundBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentColor}"/>
-                                <Setter TargetName="border" Property="Background" Value="{DynamicResource InputFocusBackgroundBrush}"/>
-                                <Setter TargetName="border" Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect Color="{StaticResource AccentColorValue}" Opacity="0.2" BlurRadius="4" ShadowDepth="0"/>
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="border" Property="Opacity" Value="0.6"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="FieldLabelTextStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Margin" Value="0,0,0,6"/>
-        </Style>
-
-        <Style x:Key="HintTextStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{DynamicResource HintBrush}"/>
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="TextWrapping" Value="Wrap"/>
-        </Style>
-
-        <Style x:Key="TextLinkButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Foreground" Value="{StaticResource AccentColor}"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <TextBlock x:Name="LinkText"
-                                   Text="{TemplateBinding Content}"
-                                   Foreground="{TemplateBinding Foreground}"
-                                   FontSize="13"/>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="LinkText" Property="TextDecorations" Value="Underline"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="LinkText" Property="Opacity" Value="0.5"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="DangerLinkButtonStyle" TargetType="Button" BasedOn="{StaticResource TextLinkButtonStyle}">
-            <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <TextBlock x:Name="LinkText"
-                                   Text="{TemplateBinding Content}"
-                                   Foreground="{TemplateBinding Foreground}"
-                                   FontSize="13"/>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="LinkText" Property="TextDecorations" Value="Underline"/>
-                                <Setter TargetName="LinkText" Property="Foreground" Value="{StaticResource DangerHoverBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="LinkText" Property="Opacity" Value="0.5"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
 
         <Style x:Key="SubTabButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
@@ -320,65 +138,7 @@
             </Setter>
         </Style>
 
-        <Style x:Key="ToggleSwitchStyle" TargetType="CheckBox">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="CheckBox">
-                        <Grid Background="{TemplateBinding Background}">
-                            <Border x:Name="Border"
-                                    Width="44" Height="24"
-                                    CornerRadius="12"
-                                    Background="{DynamicResource DividerBrush}"
-                                    BorderBrush="{Binding Background, RelativeSource={RelativeSource Self}}"
-                                    BorderThickness="1">
-                                <VisualStateManager.VisualStateGroups>
-                                    <VisualStateGroup x:Name="CheckStates">
-                                        <VisualState x:Name="Checked">
-                                            <Storyboard>
-                                                <ColorAnimation Storyboard.TargetName="Border" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="{StaticResource AccentColorValue}" Duration="0:0:0.2"/>
-                                                <ThicknessAnimation Storyboard.TargetName="Dot" Storyboard.TargetProperty="Margin" To="22,0,0,0" Duration="0:0:0.2">
-                                                    <ThicknessAnimation.EasingFunction>
-                                                        <CircleEase EasingMode="EaseOut"/>
-                                                    </ThicknessAnimation.EasingFunction>
-                                                </ThicknessAnimation>
-                                            </Storyboard>
-                                        </VisualState>
-                                        <VisualState x:Name="Unchecked">
-                                            <Storyboard>
-                                                <ColorAnimation Storyboard.TargetName="Border" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#E0E0E0" Duration="0:0:0.2"/> 
-                                                <ThicknessAnimation Storyboard.TargetName="Dot" Storyboard.TargetProperty="Margin" To="2,0,0,0" Duration="0:0:0.2">
-                                                    <ThicknessAnimation.EasingFunction>
-                                                        <CircleEase EasingMode="EaseOut"/>
-                                                    </ThicknessAnimation.EasingFunction>
-                                                </ThicknessAnimation>
-                                            </Storyboard>
-                                        </VisualState>
-                                    </VisualStateGroup>
-                                </VisualStateManager.VisualStateGroups>
 
-                                <Ellipse x:Name="Dot"
-                                         Width="18" Height="18"
-                                         Fill="White"
-                                         HorizontalAlignment="Left"
-                                         Margin="2,0,0,0">
-                                    <Ellipse.Effect>
-                                        <DropShadowEffect Color="Black" Opacity="0.15" BlurRadius="4" ShadowDepth="1"/>
-                                    </Ellipse.Effect>
-                                </Ellipse>
-                            </Border>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="{StaticResource AccentColor}"/>
-                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource AccentColor}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
 
         <Style x:Key="ModernScrollBar" TargetType="{x:Type ScrollBar}">
             <Setter Property="Stylus.IsFlicksEnabled" Value="false" />
@@ -787,132 +547,163 @@
                                         </Style>
                                     </StackPanel.Style>
 
-                                    <Border Style="{StaticResource CardStyle}">
-                                        <StackPanel>
-                                            <TextBlock Text="快捷键设置" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,20"/>
-                                            
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                </Grid.RowDefinitions>
+                                    <StackPanel Margin="0,0,0,14">
+                                        <!-- Group 1: General -->
+                                        <Border Style="{StaticResource CardStyle}">
+                                            <StackPanel>
+                                                <TextBlock Text="通用" Style="{StaticResource SectionHeaderTextStyle}"/>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
 
-                                                <!-- Row 1: Double Ctrl -->
-                                                <StackPanel Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
-                                                    <TextBlock Text="双击 Ctrl 键唤醒" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBlock Text="快速双击 Ctrl 键显示/隐藏主窗口" Style="{StaticResource HintTextStyle}"/>
-                                                </StackPanel>
-                                                <CheckBox Grid.Row="0" Grid.Column="1" 
-                                                          IsChecked="{Binding Config.EnableDoubleCtrl}" 
-                                                          Style="{StaticResource ToggleSwitchStyle}"
-                                                          VerticalAlignment="Center"/>
+                                                    <!-- Row 0: Double Ctrl -->
+                                                    <StackPanel Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
+                                                        <TextBlock Text="双击 Ctrl 键唤醒" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                        <TextBlock Text="快速双击 Ctrl 键显示/隐藏主窗口" Style="{StaticResource HintTextStyle}"/>
+                                                    </StackPanel>
+                                                    <CheckBox Grid.Row="0" Grid.Column="1" 
+                                                              IsChecked="{Binding Config.EnableDoubleCtrl}" 
+                                                              Style="{StaticResource ToggleSwitchStyle}"
+                                                              VerticalAlignment="Center"/>
 
-                                                <!-- Row 2: Full Window -->
-                                                <StackPanel Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
-                                                    <TextBlock Text="完整窗口" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBlock Text="显示完整的主窗口界面" Style="{StaticResource HintTextStyle}"/>
-                                                </StackPanel>
-                                                <TextBox Grid.Row="1" Grid.Column="1" 
-                                                          Text="{Binding Config.FullWindowHotkey}" 
-                                                          Style="{StaticResource ModernTextBoxStyle}"
-                                                          Width="140"
-                                                          IsReadOnly="True"
-                                                          Cursor="IBeam"
-                                                          VerticalAlignment="Center"
-                                                          PreviewKeyDown="FullWindowHotkeyTextBox_PreviewKeyDown"
-                                                          ToolTip="点击按下按键设置，按 Delete 清除"/>
+                                                    <!-- Row 1: Full Window -->
+                                                    <StackPanel Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
+                                                        <TextBlock Text="完整窗口" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                        <TextBlock Text="显示完整的主窗口界面" Style="{StaticResource HintTextStyle}"/>
+                                                    </StackPanel>
+                                                    <TextBox Grid.Row="1" Grid.Column="1" 
+                                                             Text="{Binding Config.FullWindowHotkey}" 
+                                                             Style="{StaticResource KeyRecorderStyle}"
+                                                             Width="140"
+                                                             IsReadOnly="True"
+                                                             Cursor="Hand"
+                                                             VerticalAlignment="Center"
+                                                             PreviewKeyDown="FullWindowHotkeyTextBox_PreviewKeyDown"
+                                                             ToolTip="点击按下按键设置，按 Delete 清除"/>
 
-                                                <!-- Row 3: Mini Window -->
-                                                <StackPanel Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
-                                                    <TextBlock Text="迷你窗口" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBlock Text="显示精简的悬浮对话窗口" Style="{StaticResource HintTextStyle}"/>
-                                                </StackPanel>
-                                                <TextBox Grid.Row="2" Grid.Column="1" 
-                                                          Text="{Binding Config.MiniWindowHotkey}"
-                                                          Style="{StaticResource ModernTextBoxStyle}"
-                                                          Width="140"
-                                                          IsReadOnly="True"
-                                                          Cursor="IBeam"
-                                                          VerticalAlignment="Center"
-                                                          PreviewKeyDown="MiniWindowHotkeyTextBox_PreviewKeyDown"
-                                                          ToolTip="点击按下按键设置，按 Delete 清除"/>
+                                                    <!-- Row 2: Mini Window -->
+                                                    <StackPanel Grid.Row="2" Grid.Column="0" VerticalAlignment="Center">
+                                                        <TextBlock Text="迷你窗口" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                        <TextBlock Text="显示精简的悬浮对话窗口" Style="{StaticResource HintTextStyle}"/>
+                                                    </StackPanel>
+                                                    <TextBox Grid.Row="2" Grid.Column="1" 
+                                                             Text="{Binding Config.MiniWindowHotkey}"
+                                                             Style="{StaticResource KeyRecorderStyle}"
+                                                             Width="140"
+                                                             IsReadOnly="True"
+                                                             Cursor="Hand"
+                                                             VerticalAlignment="Center"
+                                                             PreviewKeyDown="MiniWindowHotkeyTextBox_PreviewKeyDown"
+                                                             ToolTip="点击按下按键设置，按 Delete 清除"/>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
 
-                                                <!-- Row 4: Screenshot Translate -->
-                                                <StackPanel Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
-                                                    <TextBlock Text="截图翻译" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBlock Text="截取屏幕区域进行识别和翻译" Style="{StaticResource HintTextStyle}"/>
-                                                </StackPanel>
-                                                <TextBox Grid.Row="3" Grid.Column="1" 
-                                                          x:Name="ScreenshotTranslateHotkeyTextBox" 
-                                                          Text="{Binding Config.ScreenshotTranslateHotkey, Mode=TwoWay}"
-                                                          Style="{StaticResource ModernTextBoxStyle}"
-                                                          Width="140"
-                                                          IsReadOnly="True"
-                                                          Cursor="IBeam"
-                                                          VerticalAlignment="Center"
-                                                          PreviewKeyDown="ScreenshotTranslateHotkeyTextBox_PreviewKeyDown"
-                                                          ToolTip="点击按下按键设置，按 Delete 清除"/>
+                                        <!-- Group 2: Translation -->
+                                        <Border Style="{StaticResource CardStyle}">
+                                            <StackPanel>
+                                                <TextBlock Text="翻译" Style="{StaticResource SectionHeaderTextStyle}"/>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
 
-                                                <!-- Row 5: Selected Text Translate -->
-                                                <StackPanel Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
-                                                    <TextBlock Text="划词翻译" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBlock Text="获取选中的文本进行翻译" Style="{StaticResource HintTextStyle}"/>
-                                                </StackPanel>
-                                                <TextBox Grid.Row="4" Grid.Column="1" 
-                                                          x:Name="SelectedTextTranslateHotkeyTextBox"
-                                                          Text="{Binding Config.SelectedTextTranslateHotkey, Mode=TwoWay}"
-                                                          Style="{StaticResource ModernTextBoxStyle}"
-                                                          Width="140"
-                                                          IsReadOnly="True"
-                                                          Cursor="IBeam"
-                                                          VerticalAlignment="Center"
-                                                          PreviewKeyDown="SelectedTextTranslateHotkeyTextBox_PreviewKeyDown"
-                                                          ToolTip="点击按下按键设置，按 Delete 清除"/>
+                                                    <!-- Row 0: Screenshot Translate -->
+                                                    <StackPanel Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
+                                                        <TextBlock Text="截图翻译" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                        <TextBlock Text="截取屏幕区域进行识别和翻译" Style="{StaticResource HintTextStyle}"/>
+                                                    </StackPanel>
+                                                    <TextBox Grid.Row="0" Grid.Column="1" 
+                                                             x:Name="ScreenshotTranslateHotkeyTextBox" 
+                                                             Text="{Binding Config.ScreenshotTranslateHotkey, Mode=TwoWay}"
+                                                             Style="{StaticResource KeyRecorderStyle}"
+                                                             Width="140"
+                                                             IsReadOnly="True"
+                                                             Cursor="Hand"
+                                                             VerticalAlignment="Center"
+                                                             PreviewKeyDown="ScreenshotTranslateHotkeyTextBox_PreviewKeyDown"
+                                                             ToolTip="点击按下按键设置，按 Delete 清除"/>
 
+                                                    <!-- Row 1: Selected Text Translate -->
+                                                    <StackPanel Grid.Row="1" Grid.Column="0" VerticalAlignment="Center">
+                                                        <TextBlock Text="划词翻译" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                        <TextBlock Text="获取选中的文本进行翻译" Style="{StaticResource HintTextStyle}"/>
+                                                    </StackPanel>
+                                                    <TextBox Grid.Row="1" Grid.Column="1" 
+                                                             x:Name="SelectedTextTranslateHotkeyTextBox"
+                                                             Text="{Binding Config.SelectedTextTranslateHotkey, Mode=TwoWay}"
+                                                             Style="{StaticResource KeyRecorderStyle}"
+                                                             Width="140"
+                                                             IsReadOnly="True"
+                                                             Cursor="Hand"
+                                                             VerticalAlignment="Center"
+                                                             PreviewKeyDown="SelectedTextTranslateHotkeyTextBox_PreviewKeyDown"
+                                                             ToolTip="点击按下按键设置，按 Delete 清除"/>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
 
-                                                <!-- Row 6: OCR -->
-                                                <StackPanel Grid.Row="5" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
-                                                    <TextBlock Text="OCR 识别" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBlock Text="识别屏幕区域的文字" Style="{StaticResource HintTextStyle}"/>
-                                                </StackPanel>
-                                                <TextBox Grid.Row="5" Grid.Column="1" 
-                                                          x:Name="OcrHotkeyTextBox" 
-                                                          Text="{Binding Config.OcrHotkey, Mode=TwoWay}"
-                                                          Style="{StaticResource ModernTextBoxStyle}"
-                                                          Width="140"
-                                                          IsReadOnly="True"
-                                                          Cursor="IBeam"
-                                                          VerticalAlignment="Center"
-                                                          PreviewKeyDown="OcrHotkeyTextBox_PreviewKeyDown"
-                                                          ToolTip="点击按下按键设置，按 Delete 清除"/>
+                                        <!-- Group 3: Tools -->
+                                        <Border Style="{StaticResource CardStyle}">
+                                            <StackPanel>
+                                                <TextBlock Text="工具" Style="{StaticResource SectionHeaderTextStyle}"/>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
 
-                                                <!-- Row 7: Quick Action (Selected Text Extension) -->
-                                                <StackPanel Grid.Row="6" Grid.Column="0" VerticalAlignment="Center">
-                                                    <TextBlock Text="划词扩展" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                     <TextBlock Text="对选中文本执行自定义扩展操作" Style="{StaticResource HintTextStyle}"/>
-                                                </StackPanel>
-                                                <TextBox Grid.Row="6" Grid.Column="1" 
-                                                         x:Name="QuickActionHotkeyTextBox" 
-                                                         Text="{Binding Config.QuickActionHotkey, Mode=TwoWay}"
-                                                         Style="{StaticResource ModernTextBoxStyle}"
-                                                         Width="140"
-                                                         IsReadOnly="True"
-                                                         Cursor="IBeam"
-                                                         VerticalAlignment="Center"
-                                                         PreviewKeyDown="QuickActionHotkeyTextBox_PreviewKeyDown"
-                                                         ToolTip="点击按下按键设置，按 Delete 清除"/>
-                                            </Grid>
-                                        </StackPanel>
-                                    </Border>
+                                                    <!-- Row 0: OCR -->
+                                                    <StackPanel Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
+                                                        <TextBlock Text="OCR 识别" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                        <TextBlock Text="识别屏幕区域的文字" Style="{StaticResource HintTextStyle}"/>
+                                                    </StackPanel>
+                                                    <TextBox Grid.Row="0" Grid.Column="1" 
+                                                             x:Name="OcrHotkeyTextBox" 
+                                                             Text="{Binding Config.OcrHotkey, Mode=TwoWay}"
+                                                             Style="{StaticResource KeyRecorderStyle}"
+                                                             Width="140"
+                                                             IsReadOnly="True"
+                                                             Cursor="Hand"
+                                                             VerticalAlignment="Center"
+                                                             PreviewKeyDown="OcrHotkeyTextBox_PreviewKeyDown"
+                                                             ToolTip="点击按下按键设置，按 Delete 清除"/>
+
+                                                    <!-- Row 1: Quick Action -->
+                                                    <StackPanel Grid.Row="1" Grid.Column="0" VerticalAlignment="Center">
+                                                        <TextBlock Text="划词扩展" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                        <TextBlock Text="对选中文本执行自定义扩展操作" Style="{StaticResource HintTextStyle}"/>
+                                                    </StackPanel>
+                                                    <TextBox Grid.Row="1" Grid.Column="1" 
+                                                             x:Name="QuickActionHotkeyTextBox" 
+                                                             Text="{Binding Config.QuickActionHotkey, Mode=TwoWay}"
+                                                             Style="{StaticResource KeyRecorderStyle}"
+                                                             Width="140"
+                                                             IsReadOnly="True"
+                                                             Cursor="Hand"
+                                                             VerticalAlignment="Center"
+                                                             PreviewKeyDown="QuickActionHotkeyTextBox_PreviewKeyDown"
+                                                             ToolTip="点击按下按键设置，按 Delete 清除"/>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
                                 </StackPanel>
 
                                 <!-- Tab 6: Launcher -->
@@ -928,70 +719,88 @@
                                         </Style>
                                     </StackPanel.Style>
 
-                                    <Border Style="{StaticResource CardStyle}">
-                                        <StackPanel>
-                                            <TextBlock Text="启动器配置" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,15"/>
-                                            
-                                            <Grid Margin="0,0,0,20">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <StackPanel Grid.Column="0">
-                                                    <TextBlock Text="唤醒快捷键" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBlock Text="全局呼出启动面板" Style="{StaticResource HintTextStyle}"/>
-                                                </StackPanel>
-                                                <TextBox Grid.Column="1" 
-                                                         x:Name="LauncherHotkeyTextBox"
-                                                         Text="{Binding Config.LauncherHotkey, Mode=TwoWay}" 
-                                                         Style="{StaticResource ModernTextBoxStyle}" 
-                                                         Width="140" 
-                                                         HorizontalAlignment="Right"
-                                                         IsReadOnly="True"
-                                                         Cursor="IBeam"
-                                                         PreviewKeyDown="LauncherHotkeyTextBox_PreviewKeyDown"
-                                                         ToolTip="点击按下按键设置，按 Delete 清除"/>
-                                            </Grid>
+                                    <StackPanel Margin="0,0,0,14">
+                                        <!-- Card 1: General -->
+                                        <Border Style="{StaticResource CardStyle}">
+                                            <StackPanel>
+                                                <TextBlock Text="通用" Style="{StaticResource SectionHeaderTextStyle}"/>
+                                                
+                                                <Grid Margin="0,0,0,20">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0">
+                                                        <TextBlock Text="唤醒快捷键" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                        <TextBlock Text="全局呼出启动面板" Style="{StaticResource HintTextStyle}"/>
+                                                    </StackPanel>
+                                                    <TextBox Grid.Column="1" 
+                                                             x:Name="LauncherHotkeyTextBox"
+                                                             Text="{Binding Config.LauncherHotkey, Mode=TwoWay}" 
+                                                             Style="{StaticResource KeyRecorderStyle}" 
+                                                             Width="140" 
+                                                             HorizontalAlignment="Right"
+                                                             IsReadOnly="True"
+                                                             Cursor="Hand"
+                                                             PreviewKeyDown="LauncherHotkeyTextBox_PreviewKeyDown"
+                                                             ToolTip="点击按下按键设置，按 Delete 清除"/>
+                                                </Grid>
 
-                                            <Grid Margin="0,0,0,20">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <StackPanel Grid.Column="0">
-                                                    <TextBlock Text="管理员权限" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBlock Text="以管理员身份运行所有启动项" Style="{StaticResource HintTextStyle}"/>
-                                                </StackPanel>
-                                                <CheckBox Grid.Column="1" IsChecked="{Binding Config.LauncherRunAsAdmin}" Style="{StaticResource ToggleSwitchStyle}" HorizontalAlignment="Right"/>
-                                            </Grid>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0">
+                                                        <TextBlock Text="管理员权限" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                        <TextBlock Text="以管理员身份运行所有启动项" Style="{StaticResource HintTextStyle}"/>
+                                                    </StackPanel>
+                                                    <CheckBox Grid.Column="1" IsChecked="{Binding Config.LauncherRunAsAdmin}" Style="{StaticResource ToggleSwitchStyle}" HorizontalAlignment="Right"/>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
 
-                                            <TextBlock Text="搜索文件夹" Style="{StaticResource FieldLabelTextStyle}" Margin="0,15,0,10"/>
-                                            <TextBlock Text="自动扫描以下文件夹内的快捷方式 (.lnk) 和脚本" Style="{StaticResource HintTextStyle}" Margin="0,0,0,10"/>
+                                        <!-- Card 2: Search Paths -->
+                                        <Border Style="{StaticResource CardStyle}">
+                                            <StackPanel>
+                                                <TextBlock Text="搜索文件夹" Style="{StaticResource SectionHeaderTextStyle}"/>
+                                                <TextBlock Text="自动扫描以下文件夹内的快捷方式 (.lnk) 和脚本" Style="{StaticResource HintTextStyle}" Margin="0,0,0,15"/>
 
-                                            <Border Background="{DynamicResource ShellBackground}" CornerRadius="6" Padding="10" Margin="0,0,0,15">
-                                                <ItemsControl ItemsSource="{Binding Config.LauncherSearchPaths}">
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <Grid Margin="0,0,0,8">
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="*"/>
-                                                                    <ColumnDefinition Width="Auto"/>
-                                                                </Grid.ColumnDefinitions>
-                                                                <TextBlock Text="{Binding}" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                                                                 <Button Command="{Binding DataContext.SettingsVM.RemoveLauncherSearchPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
-                                                                         CommandParameter="{Binding}" 
-                                                                         Content="删除" 
-                                                                         Style="{StaticResource DangerLinkButtonStyle}" 
-                                                                         Margin="10,0,0,0"/>
-                                                            </Grid>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                            </Border>
+                                                <Border Background="{DynamicResource ShellBackground}" CornerRadius="6" Padding="8" Margin="0,0,0,15">
+                                                    <ItemsControl ItemsSource="{Binding Config.LauncherSearchPaths}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Border x:Name="ItemBorder" CornerRadius="4" Padding="10,8" Background="Transparent" Margin="0,0,0,2">
+                                                                    <Grid>
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="*"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <TextBlock Text="{Binding}" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                                         <Button Command="{Binding DataContext.SettingsVM.RemoveLauncherSearchPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                                                 CommandParameter="{Binding}" 
+                                                                                 Content="删除" 
+                                                                                 Style="{StaticResource DangerLinkButtonStyle}" 
+                                                                                 Margin="10,0,0,0"
+                                                                                 Visibility="Hidden" 
+                                                                                 x:Name="DeleteButton"/>
+                                                                    </Grid>
+                                                                </Border>
+                                                                <DataTemplate.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ListItemHoverBackgroundBrush}"/>
+                                                                        <Setter TargetName="DeleteButton" Property="Visibility" Value="Visible"/>
+                                                                    </Trigger>
+                                                                </DataTemplate.Triggers>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </Border>
 
-                                             <Button Command="{Binding SettingsVM.AddLauncherSearchPathCommand}" Content="+ 添加文件夹" Style="{StaticResource TextLinkButtonStyle}" HorizontalAlignment="Left"/>
-                                        </StackPanel>
-                                    </Border>
+                                                 <Button Command="{Binding SettingsVM.AddLauncherSearchPathCommand}" Content="+ 添加文件夹" Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Right"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
                                 </StackPanel>
 
                                 <!-- Tab 1: Automation -->
@@ -1010,7 +819,7 @@
                                         <!-- Coordinate Click Mode Card -->
                                         <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
                                             <StackPanel>
-                                                <TextBlock Text="坐标点击模式" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,10"/>
+                                                <TextBlock Text="坐标点击模式" Style="{StaticResource SectionHeaderTextStyle}"/>
                                                 <TextBlock Text="软件隐藏后，强制点击屏幕上的指定位置来激活输入框。"
                                                            Style="{StaticResource HintTextStyle}" Margin="0,0,0,15" TextWrapping="Wrap"/>
 
@@ -2188,7 +1997,7 @@
 
                                                 <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,8,0,20"/>
 
-                                                <TextBlock Text="腾讯云翻译配置" Style="{StaticResource FieldLabelTextStyle}" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                                                <TextBlock Text="腾讯云翻译配置" Style="{StaticResource SectionHeaderTextStyle}"/>
                                                 
                                                 <StackPanel Margin="0,0,0,12">
                                                     <TextBlock Text="Secret Id" Style="{StaticResource FieldLabelTextStyle}"/>
@@ -2202,7 +2011,7 @@
 
                                                 <Button Content="测试连接" Click="TestTencentCloud_Click" 
                                                         HorizontalAlignment="Left" Margin="0,0,0,16"
-                                                        Style="{StaticResource TextLinkButtonStyle}"/>
+                                                        Style="{StaticResource PrimaryButtonStyle}"/>
 
                                                 <TextBlock Text="配置已保存到主配置中，将在启用腾讯云供应商时生效。" 
                                                            Style="{StaticResource HintTextStyle}" Margin="0,10,0,0"/>
@@ -2214,7 +2023,7 @@
                                     <StackPanel x:Name="ExternalToolsYoudaoTab" Visibility="Collapsed">
                                         <Border Style="{StaticResource CardStyle}">
                                             <StackPanel>
-                                                <TextBlock Text="有道 OCR 配置" Style="{StaticResource FieldLabelTextStyle}" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                                                <TextBlock Text="有道 OCR 配置" Style="{StaticResource SectionHeaderTextStyle}"/>
                                                 
                                                 <StackPanel Margin="0,0,0,12">
                                                     <TextBlock Text="App Key" Style="{StaticResource FieldLabelTextStyle}"/>
@@ -2228,7 +2037,7 @@
 
                                                 <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,8,0,20"/>
 
-                                                <TextBlock Text="有道翻译配置" Style="{StaticResource FieldLabelTextStyle}" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                                                <TextBlock Text="有道翻译配置" Style="{StaticResource SectionHeaderTextStyle}"/>
                                                 
                                                 <StackPanel Margin="0,0,0,12">
                                                     <TextBlock Text="App Key" Style="{StaticResource FieldLabelTextStyle}"/>
@@ -2255,6 +2064,7 @@
                                     <StackPanel x:Name="ExternalToolsGoogleTab" Visibility="Collapsed">
                                         <Border Style="{StaticResource CardStyle}">
                                             <StackPanel>
+                                                <TextBlock Text="Google 翻译配置" Style="{StaticResource SectionHeaderTextStyle}"/>
                                                 <StackPanel Margin="0,0,0,12">
                                                     <TextBlock Text="API Base URL (可选, 支持 Cloudflare 代理)" Style="{StaticResource FieldLabelTextStyle}"/>
                                                     <TextBox x:Name="GoogleBaseUrl" Style="{StaticResource ModernTextBoxStyle}"
@@ -2268,7 +2078,7 @@
 
                                                 <Button Content="测试连接" Click="TestGoogle_Click" 
                                                         HorizontalAlignment="Left" Margin="0,0,0,16"
-                                                        Style="{StaticResource TextLinkButtonStyle}"/>
+                                                        Style="{StaticResource PrimaryButtonStyle}"/>
                                                 
                                                 <TextBlock Text="说明：Google 翻译只需要 API Key，不需要 Secret。" 
                                                            Style="{StaticResource HintTextStyle}" Margin="0,10,0,0"/>
@@ -2282,7 +2092,7 @@
                                     <StackPanel x:Name="ExternalToolsAiTranslateTab" Visibility="Collapsed">
                                         <Border Style="{StaticResource CardStyle}">
                                             <StackPanel>
-                                                <TextBlock Text="AI 辅助翻译设置" Style="{StaticResource FieldLabelTextStyle}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,15"/>
+                                                <TextBlock Text="AI 辅助翻译设置" Style="{StaticResource SectionHeaderTextStyle}"/>
                                                 <TextBlock Text="利用大模型进行高质量的上下文感知翻译。勾选的模型将参与并发竞速。" Style="{StaticResource HintTextStyle}" Margin="0,0,0,20"/>
                                                 
                                                 <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,0,0,20"/>
@@ -2361,31 +2171,7 @@
                                                 <!-- 保存 & 测试 -->
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,10,0,0">
                                                     <TextBlock Text="{Binding TranslationTestStatus}" VerticalAlignment="Center" Margin="0,0,15,0" FontWeight="Bold"/>
-                                                    <Button Content="测试勾选的模型" Command="{Binding TestAiTranslationConnectionCommand}" Width="120" Height="34">
-                                                        <Button.Style>
-                                                            <Style TargetType="Button">
-                                                                <Setter Property="Background" Value="{StaticResource AccentColor}"/>
-                                                                <Setter Property="Foreground" Value="White"/>
-                                                                <Setter Property="Template">
-                                                                    <Setter.Value>
-                                                                        <ControlTemplate TargetType="Button">
-                                                                            <Border Background="{TemplateBinding Background}" CornerRadius="4">
-                                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                            </Border>
-                                                                            <ControlTemplate.Triggers>
-                                                                                <Trigger Property="IsMouseOver" Value="True">
-                                                                                    <Setter Property="Opacity" Value="0.9"/>
-                                                                                </Trigger>
-                                                                                <Trigger Property="IsEnabled" Value="False">
-                                                                                    <Setter Property="Opacity" Value="0.5"/>
-                                                                                </Trigger>
-                                                                            </ControlTemplate.Triggers>
-                                                                        </ControlTemplate>
-                                                                    </Setter.Value>
-                                                                </Setter>
-                                                            </Style>
-                                                        </Button.Style>
-                                                    </Button>
+                                                    <Button Content="测试勾选的模型" Command="{Binding TestAiTranslationConnectionCommand}" Width="150" Height="36" Style="{StaticResource PrimaryButtonStyle}"/>
                                                 </StackPanel>
                                             </StackPanel>
                                         </Border>
