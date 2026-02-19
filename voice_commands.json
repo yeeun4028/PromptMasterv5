@@ -1,4 +1,5 @@
 {
-    "打开浏览器": "calc.exe",
-    "关机": "shutdown -s -t 0"
+    "打开计算器": "calc.exe",
+    "打开记事本": "notepad.exe",
+    "清理文件": "D:\\Program Files\\PromptMasterv5\\脚本"
 }

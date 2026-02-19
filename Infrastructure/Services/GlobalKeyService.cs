@@ -92,6 +92,20 @@ namespace PromptMasterv5.Infrastructure.Services
                 else if (Enum.TryParse<Keys>(p, true, out var k)) key = k;
             }
             enabled = key != Keys.None;
+
+            // Safety: if the key is a regular key (not F1-F12, etc.) and no modifier is required,
+            // disable the hotkey to prevent intercepting normal typing.
+            if (enabled && !needCtrl && !needAlt && !needShift && !needWin)
+            {
+                bool isFunctionKey = key >= Keys.F1 && key <= Keys.F24;
+                if (!isFunctionKey)
+                {
+                    enabled = false;
+                    LoggerService.Instance.LogWarning(
+                        $"Hotkey '{hotkeyStr}' disabled: regular keys require at least one modifier (Ctrl/Alt/Shift/Win)",
+                        "GlobalKeyService.ParseHotkey");
+                }
+            }
         }
 
         private bool CheckModifiers(bool needCtrl, bool needAlt, bool needShift, bool needWin)

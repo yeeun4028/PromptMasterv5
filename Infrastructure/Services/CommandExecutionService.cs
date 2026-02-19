@@ -73,12 +73,28 @@ namespace PromptMasterv5.Infrastructure.Services
         {
             try
             {
-                // If command looks like a file path or URL, start it
-                Process.Start(new ProcessStartInfo
+                ProcessStartInfo psi;
+
+                if (command.EndsWith(".ps1", StringComparison.OrdinalIgnoreCase))
                 {
-                    FileName = command,
-                    UseShellExecute = true
-                });
+                    // PowerShell scripts need to be launched via powershell.exe
+                    psi = new ProcessStartInfo
+                    {
+                        FileName = "powershell.exe",
+                        Arguments = $"-ExecutionPolicy Bypass -File \"{command}\"",
+                        UseShellExecute = false
+                    };
+                }
+                else
+                {
+                    psi = new ProcessStartInfo
+                    {
+                        FileName = command,
+                        UseShellExecute = true
+                    };
+                }
+
+                Process.Start(psi);
                 LoggerService.Instance.LogInfo($"Executed voice command: {command}", "CommandExecutionService.ExecuteProcess");
                 return true;
             }
