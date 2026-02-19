@@ -63,7 +63,8 @@ namespace PromptMasterv5.ViewModels
 
             try
             {
-                var text = await _voiceService.StopRecordingAndTranscribeAsync();
+                var hotwords = _commandExecutionService.GetCommandKeys();
+                var text = await _voiceService.StopRecordingAndTranscribeAsync(hotwords);
                 
                 if (string.IsNullOrWhiteSpace(text))
                 {

@@ -14,11 +14,19 @@ namespace PromptMasterv5.Infrastructure.Services
         private readonly ISettingsService _settingsService;
         private Dictionary<string, string> _commands = new();
 
+        // Max edit distance allowed for fuzzy matching (per character ratio)
+        private const double MaxEditDistanceRatio = 0.4; // Allow up to 40% character difference
+
         public CommandExecutionService(ISettingsService settingsService)
         {
             _settingsService = settingsService;
             LoadCommands();
         }
+
+        /// <summary>
+        /// Returns all command keys for hotword generation.
+        /// </summary>
+        public IReadOnlyList<string> GetCommandKeys() => _commands.Keys.ToList();
 
         public void LoadCommands()
         {
@@ -46,7 +54,6 @@ namespace PromptMasterv5.Infrastructure.Services
         {
             if (string.IsNullOrWhiteSpace(text)) return false;
 
-            // Normalize text: remove punctuation, lower case
             var normalizedText = NormalizeText(text);
 
             LoggerService.Instance.LogInfo($"Processing voice command: '{text}' -> '{normalizedText}'", "CommandExecutionService.ExecuteCommand");
@@ -54,18 +61,43 @@ namespace PromptMasterv5.Infrastructure.Services
             // 1. Exact match
             if (_commands.TryGetValue(normalizedText, out var command))
             {
+                LoggerService.Instance.LogInfo($"Exact match: '{normalizedText}'", "CommandExecutionService.ExecuteCommand");
                 return ExecuteProcess(command);
             }
 
-            // 2. Fuzzy match / Contains
-            // Find the best match where the command key is contained in the spoken text or vice versa.
-            // For simple implementation, check if spoken text contains the key
-            var match = _commands.Keys.FirstOrDefault(k => normalizedText.Contains(NormalizeText(k)));
-            if (match != null)
+            // 2. Contains match
+            var containsMatch = _commands.Keys.FirstOrDefault(k => normalizedText.Contains(NormalizeText(k)));
+            if (containsMatch != null)
             {
-                return ExecuteProcess(_commands[match]);
+                LoggerService.Instance.LogInfo($"Contains match: '{containsMatch}'", "CommandExecutionService.ExecuteCommand");
+                return ExecuteProcess(_commands[containsMatch]);
             }
 
+            // 3. Levenshtein fuzzy match
+            string? bestKey = null;
+            int bestDistance = int.MaxValue;
+
+            foreach (var key in _commands.Keys)
+            {
+                var normalizedKey = NormalizeText(key);
+                int distance = LevenshteinDistance(normalizedText, normalizedKey);
+                int maxLen = Math.Max(normalizedText.Length, normalizedKey.Length);
+                double ratio = maxLen > 0 ? (double)distance / maxLen : 1.0;
+
+                if (ratio <= MaxEditDistanceRatio && distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    bestKey = key;
+                }
+            }
+
+            if (bestKey != null)
+            {
+                LoggerService.Instance.LogInfo($"Fuzzy match: '{normalizedText}' -> '{bestKey}' (distance={bestDistance})", "CommandExecutionService.ExecuteCommand");
+                return ExecuteProcess(_commands[bestKey]);
+            }
+
+            LoggerService.Instance.LogInfo($"No match found for: '{normalizedText}'", "CommandExecutionService.ExecuteCommand");
             return false;
         }
 
@@ -77,7 +109,6 @@ namespace PromptMasterv5.Infrastructure.Services
 
                 if (command.EndsWith(".ps1", StringComparison.OrdinalIgnoreCase))
                 {
-                    // PowerShell scripts need to be launched via powershell.exe
                     psi = new ProcessStartInfo
                     {
                         FileName = "powershell.exe",
@@ -109,6 +140,32 @@ namespace PromptMasterv5.Infrastructure.Services
         {
             if (string.IsNullOrEmpty(input)) return "";
             return new string(input.Where(c => !char.IsPunctuation(c)).ToArray()).ToLowerInvariant().Trim();
+        }
+
+        /// <summary>
+        /// Compute the Levenshtein edit distance between two strings.
+        /// </summary>
+        private static int LevenshteinDistance(string s, string t)
+        {
+            int n = s.Length, m = t.Length;
+            if (n == 0) return m;
+            if (m == 0) return n;
+
+            var d = new int[n + 1, m + 1];
+            for (int i = 0; i <= n; i++) d[i, 0] = i;
+            for (int j = 0; j <= m; j++) d[0, j] = j;
+
+            for (int i = 1; i <= n; i++)
+            {
+                for (int j = 1; j <= m; j++)
+                {
+                    int cost = s[i - 1] == t[j - 1] ? 0 : 1;
+                    d[i, j] = Math.Min(
+                        Math.Min(d[i - 1, j] + 1, d[i, j - 1] + 1),
+                        d[i - 1, j - 1] + cost);
+                }
+            }
+            return d[n, m];
         }
     }
 }

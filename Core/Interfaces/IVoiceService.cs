@@ -11,7 +11,7 @@ namespace PromptMasterv5.Core.Interfaces
         event EventHandler OnRecordingStopped;
 
         void StartRecording();
-        Task<string> StopRecordingAndTranscribeAsync();
+        Task<string> StopRecordingAndTranscribeAsync(IReadOnlyList<string>? hotwords = null);
         void CancelRecording();
         
         // Configuration updates

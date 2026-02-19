@@ -105,7 +105,7 @@ namespace PromptMasterv5.Infrastructure.Services
             OnRecordingStopped?.Invoke(this, EventArgs.Empty);
         }
 
-        public async Task<string> StopRecordingAndTranscribeAsync()
+        public async Task<string> StopRecordingAndTranscribeAsync(IReadOnlyList<string>? hotwords = null)
         {
             if (!_isRecording && string.IsNullOrEmpty(_tempFilePath)) return string.Empty;
 
@@ -123,7 +123,7 @@ namespace PromptMasterv5.Infrastructure.Services
                 if (!File.Exists(_tempFilePath)) return string.Empty;
 
                 // Send to API
-                return await TranscribeFileAsync(_tempFilePath);
+                return await TranscribeFileAsync(_tempFilePath, hotwords);
 
             }
             catch (Exception ex)
@@ -158,7 +158,7 @@ namespace PromptMasterv5.Infrastructure.Services
             _tempFilePath = "";
         }
 
-            private async Task<string> TranscribeFileAsync(string filePath)
+            private async Task<string> TranscribeFileAsync(string filePath, IReadOnlyList<string>? hotwords = null)
         {
             try
             {
@@ -205,6 +205,15 @@ namespace PromptMasterv5.Infrastructure.Services
                 fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("audio/wav");
                 form.Add(fileContent, "file", "audio.wav");
                 form.Add(new StringContent(model), "model");
+
+                // Add FunASR-style hotwords if available
+                if (hotwords != null && hotwords.Count > 0)
+                {
+                    // FunASR format: "词1 权重 词2 权重 ..." (default weight 20)
+                    var hotwordStr = string.Join(" ", hotwords.Select(w => $"{w} 20"));
+                    form.Add(new StringContent(hotwordStr), "hotword");
+                    LoggerService.Instance.LogInfo($"Sending hotwords: {hotwordStr}", "VoiceService.TranscribeFileAsync");
+                }
 
                 request.Content = form;
 
