@@ -160,5 +160,22 @@ namespace PromptMasterv5.Core.Models
         private bool enableDoubleEnterSend = true;
 
         public string RemoteFolderName { get; set; } = "PromptMaster";
+
+        // ★★★ 新增：语音控制 (Voice Control) 配置 ★★★
+        [ObservableProperty]
+        private string voiceApiBaseUrl = "https://api.openai.com/v1";
+
+        [ObservableProperty]
+        [property: JsonConverter(typeof(JsonEncryptedStringConverter))]
+        private string voiceApiKey = "";
+
+        [ObservableProperty]
+        private string voiceApiModel = "whisper-1";
+
+        [ObservableProperty]
+        private string voiceTriggerHotkey = "F1+T";
+
+        [ObservableProperty]
+        private string voiceCommandConfigPath = "voice_commands.json";
     }
 }

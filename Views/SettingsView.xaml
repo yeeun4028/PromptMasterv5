@@ -671,6 +671,23 @@
                                 </StackPanel>
                             </Button>
 
+                            <Button Command="{Binding SelectSettingsTabCommand}" CommandParameter="7">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource ModernTabBtnStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedSettingsTab}" Value="7">
+                                                <Setter Property="Tag" Value="Selected"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <StackPanel Orientation="Horizontal">
+                                    <Viewbox Width="16" Height="16" Margin="0,1,12,1">
+                                        <TextBlock Text="🎙️" FontSize="14" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                    </Viewbox>
+                                    <TextBlock Text="语音控制" FontSize="14" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
 
                             <Button Command="{Binding SelectSettingsTabCommand}" CommandParameter="6">
                                 <Button.Style>
@@ -2195,7 +2212,7 @@
                                                    FontStyle="Italic"
                                                    Margin="0,-10,0,20">
                                             <TextBlock.Style>
-                                                <Style TargetType="TextBlock" BasedOn="{StaticResource HintTextStyle}">
+                                                <Style TargetType="{x:Type TextBlock}">
                                                     <Setter Property="Visibility" Value="Collapsed"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding Config.SavedModels.Count}" Value="0">
@@ -2205,6 +2222,7 @@
                                                 </Style>
                                             </TextBlock.Style>
                                         </TextBlock>
+
 
                                         <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,0,0,20"/>
 
@@ -2250,6 +2268,80 @@
                                         </StackPanel>
                                     </StackPanel>
 
+
+                                </StackPanel>
+
+                                <!-- Tab 7: Voice Control -->
+                                <StackPanel>
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel" BasedOn="{StaticResource FadeInContentStyle}">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedSettingsTab}" Value="7">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+
+                                    <TextBlock Text="语音控制配置 (Voice Control)" 
+                                               Style="{StaticResource FieldLabelTextStyle}" 
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,0,15"/>
+
+                                    <!-- API Configuration -->
+                                    <TextBlock Text="API 设置 (OpenAI Compatible)" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,12"/>
+                                    
+                                    <StackPanel Margin="0,0,0,12">
+                                        <TextBlock Text="API Base URL" Style="{StaticResource FieldLabelTextStyle}"/>
+                                        <TextBox Text="{Binding Config.VoiceApiBaseUrl}" Style="{StaticResource ModernTextBoxStyle}"
+                                                 ToolTip="例如: https://api.openai.com/v1"/>
+                                    </StackPanel>
+
+                                    <StackPanel Margin="0,0,0,12">
+                                        <TextBlock Text="API Key" Style="{StaticResource FieldLabelTextStyle}"/>
+                                        <TextBox Text="{Binding Config.VoiceApiKey}" Style="{StaticResource ApiKeyTextBoxStyle}"/>
+                                    </StackPanel>
+
+                                    <StackPanel Margin="0,0,0,12">
+                                        <TextBlock Text="Model Name (STT)" Style="{StaticResource FieldLabelTextStyle}"/>
+                                        <TextBox Text="{Binding Config.VoiceApiModel}" Style="{StaticResource ModernTextBoxStyle}"
+                                                 ToolTip="例如: whisper-1"/>
+                                    </StackPanel>
+
+                                    <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,8,0,20"/>
+
+                                    <!-- Trigger Configuration -->
+                                    <TextBlock Text="触发设置" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,12"/>
+
+                                    <StackPanel Margin="0,0,0,20">
+                                        <TextBlock Text="语音控制快捷键" Style="{StaticResource FieldLabelTextStyle}"/>
+                                        <TextBox Text="{Binding Config.VoiceTriggerHotkey}" 
+                                                 Style="{StaticResource ModernTextBoxStyle}"
+                                                 Width="140"
+                                                 HorizontalAlignment="Left"
+                                                 IsReadOnly="True"
+                                                 Cursor="IBeam"
+                                                 PreviewKeyDown="VoiceTriggerHotkeyTextBox_PreviewKeyDown"
+                                                 ToolTip="点击按下按键设置，按 Delete 清除"/>
+                                    </StackPanel>
+
+                                    <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,8,0,20"/>
+
+                                    <!-- Commands Configuration -->
+                                    <TextBlock Text="指令配置" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,12"/>
+
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                        <Button Content="打开指令配置文件 (voice_commands.json)"
+                                                Command="{Binding SettingsVM.OpenVoiceCommandsConfigCommand}"
+                                                Style="{StaticResource TextLinkButtonStyle}"/>
+                                    </StackPanel>
+                                    
+                                    <TextBlock Text="在配置文件中添加 '指令词': '程序路径' 的映射。例如：&quot;打开计算器&quot;: &quot;calc.exe&quot;" 
+                                               Style="{StaticResource HintTextStyle}" 
+                                               Margin="0,5,0,0"
+                                               TextWrapping="Wrap"/>
 
                                 </StackPanel>
                             </Grid>

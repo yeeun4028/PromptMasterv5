@@ -45,6 +45,21 @@ namespace PromptMasterv5.Infrastructure.Services
         private bool _quickActionNeedWin = false;
         private bool _quickActionEnabled = true;
 
+        // Configurable voice hotkey
+        private Keys _voiceKey = Keys.T;
+        private bool _voiceNeedAlt = false;
+        private bool _voiceNeedCtrl = false;
+        private bool _voiceNeedShift = false;
+        private bool _voiceNeedWin = false;
+        private bool _voiceEnabled = false;
+
+        public event EventHandler? OnVoiceControlTriggered;
+
+        public void UpdateVoiceHotkey(string hotkeyStr)
+        {
+            ParseHotkey(hotkeyStr, out _voiceKey, out _voiceNeedCtrl, out _voiceNeedAlt, out _voiceNeedShift, out _voiceNeedWin, out _voiceEnabled);
+        }
+
         public string LauncherHotkeyString
         {
             set => ParseHotkey(value, out _launcherKey, out _launcherNeedCtrl, out _launcherNeedAlt, out _launcherNeedShift, out _launcherNeedWin, out _launcherEnabled);
@@ -150,6 +165,24 @@ namespace PromptMasterv5.Infrastructure.Services
                 _shiftPressed = false;
             if (e.KeyCode == Keys.LWin || e.KeyCode == Keys.RWin)
                 _winPressed = false;
+
+            // Voice Control Hotkey Trigger (On KeyUp to avoid repeated triggers while holding)
+            if (_voiceEnabled && e.KeyCode == _voiceKey)
+            {
+                // Check if modifiers match what we expect.
+                // Note: On KeyUp, the modifier key itself might be the one lifting up if it's part of the combo,
+                // or if it's a simple key (like F8), modifiers should match.
+                // If the hotkey is strictly "Ctrl+Space", and user lifts "Space", Ctrl is still down -> Match.
+                // If user lifts "Ctrl", then e.KeyCode is ControlKey, not Space.
+                // So this logic works for non-modifier keys being the trigger.
+                
+                if (CheckModifiers(_voiceNeedCtrl, _voiceNeedAlt, _voiceNeedShift, _voiceNeedWin))
+                {
+                    OnVoiceControlTriggered?.Invoke(this, EventArgs.Empty);
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                }
+            }
 
             if (e.KeyCode == Keys.LControlKey || e.KeyCode == Keys.RControlKey || e.KeyCode == Keys.ControlKey)
             {

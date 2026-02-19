@@ -66,6 +66,11 @@ namespace PromptMasterv5
                 MainWindow = _serviceProvider.GetRequiredService<MainWindow>();
                 MainWindow.Show();
                 
+                // Initialize Voice Hotkey
+                var keyService = _serviceProvider.GetRequiredService<GlobalKeyService>();
+                var settingsService = _serviceProvider.GetRequiredService<ISettingsService>();
+                keyService.UpdateVoiceHotkey(settingsService.Config.VoiceTriggerHotkey);
+
                 LoggerService.Instance.LogInfo("Application started successfully.", "App.OnStartup");
             }
             catch (Exception ex)
@@ -159,6 +164,11 @@ namespace PromptMasterv5
             services.AddHttpClient<BaiduService>();
             services.AddHttpClient<GoogleService>();
             services.AddHttpClient<TencentService>();
+
+            // Voice Control Services
+            services.AddSingleton<IVoiceService, VoiceService>();
+            services.AddSingleton<ICommandExecutionService, CommandExecutionService>();
+            services.AddTransient<VoiceControlViewModel>();
             
             // 全局划词助手服务
             services.AddSingleton<WindowPositionService>();

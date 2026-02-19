@@ -439,6 +439,59 @@ namespace PromptMasterv5.ViewModels
 
         #endregion
 
+        #region Commands - Voice Control
+
+        [RelayCommand]
+        private void OpenVoiceCommandsConfig()
+        {
+            try
+            {
+                // Ensure the file exists
+                string configPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Config.VoiceCommandConfigPath);
+                if (!System.IO.File.Exists(configPath))
+                {
+                    // Create default file if not exists (although AppConfig should handle it, double check)
+                    System.IO.File.WriteAllText(configPath, 
+                        "{\n  \"打开计算器\": \"calc.exe\",\n  \"打开记事本\": \"notepad.exe\"\n}");
+                }
+
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = configPath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"无法打开配置文件: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                LoggerService.Instance.LogException(ex, "Failed to open voice command config", "SettingsViewModel.OpenVoiceCommandsConfig");
+            }
+        }
+        
+        public void UpdateVoiceTriggerHotkey()
+        {
+            try
+            {
+                 // Re-register hotkey in GlobalKeyService via MainViewModel or direct service access if available
+                 // For now, we just save config, GlobalKeyService should listen to config changes or be manually updated
+                 // Since we don't have direct access to GlobalKeyService's registration method from here easily without exposing it,
+                 // we rely on the fact that GlobalKeyService might reload on config save or we need to add a method there.
+                 // Actually we have _keyService injected. Let's use it if possible, or just save config.
+                 // In the plan, we said GlobalKeyService would use AppConfig.
+                 
+                _settingsService.SaveConfig();
+                
+                 // Trigger re-registration in GlobalKeyService
+                 _keyService.UpdateVoiceHotkey(Config.VoiceTriggerHotkey);
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Instance.LogException(ex, "Failed to update voice trigger hotkey", "SettingsViewModel.UpdateVoiceTriggerHotkey");
+            }
+        }
+
+        #endregion
+
         #region Commands - Sync & Restore
 
         [RelayCommand]

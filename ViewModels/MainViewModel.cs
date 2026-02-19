@@ -260,6 +260,7 @@ public partial class MainViewModel : ObservableObject
         });
         _keyService.OnQuickActionTriggered += async (_, __) => await HandleQuickActionTriggered();
         _keyService.OnLauncherTriggered += (_, __) => HandleLauncherTriggered();
+        _keyService.OnVoiceControlTriggered += (_, __) => HandleVoiceControlTriggered();
         // Initialize hotkeys from config before starting
         _keyService.LauncherHotkeyString = Config.LauncherHotkey;
         _keyService.QuickActionHotkeyString = Config.QuickActionHotkey;
@@ -353,6 +354,43 @@ public partial class MainViewModel : ObservableObject
 
         SyncMiniPinnedPrompts();
         IsDirty = false; // Initial load is consistent with source
+    }
+
+    private void HandleVoiceControlTriggered()
+    {
+        Application.Current.Dispatcher.Invoke(async () =>
+        {
+            try
+            {
+                // Check if already open
+                var existing = Application.Current.Windows.OfType<Views.VoiceControlWindow>().FirstOrDefault();
+                if (existing != null)
+                {
+                    existing.Activate();
+                    var vm = existing.DataContext as VoiceControlViewModel;
+                    if (vm != null && vm.IsListening)
+                    {
+                        vm.Cancel();
+                        return;
+                    }
+                    existing.Close();
+                    return;
+                }
+
+                var app = Application.Current as App;
+                if (app != null)
+                {
+                    var vm = app.ServiceProvider.GetRequiredService<VoiceControlViewModel>();
+                    var window = new Views.VoiceControlWindow(vm);
+                    window.Show();
+                    await vm.StartSession();
+                }
+            }
+            catch (Exception ex)
+            {
+                Infrastructure.Services.LoggerService.Instance.LogException(ex, "Failed to start voice control", "MainViewModel.HandleVoiceControlTriggered");
+            }
+        });
     }
 
     public void UpdateFilesViewFilter()
