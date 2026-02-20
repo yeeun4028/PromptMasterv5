@@ -248,6 +248,9 @@
             <MenuItem Header="配置中心" 
                       Style="{StaticResource TrayMenuItemStyle}"
                       Command="{Binding OpenSettingsCommand}"/>
+            <MenuItem Header="打开Claude" 
+                      Style="{StaticResource TrayMenuItemStyle}"
+                      Click="Tray_OpenClaude_Click"/>
             <MenuItem Header="退出" 
                       Style="{StaticResource TrayMenuItemStyle}"
                       Click="Tray_Exit_Click"/>
