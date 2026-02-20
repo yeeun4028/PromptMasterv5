@@ -12,7 +12,20 @@ namespace PromptMasterv5.Infrastructure.Services
     {
         public async Task<byte[]?> ShowCaptureWindowAsync(Func<byte[], System.Windows.Rect, Task>? onCaptureProcessing = null)
         {
-            // 0. Cleanup: Close any existing TranslationPopup windows to prevent "ghost windows" in screenshot
+            // 1. Capture screen instantly before any UI thread manipulation or window closing
+            // This is the "Static Screen Freeze" approach. It prevents tooltips from hiding when focus changes.
+            Bitmap? screenBmp = null;
+            try 
+            {
+                screenBmp = Helpers.ScreenCaptureHelper.CaptureFullScreen();
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Instance.LogError($"Failed to capture screen instantly: {ex.Message}", "WindowManager");
+                return null;
+            }
+
+            // 2. Cleanup: Close any existing TranslationPopup windows AFTER capture
             bool anyClosed = await Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 var existingPopups = new System.Collections.Generic.List<Window>();
@@ -42,23 +55,18 @@ namespace PromptMasterv5.Infrastructure.Services
                 return existingPopups.Count > 0;
             });
 
-            if (anyClosed)
-            {
-                // Give UI time to repaint background (remove the closed window from screen buffer)
-                await Task.Delay(150);
-            }
-
-            // 1. Capture screen cleanly (after cleanup)
-            // Note: Use a helper that uses System.Drawing so we don't block UI thread logic excessively
-            using var screenBmp = Helpers.ScreenCaptureHelper.CaptureFullScreen();
-
-            // 2. Show Overlay on UI thread
+            // 3. Show Overlay on UI thread using the static background image
             return await Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 var capture = new ScreenCaptureOverlay(screenBmp, onCaptureProcessing);
                 if (capture.ShowDialog() == true)
                 {
+                    // Memory of screenBmp is managed inside ScreenCaptureOverlay
                     return capture.CapturedImageBytes;
+                }
+                else
+                {
+                    screenBmp?.Dispose();
                 }
                 return null;
             });

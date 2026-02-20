@@ -3,18 +3,19 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Select Region" 
         WindowStyle="None" 
-        AllowsTransparency="True" 
-        Background="Transparent"
+        AllowsTransparency="False" 
+        Background="Black"
         Topmost="True"
         ShowInTaskbar="False"
-        WindowState="Maximized"
+        WindowState="Normal"
         ResizeMode="NoResize"
         Cursor="None"
         MouseRightButtonUp="Window_MouseRightButtonUp">
     
     <Grid>
-        <!-- Semi-transparent overlay (technically almost transparent to keep hit-test visible) -->
-        <Rectangle x:Name="DimOverlay" Fill="#01000000"/>
+        <!-- The window background will be set to the screen image brush. -->
+        <!-- We use a slightly dimmed semi-transparent overlay on top of the image brush to highlight the selection. -->
+        <Rectangle x:Name="DimOverlay" Fill="#60000000" IsHitTestVisible="False"/>
         
         <!-- Selection rectangle (drawn dynamically) -->
         <Canvas x:Name="SelectionCanvas" Background="Transparent"

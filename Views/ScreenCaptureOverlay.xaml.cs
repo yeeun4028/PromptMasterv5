@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using PromptMasterv5.Infrastructure.Services;
 
@@ -14,6 +15,8 @@ namespace PromptMasterv5.Views
 {
     public partial class ScreenCaptureOverlay : Window
     {
+        [DllImport("gdi32.dll")]
+        public static extern bool DeleteObject(IntPtr hObject);
         private System.Windows.Point _startPoint;
         private bool _isSelecting;
         private Bitmap? _screenBitmap;
@@ -29,8 +32,11 @@ namespace PromptMasterv5.Views
             
             if (capturedScreen != null)
             {
-                // Clone the bitmap so we own this instance
+                // Clone the bitmap so we own this instance (used for physical cropping later)
                 _screenBitmap = new Bitmap(capturedScreen);
+                
+                // Set the Window Background to the captured static screen
+                SetBackgroundFromBitmap(_screenBitmap);
             }
 
             Loaded += ScreenCaptureOverlay_Loaded;
@@ -46,6 +52,12 @@ namespace PromptMasterv5.Views
 
         private void ScreenCaptureOverlay_Loaded(object sender, RoutedEventArgs e)
         {
+            // Span the entire virtual screen (all monitors) in logical WPF units
+            this.Left = SystemParameters.VirtualScreenLeft;
+            this.Top = SystemParameters.VirtualScreenTop;
+            this.Width = SystemParameters.VirtualScreenWidth;
+            this.Height = SystemParameters.VirtualScreenHeight;
+
             // Ensure we are active and focused
             this.Activate();
             this.Focus();
@@ -64,21 +76,54 @@ namespace PromptMasterv5.Views
         {
             try
             {
-                // Get virtual screen bounds (all monitors)
-                int left = (int)SystemParameters.VirtualScreenLeft;
-                int top = (int)SystemParameters.VirtualScreenTop;
-                int width = (int)SystemParameters.VirtualScreenWidth;
-                int height = (int)SystemParameters.VirtualScreenHeight;
+                // Get physical screen bounds
+                int minX = 0, minY = 0, maxX = 0, maxY = 0;
+                foreach (var screen in System.Windows.Forms.Screen.AllScreens)
+                {
+                    if (screen.Bounds.X < minX) minX = screen.Bounds.X;
+                    if (screen.Bounds.Y < minY) minY = screen.Bounds.Y;
+                    if (screen.Bounds.Right > maxX) maxX = screen.Bounds.Right;
+                    if (screen.Bounds.Bottom > maxY) maxY = screen.Bounds.Bottom;
+                }
+                
+                int width = maxX - minX;
+                int height = maxY - minY;
 
-                _screenBitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+                _screenBitmap = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
                 using (var g = Graphics.FromImage(_screenBitmap))
                 {
-                    g.CopyFromScreen(left, top, 0, 0, new System.Drawing.Size(width, height));
+                    g.CopyFromScreen(minX, minY, 0, 0, new System.Drawing.Size(width, height));
                 }
+                
+                SetBackgroundFromBitmap(_screenBitmap);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Screen capture error: {ex.Message}");
+            }
+        }
+
+        private void SetBackgroundFromBitmap(Bitmap bmp)
+        {
+            IntPtr hBitmap = bmp.GetHbitmap();
+            try
+            {
+                var bitmapSource = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
+                    hBitmap,
+                    IntPtr.Zero,
+                    Int32Rect.Empty,
+                    BitmapSizeOptions.FromEmptyOptions());
+
+                this.Background = new ImageBrush(bitmapSource)
+                {
+                    Stretch = Stretch.Fill, // Use Fill to map the physical image boundaries exactly to the logical window boundaries
+                    AlignmentX = AlignmentX.Left,
+                    AlignmentY = AlignmentY.Top
+                };
+            }
+            finally
+            {
+                DeleteObject(hBitmap);
             }
         }
 
@@ -219,7 +264,7 @@ namespace PromptMasterv5.Views
                     int screenLeft = (int)SystemParameters.VirtualScreenLeft;
                     int screenTop = (int)SystemParameters.VirtualScreenTop;
 
-                    using var bmp = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+                    using var bmp = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
                     using (var g = Graphics.FromImage(bmp))
                     {
                         g.CopyFromScreen(screenLeft + x, screenTop + y, 0, 0, new System.Drawing.Size(width, height));
@@ -260,7 +305,7 @@ namespace PromptMasterv5.Views
                     return;
                 }
 
-                using var croppedBmp = new Bitmap(physWidth, physHeight, PixelFormat.Format32bppArgb);
+                using var croppedBmp = new Bitmap(physWidth, physHeight, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
                 using (var g = Graphics.FromImage(croppedBmp))
                 {
                     g.DrawImage(_screenBitmap, 
