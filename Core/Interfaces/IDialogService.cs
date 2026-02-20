@@ -9,5 +9,6 @@ namespace PromptMasterv5.Core.Interfaces
         string[]? ShowOpenFilesDialog(string filter);
         string? ShowSaveFileDialog(string filter, string defaultName);
         string? ShowFolderBrowserDialog(string description = "");
+        bool ShowOcrNotConfiguredDialog();
     }
 }

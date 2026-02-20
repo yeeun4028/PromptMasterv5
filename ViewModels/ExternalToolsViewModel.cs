@@ -119,7 +119,14 @@ namespace PromptMasterv5.ViewModels
                 var enabledProfiles = OcrProfiles.Where(p => p.IsEnabled).ToList();
                 if (enabledProfiles.Count == 0)
                 {
-                    _dialogService.ShowAlert("请先在设置中勾选至少一个 OCR 服务商。", "未配置 OCR");
+                    if (_dialogService.ShowOcrNotConfiguredDialog())
+                    {
+                        if (_mainViewModel != null)
+                        {
+                            _mainViewModel.OpenSettingsCommand.Execute(null);
+                            _mainViewModel.SelectSettingsTabCommand.Execute("2");
+                        }
+                    }
                     return;
                 }
 
@@ -172,14 +179,16 @@ namespace PromptMasterv5.ViewModels
 
                 if (!useVisionTranslate)
                 {
-                    if (enabledOcrProfiles.Count == 0)
+                    if (enabledOcrProfiles.Count == 0 || enabledTransProfiles.Count == 0)
                     {
-                        _dialogService.ShowAlert("请先在设置中勾选至少一个 OCR 服务商，或者启用 AI 截图翻译模型。", "未配置");
-                        return;
-                    }
-                    if (enabledTransProfiles.Count == 0)
-                    {
-                        _dialogService.ShowAlert("请先在设置中勾选至少一个翻译服务商，或者启用 AI 截图翻译模型。", "未配置");
+                        if (_dialogService.ShowOcrNotConfiguredDialog())
+                        {
+                            if (_mainViewModel != null)
+                            {
+                                _mainViewModel.OpenSettingsCommand.Execute(null);
+                                _mainViewModel.SelectSettingsTabCommand.Execute("2");
+                            }
+                        }
                         return;
                     }
                 }
@@ -307,7 +316,14 @@ namespace PromptMasterv5.ViewModels
 
                 if (enabledTransProfiles.Count == 0)
                 {
-                    _dialogService.ShowAlert("请先在设置中勾选至少一个翻译服务商。", "未配置翻译");
+                    if (_dialogService.ShowOcrNotConfiguredDialog())
+                    {
+                        if (_mainViewModel != null)
+                        {
+                            _mainViewModel.OpenSettingsCommand.Execute(null);
+                            _mainViewModel.SelectSettingsTabCommand.Execute("2");
+                        }
+                    }
                     return;
                 }
 

@@ -93,5 +93,11 @@ namespace PromptMasterv5.Infrastructure.Services
             }
             return null;
         }
+
+        public bool ShowOcrNotConfiguredDialog()
+        {
+            var dialog = new PromptMasterv5.Views.Dialogs.OcrNotConfiguredDialog();
+            return dialog.ShowDialog() == true;
+        }
     }
 }
