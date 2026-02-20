@@ -75,6 +75,8 @@ namespace PromptMasterv5
         private DateTime _suppressMiniAutoShowUntilUtc = DateTime.MinValue;
         private string _suppressMiniAutoShowUrl = "";
 
+        public bool SuppressAutoActivation { get; set; }
+
         private double GetMiniDefaultWidth()
         {
             if (ViewModel == null) return 500;
@@ -712,6 +714,8 @@ namespace PromptMasterv5
 
         private void Window_Activated(object sender, EventArgs e)
         {
+            if (SuppressAutoActivation) return;
+
             // 1. 窗口被激活（唤醒）时，取消任何待执行的隐藏操作
             StopHideTimer();
 

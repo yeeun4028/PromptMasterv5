@@ -58,17 +58,47 @@ namespace PromptMasterv5.Infrastructure.Services
             // 3. Show Overlay on UI thread using the static background image
             return await Application.Current.Dispatcher.InvokeAsync(() =>
             {
+                var mainWin = Application.Current.MainWindow as MainWindow;
+                if (mainWin != null) mainWin.SuppressAutoActivation = true;
+
+                IntPtr previousHwnd = NativeMethods.GetForegroundWindow();
+
                 var capture = new ScreenCaptureOverlay(screenBmp, onCaptureProcessing);
-                if (capture.ShowDialog() == true)
+                
+                byte[]? result = null;
+                try
                 {
-                    // Memory of screenBmp is managed inside ScreenCaptureOverlay
-                    return capture.CapturedImageBytes;
+                    if (capture.ShowDialog() == true)
+                    {
+                        result = capture.CapturedImageBytes;
+                    }
                 }
-                else
+                finally
                 {
-                    screenBmp?.Dispose();
+                    if (result == null)
+                    {
+                        screenBmp?.Dispose();
+                    }
+
+                    if (previousHwnd != IntPtr.Zero)
+                    {
+                        var currentMainHwnd = new System.Windows.Interop.WindowInteropHelper(Application.Current.MainWindow).Handle;
+                        if (previousHwnd != currentMainHwnd)
+                        {
+                            NativeMethods.SetForegroundWindow(previousHwnd);
+                        }
+                    }
+
+                    if (mainWin != null)
+                    {
+                        // Slight delay to ensure the OS activation event has passed
+                        Application.Current.Dispatcher.BeginInvoke(new Action(() => 
+                        {
+                            mainWin.SuppressAutoActivation = false;
+                        }), System.Windows.Threading.DispatcherPriority.Background);
+                    }
                 }
-                return null;
+                return result;
             });
         }
 
