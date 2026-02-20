@@ -659,17 +659,41 @@ namespace PromptMasterv5.Views
                 return;
             }
 
-            if (key == Key.LeftCtrl || key == Key.RightCtrl || key == Key.LeftAlt || key == Key.RightAlt || 
-                key == Key.LeftShift || key == Key.RightShift || key == Key.LWin || key == Key.RWin) return;
-            
             e.Handled = true;
+
+            // Voice control hotkey uses explicit Key names, including for modifiers.
+            // Let's gather currently pressed modifiers exactly (Left/Right)
             var sb = new StringBuilder();
-            if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control) sb.Append("Ctrl+");
-            if ((Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt) sb.Append("Alt+");
-            if ((Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift) sb.Append("Shift+");
-            if ((Keyboard.Modifiers & ModifierKeys.Windows) == ModifierKeys.Windows) sb.Append("Win+");
-            sb.Append(key.ToString());
+
+            bool lCtrl = Keyboard.IsKeyDown(Key.LeftCtrl);
+            bool rCtrl = Keyboard.IsKeyDown(Key.RightCtrl);
+            bool lAlt = Keyboard.IsKeyDown(Key.LeftAlt);
+            bool rAlt = Keyboard.IsKeyDown(Key.RightAlt);
+            bool lShift = Keyboard.IsKeyDown(Key.LeftShift);
+            bool rShift = Keyboard.IsKeyDown(Key.RightShift);
+            bool lWin = Keyboard.IsKeyDown(Key.LWin);
+            bool rWin = Keyboard.IsKeyDown(Key.RWin);
+
+            // If the key strictly IS a modifier, we don't treat it as the "main" key if other modifiers are pressed, 
+            // actually we just collect what's pressed. But a hotkey is usually modifiers + 1 main key.
+            // If the user presses LCtrl, it fires KeyDown(LCtrl). 
+            // If they hold LCtrl and press T, it fires KeyDown(T).
+            // So we add all pressed modifiers first.
             
+            bool isModifierKey = key == Key.LeftCtrl || key == Key.RightCtrl || key == Key.LeftAlt || key == Key.RightAlt || key == Key.LeftShift || key == Key.RightShift || key == Key.LWin || key == Key.RWin;
+
+            // We want to avoid adding the key twice if it's both in IsKeyDown and e.Key
+            if (lCtrl && key != Key.LeftCtrl) sb.Append("LeftCtrl+");
+            if (rCtrl && key != Key.RightCtrl) sb.Append("RightCtrl+");
+            if (lAlt && key != Key.LeftAlt) sb.Append("LeftAlt+");
+            if (rAlt && key != Key.RightAlt) sb.Append("RightAlt+");
+            if (lShift && key != Key.LeftShift) sb.Append("LeftShift+");
+            if (rShift && key != Key.RightShift) sb.Append("RightShift+");
+            if (lWin && key != Key.LWin) sb.Append("LWin+");
+            if (rWin && key != Key.RWin) sb.Append("RWin+");
+
+            sb.Append(key.ToString());
+
             if (sender is TextBox tb)
             {
                 ViewModel.Config.VoiceTriggerHotkey = sb.ToString();

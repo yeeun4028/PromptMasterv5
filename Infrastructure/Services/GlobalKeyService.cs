@@ -1,7 +1,9 @@
 using Gma.System.MouseKeyHook;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using System.Windows.Input;
 
 namespace PromptMasterv5.Infrastructure.Services
 {
@@ -20,7 +22,7 @@ namespace PromptMasterv5.Infrastructure.Services
         public event EventHandler? OnDoubleCtrlDetected;
         public event EventHandler? OnDoubleSemiColonDetected;
         public event EventHandler? OnAlwaysOnTopSequenceDetected;
-        public event EventHandler<KeyEventArgs>? OnAnyKeyDown;
+        public event EventHandler<System.Windows.Forms.KeyEventArgs>? OnAnyKeyDown;
         public event EventHandler? OnQuickActionTriggered;
         public event EventHandler? OnLauncherTriggered;
 
@@ -47,10 +49,7 @@ namespace PromptMasterv5.Infrastructure.Services
 
         // Configurable voice hotkey
         private Keys _voiceKey = Keys.T;
-        private bool _voiceNeedAlt = false;
-        private bool _voiceNeedCtrl = false;
-        private bool _voiceNeedShift = false;
-        private bool _voiceNeedWin = false;
+        private List<Keys> _voiceModifiers = new List<Keys>();
         private bool _voiceEnabled = false;
         private bool _voiceKeyHeld = false;
 
@@ -59,7 +58,91 @@ namespace PromptMasterv5.Infrastructure.Services
 
         public void UpdateVoiceHotkey(string hotkeyStr)
         {
-            ParseHotkey(hotkeyStr, out _voiceKey, out _voiceNeedCtrl, out _voiceNeedAlt, out _voiceNeedShift, out _voiceNeedWin, out _voiceEnabled);
+            ParseVoiceHotkey(hotkeyStr);
+        }
+
+        // WPF Key.ToString() names → Windows Forms Keys enum names
+        private static readonly Dictionary<string, Keys> WpfToWinFormsKeyMap = new Dictionary<string, Keys>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "LeftCtrl", Keys.LControlKey },
+            { "RightCtrl", Keys.RControlKey },
+            { "LeftAlt", Keys.LMenu },
+            { "RightAlt", Keys.RMenu },
+            { "LeftShift", Keys.LShiftKey },
+            { "RightShift", Keys.RShiftKey },
+        };
+
+        private void ParseVoiceHotkey(string hotkeyStr)
+        {
+            _voiceKey = Keys.None;
+            _voiceModifiers.Clear();
+            _voiceEnabled = false;
+
+            if (string.IsNullOrWhiteSpace(hotkeyStr)) return;
+
+            var parts = hotkeyStr.Split('+');
+            foreach (var part in parts)
+            {
+                var p = part.Trim();
+
+                // Try WPF-to-WinForms mapping first
+                Keys k;
+                if (!WpfToWinFormsKeyMap.TryGetValue(p, out k))
+                {
+                    if (!Enum.TryParse<Keys>(p, true, out k))
+                        continue; // skip unknown parts
+                }
+
+                // Determine if this is a modifier key
+                if (k == Keys.LControlKey || k == Keys.RControlKey ||
+                    k == Keys.LMenu || k == Keys.RMenu ||
+                    k == Keys.LShiftKey || k == Keys.RShiftKey ||
+                    k == Keys.LWin || k == Keys.RWin)
+                {
+                    if (part == parts.Last() && parts.Length == 1)
+                    {
+                        _voiceKey = k;
+                    }
+                    else
+                    {
+                        _voiceModifiers.Add(k);
+                    }
+                }
+                else
+                {
+                    _voiceKey = k;
+                }
+            }
+            
+            _voiceEnabled = _voiceKey != Keys.None;
+        }
+
+        private bool CheckVoiceModifiers()
+        {
+            // For exact modifier checking, we need to ensure ALL required modifiers are pressed
+            // AND NO OTHER modifiers are pressed.
+            bool reqLCtrl = _voiceModifiers.Contains(Keys.LControlKey) || _voiceKey == Keys.LControlKey;
+            bool reqRCtrl = _voiceModifiers.Contains(Keys.RControlKey) || _voiceKey == Keys.RControlKey;
+            bool reqLAlt = _voiceModifiers.Contains(Keys.LMenu) || _voiceKey == Keys.LMenu;
+            bool reqRAlt = _voiceModifiers.Contains(Keys.RMenu) || _voiceKey == Keys.RMenu;
+            bool reqLShift = _voiceModifiers.Contains(Keys.LShiftKey) || _voiceKey == Keys.LShiftKey;
+            bool reqRShift = _voiceModifiers.Contains(Keys.RShiftKey) || _voiceKey == Keys.RShiftKey;
+            bool reqLWin = _voiceModifiers.Contains(Keys.LWin) || _voiceKey == Keys.LWin;
+            bool reqRWin = _voiceModifiers.Contains(Keys.RWin) || _voiceKey == Keys.RWin;
+
+            bool isLCtrl = Keyboard.IsKeyDown(Key.LeftCtrl);
+            bool isRCtrl = Keyboard.IsKeyDown(Key.RightCtrl);
+            bool isLAlt = Keyboard.IsKeyDown(Key.LeftAlt);
+            bool isRAlt = Keyboard.IsKeyDown(Key.RightAlt);
+            bool isLShift = Keyboard.IsKeyDown(Key.LeftShift);
+            bool isRShift = Keyboard.IsKeyDown(Key.RightShift);
+            bool isLWin = Keyboard.IsKeyDown(Key.LWin);
+            bool isRWin = Keyboard.IsKeyDown(Key.RWin);
+
+            return reqLCtrl == isLCtrl && reqRCtrl == isRCtrl &&
+                   reqLAlt == isLAlt && reqRAlt == isRAlt &&
+                   reqLShift == isLShift && reqRShift == isRShift &&
+                   reqLWin == isLWin && reqRWin == isRWin;
         }
 
         public string LauncherHotkeyString
@@ -139,7 +222,7 @@ namespace PromptMasterv5.Infrastructure.Services
             _globalHook.KeyPress += GlobalHook_KeyPress;
         }
 
-        private void GlobalHook_KeyDown(object? sender, KeyEventArgs e)
+        private void GlobalHook_KeyDown(object? sender, System.Windows.Forms.KeyEventArgs e)
         {
             // Track modifier key states
             if (e.KeyCode == Keys.Menu || e.KeyCode == Keys.LMenu || e.KeyCode == Keys.RMenu)
@@ -168,7 +251,21 @@ namespace PromptMasterv5.Infrastructure.Services
             }
 
             // Voice Control: KeyDown = start recording (push-to-talk)
-            if (_voiceEnabled && e.KeyCode == _voiceKey && !_voiceKeyHeld && CheckModifiers(_voiceNeedCtrl, _voiceNeedAlt, _voiceNeedShift, _voiceNeedWin))
+            // Voice control could be a single modifier key itself.
+            // When e.KeyCode == _voiceKey, we check exact voice modifiers.
+            // We need to map e.KeyCode to its Left/Right equivalent if it's a generic modifier, 
+            // but unfortunately Gma.System.MouseKeyHook might sometimes map LeftAlt to LMenu and Alt to Menu.
+            // Usually e.KeyCode IS accurate to LMenu/RMenu for hook events.
+            Keys actualKey = e.KeyCode;
+            if (e.KeyCode == Keys.Menu || e.KeyCode == Keys.ControlKey || e.KeyCode == Keys.ShiftKey)
+            {
+                // Fallback to Keyboard.IsKeyDown to determine which one it was if hook only gives generic
+                if (e.KeyCode == Keys.Menu) actualKey = Keyboard.IsKeyDown(Key.LeftAlt) ? Keys.LMenu : (Keyboard.IsKeyDown(Key.RightAlt) ? Keys.RMenu : Keys.Menu);
+                if (e.KeyCode == Keys.ControlKey) actualKey = Keyboard.IsKeyDown(Key.LeftCtrl) ? Keys.LControlKey : (Keyboard.IsKeyDown(Key.RightCtrl) ? Keys.RControlKey : Keys.ControlKey);
+                if (e.KeyCode == Keys.ShiftKey) actualKey = Keyboard.IsKeyDown(Key.LeftShift) ? Keys.LShiftKey : (Keyboard.IsKeyDown(Key.RightShift) ? Keys.RShiftKey : Keys.ShiftKey);
+            }
+
+            if (_voiceEnabled && (actualKey == _voiceKey || e.KeyCode == _voiceKey) && !_voiceKeyHeld && CheckVoiceModifiers())
             {
                 _voiceKeyHeld = true;
                 OnVoiceControlKeyDown?.Invoke(this, EventArgs.Empty);
@@ -179,7 +276,7 @@ namespace PromptMasterv5.Infrastructure.Services
             OnAnyKeyDown?.Invoke(this, e);
         }
 
-        private void GlobalHook_KeyUp(object? sender, KeyEventArgs e)
+        private void GlobalHook_KeyUp(object? sender, System.Windows.Forms.KeyEventArgs e)
         {
             // Reset modifier key states
             if (e.KeyCode == Keys.Menu || e.KeyCode == Keys.LMenu || e.KeyCode == Keys.RMenu)
@@ -191,8 +288,16 @@ namespace PromptMasterv5.Infrastructure.Services
             if (e.KeyCode == Keys.LWin || e.KeyCode == Keys.RWin)
                 _winPressed = false;
 
+            Keys actualKey = e.KeyCode;
+            if (e.KeyCode == Keys.Menu || e.KeyCode == Keys.ControlKey || e.KeyCode == Keys.ShiftKey)
+            {
+                if (e.KeyCode == Keys.Menu) actualKey = Keyboard.IsKeyDown(Key.LeftAlt) ? Keys.LMenu : (Keyboard.IsKeyDown(Key.RightAlt) ? Keys.RMenu : Keys.Menu);
+                if (e.KeyCode == Keys.ControlKey) actualKey = Keyboard.IsKeyDown(Key.LeftCtrl) ? Keys.LControlKey : (Keyboard.IsKeyDown(Key.RightCtrl) ? Keys.RControlKey : Keys.ControlKey);
+                if (e.KeyCode == Keys.ShiftKey) actualKey = Keyboard.IsKeyDown(Key.LeftShift) ? Keys.LShiftKey : (Keyboard.IsKeyDown(Key.RightShift) ? Keys.RShiftKey : Keys.ShiftKey);
+            }
+
             // Voice Control: KeyUp = stop recording and process (push-to-talk)
-            if (_voiceEnabled && e.KeyCode == _voiceKey && _voiceKeyHeld)
+            if (_voiceEnabled && (actualKey == _voiceKey || e.KeyCode == _voiceKey) && _voiceKeyHeld)
             {
                 _voiceKeyHeld = false;
                 OnVoiceControlTriggered?.Invoke(this, EventArgs.Empty);
