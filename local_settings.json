@@ -1,0 +1,53 @@
+{
+    "MiniWindowTop": 100,
+    "MiniWindowLeft": 531.2,
+    "MiniWindowWidth": 500,
+    "MiniWindowHeight": 120,
+    "MiniClearAiResultOnTyping": true,
+    "MiniPinnedPromptId": "",
+    "MiniPinnedPromptCandidateId": "fe44897b-1d7a-4f5c-8d28-0b9a0975afe1",
+    "MiniPinnedPromptIds": [],
+    "MiniPinnedPromptClickShowsFullContent": false,
+    "FullWindowTop": 100,
+    "FullWindowLeft": 100,
+    "FullWindowWidth": 1000,
+    "FullWindowHeight": 600,
+    "ActionIcons": {},
+    "Mode": 0,
+    "ClickX": 1444,
+    "ClickY": 853,
+    "CoordinateRules": [
+        {
+            "X": 1444,
+            "Y": 853,
+            "UrlContains": ""
+        }
+    ],
+    "Theme": 1,
+    "MiniFontSize": 18,
+    "MiniWindowUseAi": false,
+    "MiniEnterForAi": false,
+    "MiniAiOnlyChatEnabled": true,
+    "MiniPatternPrefix": "ai",
+    "MiniAlwaysOnTopHotkeyPrefix": "",
+    "OcrHotkey": "",
+    "TranslateHotkey": "",
+    "MiniUseDefaultPosition": false,
+    "MiniUseDefaultSize": true,
+    "MiniDefaultLeft": 100,
+    "MiniDefaultBottom": 600,
+    "MiniDefaultWidth": 500,
+    "MiniDefaultHeight": 120,
+    "MiniExpandedWidth": 800,
+    "MiniPinnedPromptShowIcons": false,
+    "Block1Width": 45.6,
+    "Block2Width": 189.6,
+    "QuickActionPrompts": [
+        {
+            "Id": "516a92f4-1388-46d7-a6df-71f1e18ac266",
+            "Title": "\u91C7\u8BBF\u5F0F\u63D0\u95EE ",
+            "BoundModelId": ""
+        }
+    ],
+    "LastCloudSyncTime": "2026-01-28T19:12:24.6766105+08:00"
+}
