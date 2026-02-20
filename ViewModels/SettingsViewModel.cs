@@ -790,7 +790,11 @@ namespace PromptMasterv5.ViewModels
                 FileName = $"PromptMaster_Config_{DateTime.Now:yyyyMMdd_HHmm}.zip"
             };
 
-            if (dialog.ShowDialog() == true)
+            var owner = System.Windows.Application.Current.Windows
+                .OfType<System.Windows.Window>()
+                .FirstOrDefault(w => w.IsActive);
+
+            if (dialog.ShowDialog(owner) == true)
             {
                 try
                 {
@@ -813,10 +817,13 @@ namespace PromptMasterv5.ViewModels
                 Filter = "配置文件压缩包 (*.zip)|*.zip"
             };
 
-            if (dialog.ShowDialog() == true)
+            var owner = System.Windows.Application.Current.Windows
+                .OfType<System.Windows.Window>()
+                .FirstOrDefault(w => w.IsActive);
+
+            if (dialog.ShowDialog(owner) == true)
             {
-                if (MessageBox.Show("导入配置将覆盖当前的设置，确定要继续吗？\n(操作后将自动重启生效)",
-                    "确认导入", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                if (_dialogService.ShowConfirmation("导入配置将覆盖当前的设置，确定要继续吗？\n(操作后将自动重启生效)", "确认导入"))
                 {
                     try
                     {
@@ -832,11 +839,11 @@ namespace PromptMasterv5.ViewModels
                         OnPropertyChanged(nameof(Config));
                         OnPropertyChanged(nameof(LocalConfig));
 
-                        MessageBox.Show("配置导入成功！", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
+                        _dialogService.ShowToast("配置导入成功！", "Success");
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"配置导入失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                        _dialogService.ShowAlert($"配置导入失败: {ex.Message}", "错误");
                     }
                 }
             }

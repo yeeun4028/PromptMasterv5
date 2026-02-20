@@ -21,22 +21,27 @@ namespace PromptMasterv5.Infrastructure.Services
 
         public void ShowToast(string message, string type = "Info")
         {
-            switch (type.ToLower())
+            // 使用非 Global 的 Growl 调用，避免在 MainWindow 未激活时（如文件对话框打开期间）
+            // HandyControl 创建临时空白 Window
+            System.Windows.Application.Current?.Dispatcher.BeginInvoke(new System.Action(() =>
             {
-                case "success":
-                    HandyControl.Controls.Growl.SuccessGlobal(message);
-                    break;
-                case "warning":
-                    HandyControl.Controls.Growl.WarningGlobal(message);
-                    break;
-                case "error":
-                    HandyControl.Controls.Growl.ErrorGlobal(message);
-                    break;
-                case "info":
-                default:
-                    HandyControl.Controls.Growl.InfoGlobal(message);
-                    break;
-            }
+                switch (type.ToLower())
+                {
+                    case "success":
+                        HandyControl.Controls.Growl.Success(message);
+                        break;
+                    case "warning":
+                        HandyControl.Controls.Growl.Warning(message);
+                        break;
+                    case "error":
+                        HandyControl.Controls.Growl.Error(message);
+                        break;
+                    case "info":
+                    default:
+                        HandyControl.Controls.Growl.Info(message);
+                        break;
+                }
+            }), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
         }
 
         public string? ShowOpenFileDialog(string filter)
