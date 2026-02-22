@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using PromptMasterv5.Core.Interfaces;
 using PromptMasterv5.Infrastructure.Services;
 using System;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
@@ -22,6 +23,8 @@ namespace PromptMasterv5.ViewModels
         [ObservableProperty] private double audioScale = 0.2;
 
         public Action? RequestClose;
+        
+        private StringBuilder _intermediateResultBuffer = new();
 
         public VoiceControlViewModel(IVoiceService voiceService, ICommandExecutionService commandExecutionService)
         {
@@ -34,10 +37,24 @@ namespace PromptMasterv5.ViewModels
                  IsListening = true; 
                  StatusText = ""; // Don't show "Listening..."
                  RecognizedText = "";
+                 _intermediateResultBuffer.Clear(); // 清空中间结果缓冲
             };
             _voiceService.OnRecordingStopped += (s, e) => IsListening = false;
             
+            // 订阅中间结果事件，实时显示识别内容
+            _voiceService.OnIntermediateResult += VoiceService_OnIntermediateResult;
+            
             // Auto-close timer if needed, but for now we rely on explicit stop or silence
+        }
+        
+        private void VoiceService_OnIntermediateResult(object? sender, string text)
+        {
+            // 累积中间结果并实时显示
+            System.Windows.Application.Current.Dispatcher.Invoke(() => 
+            {
+                _intermediateResultBuffer.Append(text);
+                RecognizedText = _intermediateResultBuffer.ToString();
+            });
         }
 
         [ObservableProperty] private double audioScaleBar1 = 0.2;
@@ -90,8 +107,17 @@ namespace PromptMasterv5.ViewModels
 
             try
             {
+                // 先获取已经累积的中间结果
+                var intermediateResult = _intermediateResultBuffer.ToString();
+                
                 var hotwords = _commandExecutionService.GetCommandKeys();
                 var text = await _voiceService.StopRecordingAndTranscribeAsync(hotwords);
+                
+                // 如果 API 返回的结果为空，但中间结果有内容，使用中间结果
+                if (string.IsNullOrWhiteSpace(text) && !string.IsNullOrWhiteSpace(intermediateResult))
+                {
+                    text = intermediateResult;
+                }
                 
                 if (string.IsNullOrWhiteSpace(text))
                 {
