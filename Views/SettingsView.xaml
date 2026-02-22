@@ -912,7 +912,6 @@
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
                                         <Button x:Name="BtnAiMainTab" Content="主界面" Padding="12,6" Margin="0,0,8,0" Click="AiSubTab_Click" Tag="Selected" Style="{StaticResource SubTabButtonStyle}"/>
                                         <Button x:Name="BtnAiMiniTab" Content="迷你" Padding="12,6" Margin="0,0,8,0" Click="AiSubTab_Click" Tag="1" Style="{StaticResource SubTabButtonStyle}"/>
-                                        <Button x:Name="BtnAiQuickActionTab" Content="划词助手" Padding="12,6" Margin="0,0,8,0" Click="AiSubTab_Click" Tag="3" Style="{StaticResource SubTabButtonStyle}"/>
                                     </StackPanel>
 
                                     <!-- Sub-Tab Content Container -->
@@ -1067,118 +1066,9 @@
                                                 </StackPanel>
                                             </Border>
                                         </StackPanel>
-
-
-
-                                        <!-- 4. 划词 Tab: Quick Actions with Model Selection -->
-                                        <StackPanel x:Name="AiQuickActionTab" Visibility="Collapsed">
-                                            <Border Style="{StaticResource CardStyle}">
-                                                <StackPanel>
-                                                    <TextBlock Text="划词助手配置" Style="{StaticResource FieldLabelTextStyle}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,15"/>
-                                                    
-                                                    <TextBlock Text="添加提示词" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,8"/>
-                                                    <Grid Margin="0,0,0,20">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        
-                                                        <ComboBox Grid.Column="0" x:Name="QuickActionCandidateCombo" 
-                                                                  ItemsSource="{Binding FilesView}"
-                                                                  SelectedValuePath="Id"
-                                                                  DisplayMemberPath="Title"
-                                                                  Style="{StaticResource ModernComboBoxStyle}"/>
-                                                        
-                                                        <Button Grid.Column="1" Content="添加" Margin="10,0,0,0" Padding="15,6"
-                                                                Click="AddQuickAction_Click"
-                                                                Style="{StaticResource TextLinkButtonStyle}"/>
-                                                    </Grid>
-
-                                                    <TextBlock Text="已配置的划词指令" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,10"/>
-                                                    
-                                                    <ListBox x:Name="QuickActionsListBox"
-                                                             ItemsSource="{Binding LocalConfig.QuickActionPrompts}"
-                                                             BorderThickness="0"
-                                                             Background="Transparent"
-                                                             SelectionMode="Single"
-                                                             Margin="0,0,0,20">
-                                                        <ListBox.ItemContainerStyle>
-                                                            <Style TargetType="ListBoxItem">
-                                                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                                                <Setter Property="Template">
-                                                                    <Setter.Value>
-                                                                        <ControlTemplate TargetType="ListBoxItem">
-                                                                            <Border Background="{DynamicResource ShellBackground}" 
-                                                                                    CornerRadius="6" 
-                                                                                    Padding="12,10" 
-                                                                                    Margin="0,0,0,8" 
-                                                                                    BorderBrush="{DynamicResource DividerColor}" 
-                                                                                    BorderThickness="1">
-                                                                                <ContentPresenter/>
-                                                                            </Border>
-                                                                        </ControlTemplate>
-                                                                    </Setter.Value>
-                                                                </Setter>
-                                                            </Style>
-                                                        </ListBox.ItemContainerStyle>
-                                                        <ListBox.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <Grid>
-                                                                    <Grid.ColumnDefinitions>
-                                                                        <ColumnDefinition Width="*"/>
-                                                                        <ColumnDefinition Width="180"/>
-                                                                        <ColumnDefinition Width="Auto"/>
-                                                                    </Grid.ColumnDefinitions>
-                                                                    
-                                                                    <TextBlock Grid.Column="0" Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
-                                                                    
-                                                                    <!-- Model Selector for each quick action -->
-                                                                    <ComboBox Grid.Column="1" 
-                                                                              ItemsSource="{Binding DataContext.Config.SavedModels, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                              SelectedValuePath="Id"
-                                                                              SelectedValue="{Binding BoundModelId, Mode=TwoWay}"
-                                                                              DisplayMemberPath="DisplayName"
-                                                                              SelectionChanged="QuickActionModel_SelectionChanged"
-                                                                              Style="{StaticResource ModernComboBoxStyle}"
-                                                                              Margin="10,0"
-                                                                              VerticalAlignment="Center"
-                                                                              ToolTip="选择专用模型 (留空则使用全局默认)"/>
-                                                                    
-                                                                    <Button Grid.Column="2" Content="移除" 
-                                                                            Click="RemoveQuickAction_Click"
-                                                                            Tag="{Binding}"
-                                                                            Style="{StaticResource DangerLinkButtonStyle}"
-                                                                            FontSize="12"/>
-                                                                </Grid>
-                                                            </DataTemplate>
-                                                        </ListBox.ItemTemplate>
-                                                    </ListBox>
-                                                    
-                                                    <!-- QuickAction Display Settings -->
-                                                    <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,0,0,20"/>
-                                                    
-                                                    <TextBlock Text="显示设置" Style="{StaticResource FieldLabelTextStyle}" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,15"/>
-                                                    
-                                                    <StackPanel>
-                                                        <TextBlock Text="提示词按钮显示方式" Style="{StaticResource FieldLabelTextStyle}" Margin="0,0,0,8"/>
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <RadioButton GroupName="QuickActionDisplayMode" 
-                                                                        Content="文本" 
-                                                                        IsChecked="{Binding Config.QuickActionShowText}"
-                                                                        Margin="0,0,20,0"
-                                                                        Cursor="Hand"/>
-                                                            
-                                                            <RadioButton GroupName="QuickActionDisplayMode" 
-                                                                        Content="仅图标"
-                                                                        IsChecked="{Binding Config.QuickActionShowText, Converter={StaticResource InverseBoolConverter}}"
-                                                                        Cursor="Hand"/>
-                                                        </StackPanel>
-                                                    </StackPanel>
-                                                </StackPanel>
-                                            </Border>
-                                        </StackPanel>
                                     </StackPanel>
-                                </StackPanel>                                <!-- Tab 3: Sync -->
+                                </StackPanel>
+                                <!-- Tab 3: Sync -->
                                 <StackPanel>
                                     <StackPanel.Style>
                                         <Style TargetType="StackPanel" BasedOn="{StaticResource FadeInContentStyle}">

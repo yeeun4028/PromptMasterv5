@@ -745,14 +745,11 @@ namespace PromptMasterv5.Views
             // Update button states
             if (BtnAiMainTab != null) BtnAiMainTab.Tag = tabIndex == 0 ? "Selected" : "0";
             if (BtnAiMiniTab != null) BtnAiMiniTab.Tag = tabIndex == 1 ? "Selected" : "1";
-            // Tab 2 (Translations) removed
-            if (BtnAiQuickActionTab != null) BtnAiQuickActionTab.Tag = tabIndex == 3 ? "Selected" : "3";
+            // Tab 2 (Translations) and Tab 3 (Selection Assistant) removed
 
             // Show/hide tab content
             if (AiMainTab != null) AiMainTab.Visibility = tabIndex == 0 ? Visibility.Visible : Visibility.Collapsed;
             if (AiMiniTab != null) AiMiniTab.Visibility = tabIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
-            // if (AiTranslateTab != null) AiTranslateTab.Visibility = tabIndex == 2 ? Visibility.Visible : Visibility.Collapsed; // Removed
-            if (AiQuickActionTab != null) AiQuickActionTab.Visibility = tabIndex == 3 ? Visibility.Visible : Visibility.Collapsed;
         }
 
         // Sync Sub-Tab Handlers
@@ -782,51 +779,6 @@ namespace PromptMasterv5.Views
             if (SyncLogTab != null) SyncLogTab.Visibility = tabIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        // Quick Action Handlers
-        private void AddQuickAction_Click(object sender, RoutedEventArgs e)
-        {
-            if (ViewModel == null) return;
-            var selectedId = (QuickActionCandidateCombo?.SelectedValue as string) ?? "";
-            if (string.IsNullOrWhiteSpace(selectedId)) return;
-
-            var selectedFile = ViewModel.Files.FirstOrDefault(f => f.Id == selectedId);
-            if (selectedFile == null) return;
-
-            // Check if already exists
-            if (ViewModel.LocalConfig.QuickActionPrompts.Any(qa => qa.Id == selectedId))
-            {
-                System.Windows.MessageBox.Show("该提示词已经在列表中", "提示");
-                return;
-            }
-
-            // Add to quick actions list
-            var quickAction = new QuickActionPrompt
-            {
-                Id = selectedFile.Id,
-                Title = selectedFile.Title,
-                BoundModelId = "" // Empty means use global default
-            };
-
-            ViewModel.LocalConfig.QuickActionPrompts.Add(quickAction);
-            LocalConfigService.Save(ViewModel.LocalConfig);
-        }
-
-        private void RemoveQuickAction_Click(object sender, RoutedEventArgs e)
-        {
-            if (ViewModel == null) return;
-            if (sender is not Button btn) return;
-            if (btn.Tag is not QuickActionPrompt quickAction) return;
-
-            ViewModel.LocalConfig.QuickActionPrompts.Remove(quickAction);
-            LocalConfigService.Save(ViewModel.LocalConfig);
-        }
-
-        private void QuickActionModel_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (ViewModel == null) return;
-            // Selection is bound via TwoWay binding, just save the config
-            LocalConfigService.Save(ViewModel.LocalConfig);
-        }
 
         private void LoadGoogleCredentials()
         {
