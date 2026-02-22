@@ -33,7 +33,7 @@ using System.Reactive.Subjects;
 
 namespace PromptMasterv5.ViewModels;
 
-public partial class MainViewModel : ObservableObject
+public partial class MainViewModel : ObservableObject, IDisposable
 {
     private readonly IDataService _dataService;
     private readonly IDataService _localDataService;
@@ -50,6 +50,17 @@ public partial class MainViewModel : ObservableObject
     private DispatcherTimer _timer;
     private readonly Subject<System.Reactive.Unit> _saveSubject = new();
     private readonly Subject<System.Reactive.Unit> _saveLocalSettingsSubject = new();
+
+    // Event handlers for proper unsubscription
+    private EventHandler? _onDoubleCtrlDetectedHandler;
+    private EventHandler? _onDoubleSemiColonDetectedHandler;
+    private EventHandler? _onQuickActionTriggeredHandler;
+    private EventHandler? _onLauncherTriggeredHandler;
+    private EventHandler? _onVoiceControlKeyDownHandler;
+    private EventHandler? _onVoiceControlTriggeredHandler;
+    private PropertyChangedEventHandler? _settingsVMPropertyChangedHandler;
+    private PropertyChangedEventHandler? _localConfigPropertyChangedHandler;
+
     private bool _previousFullMode = true;
     private IntPtr _previousWindowHandle = IntPtr.Zero;
     private bool _isSimulatingKeys;
@@ -187,7 +198,7 @@ public partial class MainViewModel : ObservableObject
         SettingsVM.SetMainViewModel(this);
 
         // 订阅 SettingsVM 的属性变更，传播到 MainVM 的委托属性
-        SettingsVM.PropertyChanged += (sender, e) =>
+        _settingsVMPropertyChangedHandler = (sender, e) =>
         {
             switch (e.PropertyName)
             {
@@ -212,6 +223,7 @@ public partial class MainViewModel : ObservableObject
                     break;
             }
         };
+        SettingsVM.PropertyChanged += _settingsVMPropertyChangedHandler;
 
         SidebarVM.Files = Files;
 
@@ -250,7 +262,7 @@ public partial class MainViewModel : ObservableObject
             .ObserveOn(System.Threading.SynchronizationContext.Current!)
             .Subscribe(_ => _settingsService.SaveLocalConfig());
 
-        LocalConfig.PropertyChanged += (_, e) =>
+        _localConfigPropertyChangedHandler = (_, e) =>
         {
             if (e.PropertyName == nameof(LocalSettings.Block1Width) ||
                 e.PropertyName == nameof(LocalSettings.Block2Width))
@@ -258,20 +270,32 @@ public partial class MainViewModel : ObservableObject
                 _saveLocalSettingsSubject.OnNext(System.Reactive.Unit.Default);
             }
         };
+        LocalConfig.PropertyChanged += _localConfigPropertyChangedHandler;
 
-        _keyService.OnDoubleCtrlDetected += (_, __) => Application.Current.Dispatcher.Invoke(() =>
+        _onDoubleCtrlDetectedHandler = (_, __) => Application.Current.Dispatcher.Invoke(() =>
         {
             if (_isSimulatingKeys) return;
             ToggleMainWindow();
         });
-        _keyService.OnDoubleSemiColonDetected += (_, __) => Application.Current.Dispatcher.Invoke(() =>
+        _keyService.OnDoubleCtrlDetected += _onDoubleCtrlDetectedHandler;
+
+        _onDoubleSemiColonDetectedHandler = (_, __) => Application.Current.Dispatcher.Invoke(() =>
         {
             if (!IsFullMode) ChatVM.MiniInputText = "";
         });
-        _keyService.OnQuickActionTriggered += async (_, __) => await HandleQuickActionTriggered();
-        _keyService.OnLauncherTriggered += (_, __) => HandleLauncherTriggered();
-        _keyService.OnVoiceControlKeyDown += (_, __) => HandleVoiceControlKeyDown();
-        _keyService.OnVoiceControlTriggered += (_, __) => HandleVoiceControlKeyUp();
+        _keyService.OnDoubleSemiColonDetected += _onDoubleSemiColonDetectedHandler;
+
+        _onQuickActionTriggeredHandler = async (_, __) => await HandleQuickActionTriggered();
+        _keyService.OnQuickActionTriggered += _onQuickActionTriggeredHandler;
+
+        _onLauncherTriggeredHandler = (_, __) => HandleLauncherTriggered();
+        _keyService.OnLauncherTriggered += _onLauncherTriggeredHandler;
+
+        _onVoiceControlKeyDownHandler = (_, __) => HandleVoiceControlKeyDown();
+        _keyService.OnVoiceControlKeyDown += _onVoiceControlKeyDownHandler;
+
+        _onVoiceControlTriggeredHandler = (_, __) => HandleVoiceControlKeyUp();
+        _keyService.OnVoiceControlTriggered += _onVoiceControlTriggeredHandler;
         // Initialize hotkeys from config before starting
         _keyService.LauncherHotkeyString = Config.LauncherHotkey;
         _keyService.QuickActionHotkeyString = Config.QuickActionHotkey;
@@ -1584,5 +1608,69 @@ public partial class MainViewModel : ObservableObject
         }
 
         GlobalPromptList = new ObservableCollection<PromptGroup>(groups);
+    }
+
+    // ========== IDisposable ==========
+    private bool _disposed = false;
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        // Stop and dispose timer
+        if (_timer != null)
+        {
+            _timer.Stop();
+            _timer = null!;
+        }
+
+        // Dispose Reactive Subjects
+        _saveSubject?.Dispose();
+        _saveLocalSettingsSubject?.Dispose();
+
+        // Unsubscribe from GlobalKeyService events
+        if (_keyService != null)
+        {
+            if (_onDoubleCtrlDetectedHandler != null)
+                _keyService.OnDoubleCtrlDetected -= _onDoubleCtrlDetectedHandler;
+            if (_onDoubleSemiColonDetectedHandler != null)
+                _keyService.OnDoubleSemiColonDetected -= _onDoubleSemiColonDetectedHandler;
+            if (_onQuickActionTriggeredHandler != null)
+                _keyService.OnQuickActionTriggered -= _onQuickActionTriggeredHandler;
+            if (_onLauncherTriggeredHandler != null)
+                _keyService.OnLauncherTriggered -= _onLauncherTriggeredHandler;
+            if (_onVoiceControlKeyDownHandler != null)
+                _keyService.OnVoiceControlKeyDown -= _onVoiceControlKeyDownHandler;
+            if (_onVoiceControlTriggeredHandler != null)
+                _keyService.OnVoiceControlTriggered -= _onVoiceControlTriggeredHandler;
+        }
+
+        // Unsubscribe from SettingsVM PropertyChanged
+        if (SettingsVM != null && _settingsVMPropertyChangedHandler != null)
+        {
+            SettingsVM.PropertyChanged -= _settingsVMPropertyChangedHandler;
+        }
+
+        // Unsubscribe from LocalConfig PropertyChanged
+        if (LocalConfig != null && _localConfigPropertyChangedHandler != null)
+        {
+            LocalConfig.PropertyChanged -= _localConfigPropertyChangedHandler;
+        }
+
+        // Unsubscribe from Files collection events
+        if (Files != null)
+        {
+            Files.CollectionChanged -= OnFilesCollectionChanged;
+            foreach (var item in Files)
+            {
+                item.PropertyChanged -= OnFilePropertyChanged;
+            }
+        }
+
+        // Unregister WeakReferenceMessenger
+        WeakReferenceMessenger.Default.UnregisterAll(this);
+
+        GC.SuppressFinalize(this);
     }
 }

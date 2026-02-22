@@ -27,8 +27,11 @@ namespace PromptMasterv5.Infrastructure.Services
 
         // 缓存 OpenAIService 实例，避免每次请求都创建新实例
         // 使用 (apiKey + baseUrl) 作为缓存键
+        // 限制最大缓存数量，防止内存无限增长
+        private const int MaxCacheSize = 10;
         private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, OpenAIService> _serviceCache 
             = new System.Collections.Concurrent.ConcurrentDictionary<string, OpenAIService>();
+        private static readonly object _cacheLock = new();
 
         /// <summary>
         /// 获取缓存的 OpenAIService 实例，如果不存在则创建并缓存
@@ -36,6 +39,24 @@ namespace PromptMasterv5.Infrastructure.Services
         private OpenAIService GetOrCreateOpenAiService(string apiKey, string baseUrl)
         {
             string cacheKey = $"{apiKey}|{baseUrl}";
+            
+            // 如果缓存已满，清理最旧的条目
+            if (_serviceCache.Count >= MaxCacheSize)
+            {
+                lock (_cacheLock)
+                {
+                    if (_serviceCache.Count >= MaxCacheSize)
+                    {
+                        // 移除一个条目（简单策略：移除第一个）
+                        var firstKey = _serviceCache.Keys.FirstOrDefault();
+                        if (firstKey != null && _serviceCache.TryRemove(firstKey, out var oldService))
+                        {
+                            LoggerService.Instance.LogInfo($"Cache full, removed service for: {firstKey.Substring(0, Math.Min(20, firstKey.Length))}...", "AiService.GetOrCreateOpenAiService");
+                        }
+                    }
+                }
+            }
+            
             return _serviceCache.GetOrAdd(cacheKey, key => CreateOpenAiServiceInternal(apiKey, baseUrl));
         }
 

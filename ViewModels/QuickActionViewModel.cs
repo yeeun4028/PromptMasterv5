@@ -165,40 +165,28 @@ namespace PromptMasterv5.ViewModels
                 var sw = Stopwatch.StartNew();
                 int lineCount = 1;
 
-                await Task.Run(async () =>
+                // 直接在 UI 线程使用 await foreach，避免 Task.Run 内的 Dispatcher.Invoke
+                await foreach (var chunk in _aiService.ChatStreamAsync(apiMessages, apiKey, baseUrl, model).ConfigureAwait(false))
                 {
-                    await foreach (var chunk in _aiService.ChatStreamAsync(apiMessages, apiKey, baseUrl, model).ConfigureAwait(false))
-                    {
-                        sb.Append(chunk);
-                        lineCount += chunk.Count(c => c == '\n');
+                    sb.Append(chunk);
+                    lineCount += chunk.Count(c => c == '\n');
 
-                        // 节流：每 50ms 才刷新一次 UI，避免频繁更新导致卡顿
-                        if (sw.ElapsedMilliseconds >= 50)
-                        {
-                            var text = sb.ToString();
-                            var currentCount = lineCount;
-                            
-                            System.Windows.Application.Current.Dispatcher.Invoke(() => 
-                            {
-                                CurrentResult = text;
-                                assistantMessage.Content = text;
-                                CurrentLineCount = currentCount;
-                                CheckLongTextThreshold();
-                            });
-                            sw.Restart();
-                        }
-                    }
-
-                    // 最终刷新：确保所有内容显示
-                    var finalText = sb.ToString();
-                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    // 节流：每 50ms 才刷新一次 UI，避免频繁更新导致卡顿
+                    if (sw.ElapsedMilliseconds >= 50)
                     {
-                        CurrentResult = finalText;
-                        assistantMessage.Content = finalText;
+                        CurrentResult = sb.ToString();
+                        assistantMessage.Content = CurrentResult;
                         CurrentLineCount = lineCount;
                         CheckLongTextThreshold();
-                    });
-                });
+                        sw.Restart();
+                    }
+                }
+
+                // 最终刷新：确保所有内容显示
+                CurrentResult = sb.ToString();
+                assistantMessage.Content = CurrentResult;
+                CurrentLineCount = lineCount;
+                CheckLongTextThreshold();
             }
             catch (Exception ex)
             {
@@ -275,38 +263,26 @@ namespace PromptMasterv5.ViewModels
                 var sw = Stopwatch.StartNew();
                 int lineCount = 1;
 
-                await Task.Run(async () =>
+                // 直接在 UI 线程使用 await foreach，避免 Task.Run 内的 Dispatcher.Invoke
+                await foreach (var chunk in _aiService.ChatStreamAsync(apiMessages, apiKey, baseUrl, model).ConfigureAwait(false))
                 {
-                    await foreach (var chunk in _aiService.ChatStreamAsync(apiMessages, apiKey, baseUrl, model).ConfigureAwait(false))
-                    {
-                        sb.Append(chunk);
-                        lineCount += chunk.Count(c => c == '\n');
+                    sb.Append(chunk);
+                    lineCount += chunk.Count(c => c == '\n');
 
-                        if (sw.ElapsedMilliseconds >= 50)
-                        {
-                            var text = sb.ToString();
-                            var currentCount = lineCount;
-                            
-                            System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                            {
-                                CurrentResult = text;
-                                assistantMessage.Content = text;
-                                CurrentLineCount = currentCount;
-                                CheckLongTextThreshold();
-                            });
-                            sw.Restart();
-                        }
-                    }
-
-                    var finalText = sb.ToString();
-                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    if (sw.ElapsedMilliseconds >= 50)
                     {
-                        CurrentResult = finalText;
-                        assistantMessage.Content = finalText;
+                        CurrentResult = sb.ToString();
+                        assistantMessage.Content = CurrentResult;
                         CurrentLineCount = lineCount;
                         CheckLongTextThreshold();
-                    });
-                });
+                        sw.Restart();
+                    }
+                }
+
+                CurrentResult = sb.ToString();
+                assistantMessage.Content = CurrentResult;
+                CurrentLineCount = lineCount;
+                CheckLongTextThreshold();
             }
             catch (Exception ex)
             {

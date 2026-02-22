@@ -503,6 +503,8 @@ namespace PromptMasterv5
                     _notifyIcon.Visible = false;
                     _notifyIcon.Dispose();
                 }
+                // Clean up timers
+                CleanupTimers();
                 return;
             }
 
@@ -556,6 +558,28 @@ namespace PromptMasterv5
             {
                 _notifyIcon.Visible = false;
                 _notifyIcon.Dispose();
+            }
+
+            // Clean up timers
+            CleanupTimers();
+        }
+
+        private void CleanupTimers()
+        {
+            if (_hideTimer != null)
+            {
+                _hideTimer.Stop();
+                _hideTimer = null;
+            }
+            if (_miniPersistTimer != null)
+            {
+                _miniPersistTimer.Stop();
+                _miniPersistTimer = null;
+            }
+            if (_miniAutoResizeTimer != null)
+            {
+                _miniAutoResizeTimer.Stop();
+                _miniAutoResizeTimer = null;
             }
         }
 

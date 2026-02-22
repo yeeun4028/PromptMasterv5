@@ -94,8 +94,9 @@ namespace PromptMasterv5
                 if (mainVM != null)
                 {
                     LoggerService.Instance.LogInfo("执行退出前保存...", "App.OnExit");
-                    // 使用 Task.Run 避免同步上下文死锁
-                    Task.Run(async () => await mainVM.PerformLocalBackup()).Wait();
+                    // 使用 GetAwaiter().GetResult() 避免 Wait() 的死锁风险
+                    // 因为 OnExit 已经在 UI 线程，不需要同步上下文
+                    mainVM.PerformLocalBackup().GetAwaiter().GetResult();
                 }
             }
             catch (Exception ex)

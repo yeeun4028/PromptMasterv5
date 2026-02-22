@@ -9,7 +9,7 @@ using System.Text.Json;
 
 namespace PromptMasterv5.Infrastructure.Services
 {
-    public class CommandExecutionService : ICommandExecutionService
+    public class CommandExecutionService : ICommandExecutionService, IDisposable
     {
         private readonly ISettingsService _settingsService;
         private Dictionary<string, string> _commands = new();
@@ -249,6 +249,27 @@ namespace PromptMasterv5.Infrastructure.Services
                 }
             }
             return d[n, m];
+        }
+
+        // ========== IDisposable ==========
+        private bool _disposed = false;
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+
+            if (_watcher != null)
+            {
+                _watcher.EnableRaisingEvents = false;
+                _watcher.Changed -= OnFileChanged;
+                _watcher.Created -= OnFileChanged;
+                _watcher.Renamed -= OnFileChanged;
+                _watcher.Dispose();
+                _watcher = null;
+            }
+
+            GC.SuppressFinalize(this);
         }
     }
 }
