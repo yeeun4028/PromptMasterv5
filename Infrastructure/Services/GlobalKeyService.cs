@@ -23,7 +23,6 @@ namespace PromptMasterv5.Infrastructure.Services
         public event EventHandler? OnDoubleSemiColonDetected;
         public event EventHandler? OnAlwaysOnTopSequenceDetected;
         public event EventHandler<System.Windows.Forms.KeyEventArgs>? OnAnyKeyDown;
-        public event EventHandler? OnQuickActionTriggered;
         public event EventHandler? OnLauncherTriggered;
 
         private bool _altPressed = false;
@@ -39,13 +38,6 @@ namespace PromptMasterv5.Infrastructure.Services
         private bool _launcherNeedWin = false;
         private bool _launcherEnabled = true;
 
-        // Configurable quick action hotkey
-        private Keys _quickActionKey = Keys.Q;
-        private bool _quickActionNeedAlt = true;
-        private bool _quickActionNeedCtrl = false;
-        private bool _quickActionNeedShift = false;
-        private bool _quickActionNeedWin = false;
-        private bool _quickActionEnabled = true;
 
         // Configurable voice hotkey
         private Keys _voiceKey = Keys.T;
@@ -150,10 +142,6 @@ namespace PromptMasterv5.Infrastructure.Services
             set => ParseHotkey(value, out _launcherKey, out _launcherNeedCtrl, out _launcherNeedAlt, out _launcherNeedShift, out _launcherNeedWin, out _launcherEnabled);
         }
 
-        public string QuickActionHotkeyString
-        {
-            set => ParseHotkey(value, out _quickActionKey, out _quickActionNeedCtrl, out _quickActionNeedAlt, out _quickActionNeedShift, out _quickActionNeedWin, out _quickActionEnabled);
-        }
 
         private void ParseHotkey(string hotkeyStr, out Keys key, out bool needCtrl, out bool needAlt, out bool needShift, out bool needWin, out bool enabled)
         {
@@ -234,13 +222,6 @@ namespace PromptMasterv5.Infrastructure.Services
             if (e.KeyCode == Keys.LWin || e.KeyCode == Keys.RWin)
                 _winPressed = true;
 
-            // Detect Quick Action hotkey
-            if (_quickActionEnabled && e.KeyCode == _quickActionKey && CheckModifiers(_quickActionNeedCtrl, _quickActionNeedAlt, _quickActionNeedShift, _quickActionNeedWin))
-            {
-                OnQuickActionTriggered?.Invoke(this, EventArgs.Empty);
-                e.Handled = true;
-                e.SuppressKeyPress = true;
-            }
 
             // Detect Launcher hotkey
             if (_launcherEnabled && e.KeyCode == _launcherKey && CheckModifiers(_launcherNeedCtrl, _launcherNeedAlt, _launcherNeedShift, _launcherNeedWin))

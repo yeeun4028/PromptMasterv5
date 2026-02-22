@@ -395,15 +395,11 @@ namespace PromptMasterv5.ViewModels
             {
                 // Remove old hotkeys
                 try { HotkeyManager.Current.Remove("ScreenshotTranslate"); } catch { }
-                try { HotkeyManager.Current.Remove("SelectedTextTranslate"); } catch { }
                 try { HotkeyManager.Current.Remove("OcrOnly"); } catch { }
-                try { HotkeyManager.Current.Remove("GlobalQuickAction"); } catch { }
 
                 // Register new hotkeys from external tools settings
                 RegisterWindowHotkey("ScreenshotTranslate", Config.ScreenshotTranslateHotkey, () => _mainViewModel.ExternalToolsVM.TriggerTranslateCommand.Execute(null));
-                RegisterWindowHotkey("SelectedTextTranslate", Config.SelectedTextTranslateHotkey, () => _mainViewModel.ExternalToolsVM.TriggerSelectedTextTranslateCommand.Execute(null));
                 RegisterWindowHotkey("OcrOnly", Config.OcrHotkey, () => _mainViewModel.ExternalToolsVM.TriggerOcrCommand.Execute(null));
-                RegisterWindowHotkey("GlobalQuickAction", Config.QuickActionHotkey, () => _mainViewModel.TriggerQuickActionCommand.Execute(null));
                 
                 // Update Launcher Hotkey
                 UpdateLauncherHotkey();

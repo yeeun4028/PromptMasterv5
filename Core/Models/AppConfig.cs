@@ -132,28 +132,9 @@ namespace PromptMasterv5.Core.Models
         [ObservableProperty]
         private string screenshotTranslateHotkey = "";
 
-        [ObservableProperty]
-        private string selectedTextTranslateHotkey = "";
-
+        // OCR Hotkey
         [ObservableProperty]
         private string ocrHotkey = "";
-
-        // Global Quick Action Hotkey
-        [ObservableProperty]
-        private string quickActionHotkey = "Alt+Q";
-
-        // QuickAction Settings
-        [ObservableProperty]
-        private QuickActionLongTextMode quickActionLongTextMode = QuickActionLongTextMode.ExternalEditor;
-
-        [ObservableProperty]
-        private int quickActionLineThreshold = 15;
-
-        [ObservableProperty]
-        private bool quickActionShowText = true;
-
-        [ObservableProperty]
-        private bool quickActionShowIcons = true;
 
         // ★★★ 新增：启动器 (Launcher) 配置 ★★★
         [ObservableProperty]

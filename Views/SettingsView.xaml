@@ -616,11 +616,10 @@
                                                     </Grid.ColumnDefinitions>
                                                     <Grid.RowDefinitions>
                                                         <RowDefinition Height="Auto"/>
-                                                        <RowDefinition Height="Auto"/>
                                                     </Grid.RowDefinitions>
 
                                                     <!-- Row 0: Screenshot Translate -->
-                                                    <StackPanel Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
+                                                    <StackPanel Grid.Row="0" Grid.Column="0" VerticalAlignment="Center">
                                                         <TextBlock Text="截图翻译" Style="{StaticResource FieldLabelTextStyle}"/>
                                                     </StackPanel>
                                                     <TextBox Grid.Row="0" Grid.Column="1" 
@@ -632,21 +631,6 @@
                                                              Cursor="Hand"
                                                              VerticalAlignment="Center"
                                                              PreviewKeyDown="ScreenshotTranslateHotkeyTextBox_PreviewKeyDown"
-                                                             ToolTip="点击按下按键设置，按 Delete 清除"/>
-
-                                                    <!-- Row 1: Selected Text Translate -->
-                                                    <StackPanel Grid.Row="1" Grid.Column="0" VerticalAlignment="Center">
-                                                        <TextBlock Text="划词翻译" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    </StackPanel>
-                                                    <TextBox Grid.Row="1" Grid.Column="1" 
-                                                             x:Name="SelectedTextTranslateHotkeyTextBox"
-                                                             Text="{Binding Config.SelectedTextTranslateHotkey, Mode=TwoWay}"
-                                                             Style="{StaticResource KeyRecorderStyle}"
-                                                             Width="140"
-                                                             IsReadOnly="True"
-                                                             Cursor="Hand"
-                                                             VerticalAlignment="Center"
-                                                             PreviewKeyDown="SelectedTextTranslateHotkeyTextBox_PreviewKeyDown"
                                                              ToolTip="点击按下按键设置，按 Delete 清除"/>
                                                 </Grid>
                                             </StackPanel>
@@ -663,11 +647,10 @@
                                                     </Grid.ColumnDefinitions>
                                                     <Grid.RowDefinitions>
                                                         <RowDefinition Height="Auto"/>
-                                                        <RowDefinition Height="Auto"/>
                                                     </Grid.RowDefinitions>
 
                                                     <!-- Row 0: OCR -->
-                                                    <StackPanel Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,20">
+                                                    <StackPanel Grid.Row="0" Grid.Column="0" VerticalAlignment="Center">
                                                         <TextBlock Text="OCR 识别" Style="{StaticResource FieldLabelTextStyle}"/>
                                                     </StackPanel>
                                                     <TextBox Grid.Row="0" Grid.Column="1" 
@@ -679,21 +662,6 @@
                                                              Cursor="Hand"
                                                              VerticalAlignment="Center"
                                                              PreviewKeyDown="OcrHotkeyTextBox_PreviewKeyDown"
-                                                             ToolTip="点击按下按键设置，按 Delete 清除"/>
-
-                                                    <!-- Row 1: Quick Action -->
-                                                    <StackPanel Grid.Row="1" Grid.Column="0" VerticalAlignment="Center">
-                                                        <TextBlock Text="划词扩展" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    </StackPanel>
-                                                    <TextBox Grid.Row="1" Grid.Column="1" 
-                                                             x:Name="QuickActionHotkeyTextBox" 
-                                                             Text="{Binding Config.QuickActionHotkey, Mode=TwoWay}"
-                                                             Style="{StaticResource KeyRecorderStyle}"
-                                                             Width="140"
-                                                             IsReadOnly="True"
-                                                             Cursor="Hand"
-                                                             VerticalAlignment="Center"
-                                                             PreviewKeyDown="QuickActionHotkeyTextBox_PreviewKeyDown"
                                                              ToolTip="点击按下按键设置，按 Delete 清除"/>
                                                 </Grid>
                                             </StackPanel>

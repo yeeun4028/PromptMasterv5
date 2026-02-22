@@ -54,10 +54,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
     // Event handlers for proper unsubscription
     private EventHandler? _onDoubleCtrlDetectedHandler;
     private EventHandler? _onDoubleSemiColonDetectedHandler;
-    private EventHandler? _onQuickActionTriggeredHandler;
-    private EventHandler? _onLauncherTriggeredHandler;
     private EventHandler? _onVoiceControlKeyDownHandler;
     private EventHandler? _onVoiceControlTriggeredHandler;
+    private EventHandler? _onLauncherTriggeredHandler;
     private PropertyChangedEventHandler? _settingsVMPropertyChangedHandler;
     private PropertyChangedEventHandler? _localConfigPropertyChangedHandler;
 
@@ -285,9 +284,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
         });
         _keyService.OnDoubleSemiColonDetected += _onDoubleSemiColonDetectedHandler;
 
-        _onQuickActionTriggeredHandler = async (_, __) => await HandleQuickActionTriggered();
-        _keyService.OnQuickActionTriggered += _onQuickActionTriggeredHandler;
-
         _onLauncherTriggeredHandler = (_, __) => HandleLauncherTriggered();
         _keyService.OnLauncherTriggered += _onLauncherTriggeredHandler;
 
@@ -298,7 +294,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _keyService.OnVoiceControlTriggered += _onVoiceControlTriggeredHandler;
         // Initialize hotkeys from config before starting
         _keyService.LauncherHotkeyString = Config.LauncherHotkey;
-        _keyService.QuickActionHotkeyString = Config.QuickActionHotkey;
         // Initialize GlobalKeyService unconditionally to support Launcher
         try { _keyService.Start(); } catch { }
 
@@ -615,13 +610,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void ManualLocalRestore() => SettingsVM.ManualLocalRestoreCommand.Execute(null);
 
-    [RelayCommand]
-    private void TriggerQuickAction()
-    {
-        var window = new Views.CaptureWindow();
-        window.Show();
-        window.Activate();
-    }
 
     public async Task BackupToCloudAsync()
     {
@@ -1349,120 +1337,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
 
 
-    [RelayCommand]
-    private void TriggerSelectedTextTranslate() => ExternalToolsVM.TriggerSelectedTextTranslateCommand.Execute(null);
 
     [RelayCommand]
     private void TriggerOcr() => ExternalToolsVM.TriggerOcrCommand.Execute(null);
 
     [RelayCommand]
     private void TriggerTranslate() => ExternalToolsVM.TriggerTranslateCommand.Execute(null);
-
-    // ========== 全局划词助手 ==========
-    private async Task HandleQuickActionTriggered()
-    {
-        try
-        {
-            // 1. 获取选中文本
-            var selectedText = await _clipboardService.GetSelectedTextAsync();
-
-            // 1.1 清理文本 (移除不可见字符、控制符)
-            if (selectedText != null)
-            {
-                selectedText = selectedText.Trim().Trim('\0', '\uFEFF', '\u200B');
-            }
-
-            if (string.IsNullOrWhiteSpace(selectedText))
-            {
-                // 优化：使用统一的 TranslationPopup 展示警告
-                await Application.Current.Dispatcher.InvokeAsync(() =>
-                {
-                    _windowManager.ShowTranslationPopup("未能获取选中文本...");
-                });
-                return;
-            }
-
-            // 2. 获取带有 IsQuickAction 标记的提示词
-            var quickActions = new ObservableCollection<PromptItem>();
-
-            // 优先使用 LocalConfig 中的配置 (支持自定义模型绑定)
-            if (LocalConfig.QuickActionPrompts != null && LocalConfig.QuickActionPrompts.Count > 0)
-            {
-                foreach (var configItem in LocalConfig.QuickActionPrompts)
-                {
-                    var file = Files.FirstOrDefault(f => f.Id == configItem.Id);
-                    if (file != null)
-                    {
-                        // 创建临时对象，确保使用配置中的模型ID，且不污染原始对象
-                        quickActions.Add(new PromptItem
-                        {
-                            Id = file.Id,
-                            Title = file.Title,
-                            Content = file.Content,
-                            FolderId = file.FolderId,
-                            IconGeometry = file.IconGeometry,
-                            Description = file.Description,
-                            IsQuickAction = true,
-                            BoundModelId = configItem.BoundModelId,
-                            CreatedAt = file.CreatedAt,
-                            LastModified = file.LastModified
-                        });
-                    }
-                }
-            }
-
-            // 如果配置为空，回退到旧版 IsQuickAction 标记逻辑
-            if (quickActions.Count == 0)
-            {
-                var legacyItems = Files.Where(f => f.IsQuickAction).ToList();
-
-                // 如果为空，尝试自动初始化默认指令
-                if (legacyItems.Count == 0)
-                {
-                    InitializeQuickActions();
-                    legacyItems = Files.Where(f => f.IsQuickAction).ToList();
-                }
-
-                foreach (var item in legacyItems) quickActions.Add(item);
-            }
-
-            if (quickActions.Count == 0)
-            {
-                await Application.Current.Dispatcher.InvokeAsync(() =>
-                {
-                    _dialogService.ShowAlert("未配置快捷指令。\n请在设置中将提示词标记为快捷操作。", "提示");
-                });
-                return;
-            }
-
-            // 3. 创建 ViewModel 和窗口
-            await Application.Current.Dispatcher.InvokeAsync(() =>
-            {
-                var viewModel = new QuickActionViewModel(
-                    _aiService,
-                    _clipboardService,
-                    _settingsService,
-                    selectedText,
-                    quickActions);
-
-                var window = new Views.QuickActionWindow
-                {
-                    DataContext = viewModel
-                };
-
-                // 定位窗口
-                _windowPositionService.PositionWindowNearMouse(window);
-
-                // 显示窗口
-                window.Show();
-                window.Activate();
-            });
-        }
-        catch (Exception ex)
-        {
-            LoggerService.Instance.LogError($"快捷助手触发失败: {ex.Message}", "MainViewModel.HandleQuickActionTriggered");
-        }
-    }
 
     private void HandleLauncherTriggered()
     {
@@ -1495,38 +1375,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
         });
     }
 
+    // ========== 全局划词助手 ==========
 
-    [RelayCommand]
-    private void ToggleQuickAction(PromptItem? file)
-    {
-        if (file == null) return;
-        file.IsQuickAction = !file.IsQuickAction;
-        RequestSave();
-    }
-
-    private void InitializeQuickActions()
-    {
-        // 如果已经有配置的快捷指令，直接返回
-        if (Files.Any(f => f.IsQuickAction)) return;
-
-        // 尝试自动标记一些常用指令
-        bool modified = false;
-        var commonKeywords = new[] { "润色", "Polish", "翻译", "Translate", "解释", "Explain", "摘要", "Summarize" };
-
-        foreach (var keyword in commonKeywords)
-        {
-            var match = Files.FirstOrDefault(f => f.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase));
-            if (match != null && !match.IsQuickAction)
-            {
-                match.IsQuickAction = true;
-                modified = true;
-            }
-        }
-
-        // 如果没有找到匹配的，或者列表为空，我们什么都不做，等待用户手动添加
-        // 但如果有修改，保存
-        if (modified) RequestSave();
-    }
 
     [RelayCommand]
     private void ToggleGlobalPromptList()
@@ -1636,8 +1486,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
                 _keyService.OnDoubleCtrlDetected -= _onDoubleCtrlDetectedHandler;
             if (_onDoubleSemiColonDetectedHandler != null)
                 _keyService.OnDoubleSemiColonDetected -= _onDoubleSemiColonDetectedHandler;
-            if (_onQuickActionTriggeredHandler != null)
-                _keyService.OnQuickActionTriggered -= _onQuickActionTriggeredHandler;
             if (_onLauncherTriggeredHandler != null)
                 _keyService.OnLauncherTriggered -= _onLauncherTriggeredHandler;
             if (_onVoiceControlKeyDownHandler != null)
