@@ -1710,78 +1710,136 @@
 
                                     <!-- Sub-Tab Content: Main Interface -->
                                     <StackPanel x:Name="ExternalToolsMainTab">
-                                        <Border Style="{StaticResource CardStyle}">
+                                        <!-- OCR Providers Card -->
+                                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
                                             <StackPanel>
-                                                <!-- OCR Providers Selection -->
+                                                <TextBlock Text="OCR 识别引擎" Style="{StaticResource SectionHeaderTextStyle}"/>
                                                 
-                                                
-                                                <ItemsControl ItemsSource="{Binding ExternalToolsVM.OcrProfiles}" Margin="0,0,0,10">
+                                                <ItemsControl ItemsSource="{Binding ExternalToolsVM.OcrProfiles}">
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate>
-                                                            <StackPanel Orientation="Horizontal" Margin="0,6">
-                                                                <CheckBox IsChecked="{Binding IsEnabled}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand" VerticalAlignment="Center"/>
-                                                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{DynamicResource TextPrimary}"/>
-                                                                <TextBlock Text="{Binding ProviderDisplayName, StringFormat='({0})'}" VerticalAlignment="Center" Margin="5,0,0,0" Foreground="{DynamicResource TextSecondary}" FontSize="12"/>
+                                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                                                <CheckBox IsChecked="{Binding IsEnabled}" 
+                                                                          Style="{StaticResource ToggleSwitchStyle}" 
+                                                                          Cursor="Hand" 
+                                                                          VerticalAlignment="Center"/>
+                                                                <TextBlock Text="{Binding Name}" 
+                                                                           VerticalAlignment="Center" 
+                                                                           Margin="12,0,0,0" 
+                                                                           Foreground="{DynamicResource TextPrimary}"
+                                                                           FontSize="14"/>
+                                                                <TextBlock Text="{Binding ProviderDisplayName, StringFormat='({0})'}" 
+                                                                           VerticalAlignment="Center" 
+                                                                           Margin="8,0,0,0" 
+                                                                           Foreground="{DynamicResource TextSecondary}" 
+                                                                           FontSize="12"/>
                                                             </StackPanel>
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
 
-                                                <!-- Separator -->
-                                                <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,10,0,20"/>
-
-                                                <!-- Translation Providers Selection -->
+                                        <!-- Translation Providers Card -->
+                                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
+                                            <StackPanel>
+                                                <TextBlock Text="翻译引擎" Style="{StaticResource SectionHeaderTextStyle}"/>
                                                 
-                                                
-                                                <ItemsControl ItemsSource="{Binding ExternalToolsVM.TranslateProfiles}" Margin="0,0,0,10">
+                                                <ItemsControl ItemsSource="{Binding ExternalToolsVM.TranslateProfiles}">
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate>
-                                                            <StackPanel Orientation="Horizontal" Margin="0,6">
-                                                                <CheckBox IsChecked="{Binding IsEnabled}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand" VerticalAlignment="Center"/>
-                                                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{DynamicResource TextPrimary}"/>
-                                                                <TextBlock Text="{Binding ProviderDisplayName, StringFormat='({0})'}" VerticalAlignment="Center" Margin="5,0,0,0" Foreground="{DynamicResource TextSecondary}" FontSize="12"/>
+                                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                                                <CheckBox IsChecked="{Binding IsEnabled}" 
+                                                                          Style="{StaticResource ToggleSwitchStyle}" 
+                                                                          Cursor="Hand" 
+                                                                          VerticalAlignment="Center"/>
+                                                                <TextBlock Text="{Binding Name}" 
+                                                                           VerticalAlignment="Center" 
+                                                                           Margin="12,0,0,0" 
+                                                                           Foreground="{DynamicResource TextPrimary}"
+                                                                           FontSize="14"/>
+                                                                <TextBlock Text="{Binding ProviderDisplayName, StringFormat='({0})'}" 
+                                                                           VerticalAlignment="Center" 
+                                                                           Margin="8,0,0,0" 
+                                                                           Foreground="{DynamicResource TextSecondary}" 
+                                                                           FontSize="12"/>
                                                             </StackPanel>
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
 
-                                                <!-- Divider and Auto Copy -->
-                                                <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,10,0,20"/>
+                                        <!-- Quick Settings Card -->
+                                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
+                                            <StackPanel>
+                                                <TextBlock Text="快捷设置" Style="{StaticResource SectionHeaderTextStyle}"/>
                                                 
-                                                <Grid Margin="0,0,0,10">
+                                                <Grid Margin="0,0,0,0">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="翻译后自动复制结果" 
-                                                               VerticalAlignment="Center" 
-                                                               Foreground="{DynamicResource TextPrimary}"/>
-                                                    <CheckBox Grid.Column="1" IsChecked="{Binding Config.AutoCopyTranslationResult}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand" VerticalAlignment="Center"/>
-                                                </Grid>
-
-                                                <!-- Separator -->
-                                                <ContentControl Visibility="{Binding Config.SavedModels.Count, Converter={StaticResource CountToVisibilityConverter}}">
-                                                    <StackPanel>
-                                                        <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,10,0,20"/>
-
-                                                        <!-- AI Vision Translate Models Checklist -->
-                                                        <TextBlock Text="" Visibility="Collapsed"/>
-                                                        
-                                                        <ItemsControl ItemsSource="{Binding Config.SavedModels}" Margin="0,0,0,0">
-                                                            <ItemsControl.ItemTemplate>
-                                                                <DataTemplate>
-                                                                    <StackPanel Orientation="Horizontal" Margin="0,6">
-                                                                        <CheckBox IsChecked="{Binding IsEnableForScreenshotTranslate}" Style="{StaticResource ToggleSwitchStyle}" Cursor="Hand" VerticalAlignment="Center" ToolTip="启用截图直译 (跳过 OCR，直接发送图片给 AI)"/>
-                                                                        <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{DynamicResource TextPrimary}" FontWeight="Medium"/>
-                                                                        <TextBlock Text="[Vision-to-Text]" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{DynamicResource HintBrush}" FontSize="11"/>
-                                                                    </StackPanel>
-                                                                </DataTemplate>
-                                                            </ItemsControl.ItemTemplate>
-                                                        </ItemsControl>
+                                                    
+                                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                        <TextBlock Text="翻译后自动复制结果" 
+                                                                   VerticalAlignment="Center" 
+                                                                   Foreground="{DynamicResource TextPrimary}"
+                                                                   FontSize="14"/>
+                                                        <TextBlock Text="翻译完成后自动将结果复制到剪贴板" 
+                                                                   VerticalAlignment="Center" 
+                                                                   Foreground="{DynamicResource TextSecondary}"
+                                                                   FontSize="12"
+                                                                   Margin="0,4,0,0"/>
                                                     </StackPanel>
-                                                </ContentControl>
+                                                    
+                                                    <CheckBox Grid.Column="1" 
+                                                              IsChecked="{Binding Config.AutoCopyTranslationResult}" 
+                                                              Style="{StaticResource ToggleSwitchStyle}" 
+                                                              Cursor="Hand" 
+                                                              VerticalAlignment="Center"/>
+                                                </Grid>
                                             </StackPanel>
                                         </Border>
+
+                                        <!-- AI Vision Models Card -->
+                                        <ContentControl Visibility="{Binding Config.SavedModels.Count, Converter={StaticResource CountToVisibilityConverter}}">
+                                            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,0">
+                                                <StackPanel>
+                                                    <TextBlock Text="AI 视觉翻译" Style="{StaticResource SectionHeaderTextStyle}"/>
+                                                    
+                                                    <TextBlock Text="启用后可跳过 OCR，直接发送图片给 AI 进行翻译" 
+                                                               Style="{StaticResource HintTextStyle}"
+                                                               Margin="0,0,0,15"
+                                                               TextWrapping="Wrap"/>
+                                                    
+                                                    <ItemsControl ItemsSource="{Binding Config.SavedModels}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                                                    <CheckBox IsChecked="{Binding IsEnableForScreenshotTranslate}" 
+                                                                              Style="{StaticResource ToggleSwitchStyle}" 
+                                                                              Cursor="Hand" 
+                                                                              VerticalAlignment="Center"
+                                                                              ToolTip="启用截图直译 (跳过 OCR，直接发送图片给 AI)"/>
+                                                                    <TextBlock Text="{Binding DisplayName}" 
+                                                                               VerticalAlignment="Center" 
+                                                                               Margin="12,0,0,0" 
+                                                                               Foreground="{DynamicResource TextPrimary}" 
+                                                                               FontWeight="Medium"
+                                                                               FontSize="14"/>
+                                                                    <TextBlock Text="[Vision-to-Text]" 
+                                                                               VerticalAlignment="Center" 
+                                                                               Margin="8,0,0,0" 
+                                                                               Foreground="{DynamicResource HintBrush}" 
+                                                                               FontSize="11"/>
+                                                                </StackPanel>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </StackPanel>
+                                            </Border>
+                                        </ContentControl>
                                     </StackPanel>
 
                                     <!-- Sub-Tab Content: Baidu -->
