@@ -24,6 +24,43 @@ namespace PromptMasterv5.Infrastructure.Services
         {
             Timeout = TimeSpan.FromMinutes(2)
         };
+
+        // 缓存 OpenAIService 实例，避免每次请求都创建新实例
+        // 使用 (apiKey + baseUrl) 作为缓存键
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, OpenAIService> _serviceCache 
+            = new System.Collections.Concurrent.ConcurrentDictionary<string, OpenAIService>();
+
+        /// <summary>
+        /// 获取缓存的 OpenAIService 实例，如果不存在则创建并缓存
+        /// </summary>
+        private OpenAIService GetOrCreateOpenAiService(string apiKey, string baseUrl)
+        {
+            string cacheKey = $"{apiKey}|{baseUrl}";
+            return _serviceCache.GetOrAdd(cacheKey, key => CreateOpenAiServiceInternal(apiKey, baseUrl));
+        }
+
+        /// <summary>
+        /// 内部方法：创建新的 OpenAIService 实例
+        /// </summary>
+        private OpenAIService CreateOpenAiServiceInternal(string apiKey, string baseUrl)
+        {
+            LoggerService.Instance.LogInfo($"Creating new OpenAiService: BaseUrl={baseUrl}", "AiService.CreateOpenAiServiceInternal");
+            
+            var options = new OpenAiOptions
+            {
+                ApiKey = apiKey,
+                BaseDomain = baseUrl
+            };
+
+            // 使用自定义 Handler 处理智谱 AI 的 URL 兼容性问题
+            var httpClient = new HttpClient(new ZhipuCompatHandler(new HttpClientHandler()))
+            {
+                Timeout = TimeSpan.FromMinutes(2)
+            };
+
+            return new OpenAIService(options, httpClient);
+        }
+
         public Task<string> ChatAsync(string userContent, AppConfig config, string? systemPrompt = null)
         {
             string apiKey = config.AiApiKey;
@@ -51,7 +88,7 @@ namespace PromptMasterv5.Infrastructure.Services
                 return "[设置错误] 请先在设置中配置 API Key";
             }
 
-            var openAiService = CreateOpenAiService(apiKey, baseUrl);
+            var openAiService = GetOrCreateOpenAiService(apiKey, baseUrl);
 
             string finalSystemPrompt = systemPrompt ?? "You are a helpful assistant. Output result directly without unnecessary conversational filler. IMPORTANT: Always answer in Simplified Chinese unless the user explicitly asks for another language.";
 
@@ -98,7 +135,7 @@ namespace PromptMasterv5.Infrastructure.Services
             if (string.IsNullOrWhiteSpace(apiKey)) return "[设置错误] 请先配置 API Key";
             if (imageBytes == null || imageBytes.Length == 0) return "[输入错误] 图片数据为空";
 
-            var openAiService = CreateOpenAiService(apiKey, baseUrl);
+            var openAiService = GetOrCreateOpenAiService(apiKey, baseUrl);
 
             string finalSystemPrompt = systemPrompt ?? "You are a helpful assistant. Please perform OCR on the provided image.";
             string base64Image = Convert.ToBase64String(imageBytes);
@@ -175,7 +212,7 @@ namespace PromptMasterv5.Infrastructure.Services
                 yield break;
             }
 
-            var openAiService = CreateOpenAiService(apiKey, baseUrl);
+            var openAiService = GetOrCreateOpenAiService(apiKey, baseUrl);
 
             string finalSystemPrompt = systemPrompt ?? "You are a helpful assistant. Output result directly without unnecessary conversational filler. IMPORTANT: Always answer in Simplified Chinese unless the user explicitly asks for another language.";
 
@@ -285,7 +322,7 @@ namespace PromptMasterv5.Infrastructure.Services
                 yield break;
             }
 
-            var openAiService = CreateOpenAiService(apiKey, baseUrl);
+            var openAiService = GetOrCreateOpenAiService(apiKey, baseUrl);
 
             var request = new ChatCompletionCreateRequest
             {
@@ -491,7 +528,7 @@ namespace PromptMasterv5.Infrastructure.Services
 
             try
             {
-                var openAiService = CreateOpenAiService(apiKey, baseUrl);
+                var openAiService = GetOrCreateOpenAiService(apiKey, baseUrl);
 
                 var request = new ChatCompletionCreateRequest
                 {
@@ -522,24 +559,8 @@ namespace PromptMasterv5.Infrastructure.Services
         }
         private OpenAIService CreateOpenAiService(string apiKey, string baseUrl)
         {
-            LoggerService.Instance.LogInfo($"Creating OpenAiService: BaseUrl={baseUrl}, ApiKey={(string.IsNullOrEmpty(apiKey) ? "Empty" : "Present")}", "AiService.CreateOpenAiService");
-            
-            var options = new OpenAiOptions
-            {
-                ApiKey = apiKey,
-                BaseDomain = baseUrl
-            };
-
-            // 使用自定义 Handler 处理智谱 AI 的 URL 兼容性问题
-            // 智谱 API 虽然号称兼容 OpenAI，但 path 使用 /api/paas/v4/
-            // 标准 SDK 会自动追加 /v1/chat/completions，导致路径变为 /api/paas/v4/v1/... (404)
-            var httpClient = new HttpClient(new ZhipuCompatHandler(new HttpClientHandler()))
-            {
-                Timeout = TimeSpan.FromMinutes(2) // 增加超时时间以防万一
-            };
-
-            LoggerService.Instance.LogInfo("OpenAiService created successfully with ZhipuCompatHandler", "AiService.CreateOpenAiService");
-            return new OpenAIService(options, httpClient);
+            // 使用缓存版本，避免重复创建
+            return GetOrCreateOpenAiService(apiKey, baseUrl);
         }
 
         /// <summary>

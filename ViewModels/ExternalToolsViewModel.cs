@@ -24,6 +24,42 @@ namespace PromptMasterv5.ViewModels
         private readonly GoogleService _googleService;
         private readonly IAudioService _audioService;
 
+        // 缓存配置查询结果，避免每次访问都创建新的 ObservableCollection
+        private List<ApiProfile>? _cachedOcrProfiles;
+        private List<ApiProfile>? _cachedTranslateProfiles;
+        private int _lastConfigVersion = -1;
+
+        /// <summary>
+        /// 获取启用的 OCR 配置（带缓存）
+        /// </summary>
+        private List<ApiProfile> GetEnabledOcrProfiles()
+        {
+            // 简单的版本检查：如果配置数量变化，重新缓存
+            var currentCount = Config.ApiProfiles.Count;
+            if (_cachedOcrProfiles == null || _lastConfigVersion != currentCount)
+            {
+                _cachedOcrProfiles = Config.ApiProfiles.Where(p => p.ServiceType == ServiceType.OCR && p.IsEnabled).ToList();
+                _cachedTranslateProfiles = null; // 同时清除翻译缓存
+                _lastConfigVersion = currentCount;
+            }
+            return _cachedOcrProfiles!;
+        }
+
+        /// <summary>
+        /// 获取启用的翻译配置（带缓存）
+        /// </summary>
+        private List<ApiProfile> GetEnabledTranslateProfiles()
+        {
+            var currentCount = Config.ApiProfiles.Count;
+            if (_cachedTranslateProfiles == null || _lastConfigVersion != currentCount)
+            {
+                _cachedTranslateProfiles = Config.ApiProfiles.Where(p => p.ServiceType == ServiceType.Translation && p.IsEnabled).ToList();
+                _cachedOcrProfiles = null; // 同时清除OCR缓存
+                _lastConfigVersion = currentCount;
+            }
+            return _cachedTranslateProfiles!;
+        }
+
         public ObservableCollection<ApiProfile> OcrProfiles => 
             new(Config.ApiProfiles.Where(p => p.ServiceType == ServiceType.OCR));
 
@@ -32,6 +68,11 @@ namespace PromptMasterv5.ViewModels
 
         public void RefreshProfiles()
         {
+            // 清除缓存
+            _cachedOcrProfiles = null;
+            _cachedTranslateProfiles = null;
+            _lastConfigVersion = -1;
+            
             OnPropertyChanged(nameof(OcrProfiles));
             OnPropertyChanged(nameof(TranslateProfiles));
         }
@@ -116,7 +157,7 @@ namespace PromptMasterv5.ViewModels
             try
             {
                 _isCapturing = true;
-                var enabledProfiles = OcrProfiles.Where(p => p.IsEnabled).ToList();
+                var enabledProfiles = GetEnabledOcrProfiles();
                 if (enabledProfiles.Count == 0)
                 {
                     if (_dialogService.ShowOcrNotConfiguredDialog())
@@ -174,8 +215,8 @@ namespace PromptMasterv5.ViewModels
                 var enabledVisionModels = Config.SavedModels.Where(m => m.IsEnableForScreenshotTranslate).ToList();
                 bool useVisionTranslate = enabledVisionModels.Any();
 
-                var enabledOcrProfiles = OcrProfiles.Where(p => p.IsEnabled).ToList();
-                var enabledTransProfiles = TranslateProfiles.Where(p => p.IsEnabled).ToList();
+                var enabledOcrProfiles = GetEnabledOcrProfiles();
+                var enabledTransProfiles = GetEnabledTranslateProfiles();
 
                 if (!useVisionTranslate)
                 {
@@ -273,7 +314,7 @@ namespace PromptMasterv5.ViewModels
         [RelayCommand]
         private async Task TriggerSelectedTextTranslate()
         {
-            var enabledTransProfiles = TranslateProfiles.Where(p => p.IsEnabled).ToList();
+            var enabledTransProfiles = GetEnabledTranslateProfiles();
             if (enabledTransProfiles.Count == 0)
             {
                  // Check if it's just a misconfiguration or intended fallback

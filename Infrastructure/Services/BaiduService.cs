@@ -222,7 +222,7 @@ namespace PromptMasterv5.Services
             // Baidu Limit: Base64 < 4MB, Side 15px-4096px
             try
             {
-                imageBytes = OptimizeImage(imageBytes);
+                imageBytes = await OptimizeImageAsync(imageBytes);
             }
             catch (Exception ex)
             {
@@ -401,7 +401,19 @@ namespace PromptMasterv5.Services
         /// 优化图片尺寸和大小以符合百度 API 限制
         /// 限制：长宽最大 4096px，最短 15px，Base64 后大小 < 4MB (原图建议 < 3MB)
         /// </summary>
-        private byte[] OptimizeImage(byte[] originalBytes)
+        /// <summary>
+        /// 异步优化图片尺寸和大小以符合百度 API 限制
+        /// 性能优化：将图片处理放到后台线程，避免阻塞调用线程
+        /// </summary>
+        private Task<byte[]> OptimizeImageAsync(byte[] originalBytes)
+        {
+            return Task.Run(() => OptimizeImageCore(originalBytes));
+        }
+
+        /// <summary>
+        /// 图片优化核心逻辑（同步执行，由异步方法包装）
+        /// </summary>
+        private byte[] OptimizeImageCore(byte[] originalBytes)
         {
             try
             {

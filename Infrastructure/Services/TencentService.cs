@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Windows.Media.Imaging;
+using System.Windows.Media;
 using PromptMasterv5.Core.Models;
 using PromptMasterv5.Infrastructure.Services; // Ensure access to LoggerService
 
@@ -113,6 +116,10 @@ namespace PromptMasterv5.Services
             
             try
             {
+                // 图片优化：腾讯OCR限制 Base64后7MB，建议原图<5MB
+                // 性能优化：使用异步方法避免阻塞
+                imageBytes = await OptimizeImageAsync(imageBytes);
+                
                 // OCR API v3: GeneralBasicOCR
                 // Endpoint: ocr.tencentcloudapi.com
                 
@@ -240,6 +247,98 @@ namespace PromptMasterv5.Services
             using (HMACSHA256 hmac = new HMACSHA256(key))
             {
                 return hmac.ComputeHash(Encoding.UTF8.GetBytes(msg));
+            }
+        }
+
+        #endregion
+
+        #region 图片优化逻辑 (Image Optimization)
+
+        /// <summary>
+        /// 异步优化图片尺寸和大小以符合腾讯 API 限制
+        /// 限制：Base64 后 < 7MB，建议原图 < 5MB
+        /// 性能优化：将图片处理放到后台线程，避免阻塞调用线程
+        /// </summary>
+        private Task<byte[]> OptimizeImageAsync(byte[] originalBytes)
+        {
+            return Task.Run(() => OptimizeImageCore(originalBytes));
+        }
+
+        /// <summary>
+        /// 图片优化核心逻辑（同步执行，由异步方法包装）
+        /// </summary>
+        private byte[] OptimizeImageCore(byte[] originalBytes)
+        {
+            try
+            {
+                // 如果图片已经足够小，直接返回
+                if (originalBytes.Length <= 3 * 1024 * 1024) // 3MB
+                {
+                    return originalBytes;
+                }
+
+                using (var ms = new MemoryStream(originalBytes))
+                {
+                    var bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.StreamSource = ms;
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.EndInit();
+                    bitmap.Freeze();
+
+                    double width = bitmap.PixelWidth;
+                    double height = bitmap.PixelHeight;
+
+                    // 腾讯限制：建议长边不超过 4000px
+                    double maxDimension = 4000;
+                    double scale = 1.0;
+
+                    if (width > maxDimension || height > maxDimension)
+                    {
+                        scale = Math.Min(maxDimension / width, maxDimension / height);
+                    }
+
+                    // 如果尺寸过大，或者文件过大 (>3MB)，则重绘
+                    if (scale < 1.0 || originalBytes.Length > 3 * 1024 * 1024)
+                    {
+                        BitmapSource finalBitmap = bitmap;
+
+                        if (scale < 1.0)
+                        {
+                            finalBitmap = new TransformedBitmap(bitmap, new ScaleTransform(scale, scale));
+                        }
+
+                        // 压缩为 JPEG
+                        using (var outStream = new MemoryStream())
+                        {
+                            var encoder = new JpegBitmapEncoder();
+                            encoder.QualityLevel = 85;
+                            encoder.Frames.Add(BitmapFrame.Create(finalBitmap));
+                            encoder.Save(outStream);
+
+                            var resultBytes = outStream.ToArray();
+
+                            // 二次检查大小，如果仍然 > 4MB，降低质量
+                            if (resultBytes.Length > 4 * 1024 * 1024)
+                            {
+                                outStream.SetLength(0);
+                                encoder.QualityLevel = 60;
+                                encoder.Save(outStream);
+                                resultBytes = outStream.ToArray();
+                            }
+
+                            LoggerService.Instance.LogInfo($"Image Optimized: Original {originalBytes.Length / 1024}KB -> Optimized {resultBytes.Length / 1024}KB (Scale: {scale:F2})", "TencentService.OptimizeImage");
+                            return resultBytes;
+                        }
+                    }
+
+                    return originalBytes;
+                }
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Instance.LogException(ex, "Image Optimization Failed", "TencentService");
+                return originalBytes;
             }
         }
 
