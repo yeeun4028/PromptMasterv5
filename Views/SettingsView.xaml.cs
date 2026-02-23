@@ -81,21 +81,6 @@ namespace PromptMasterv5.Views
             var baiduTransProfile = ViewModel.Config.ApiProfiles.FirstOrDefault(p => 
                 p.Provider == ApiProvider.Baidu && p.ServiceType == ServiceType.Translation);
 
-            // Load OCR credentials
-            /*
-            if (baiduOcrProfile != null && BaiduOcrApiKey != null && BaiduOcrSecretKey != null)
-            {
-                BaiduOcrApiKey.Text = baiduOcrProfile.Key1;
-                BaiduOcrSecretKey.Text = baiduOcrProfile.Key2;
-            }
-
-            // Load Translation credentials
-            if (baiduTransProfile != null && BaiduTranslateAppId != null && BaiduTranslateSecretKey != null)
-            {
-                BaiduTranslateAppId.Text = baiduTransProfile.Key1;
-                BaiduTranslateSecretKey.Text = baiduTransProfile.Key2;
-            }
-            */
         }
 
         private void SaveBaiduCredentials()
@@ -117,14 +102,6 @@ namespace PromptMasterv5.Views
                 ViewModel.Config.ApiProfiles.Add(baiduOcrProfile);
             }
 
-            /*
-            if (BaiduOcrApiKey != null && BaiduOcrSecretKey != null)
-            {
-                baiduOcrProfile.Key1 = BaiduOcrApiKey.Text;
-                baiduOcrProfile.Key2 = BaiduOcrSecretKey.Text;
-            }
-            */
-
             // Find or create Baidu Translation profile
             var baiduTransProfile = ViewModel.Config.ApiProfiles.FirstOrDefault(p => 
                 p.Provider == ApiProvider.Baidu && p.ServiceType == ServiceType.Translation);
@@ -139,14 +116,6 @@ namespace PromptMasterv5.Views
                 };
                 ViewModel.Config.ApiProfiles.Add(baiduTransProfile);
             }
-
-            /*
-            if (BaiduTranslateAppId != null && BaiduTranslateSecretKey != null)
-            {
-                baiduTransProfile.Key1 = BaiduTranslateAppId.Text;
-                baiduTransProfile.Key2 = BaiduTranslateSecretKey.Text;
-            }
-            */
 
             // Auto-set as active profiles if not already set
             if (string.IsNullOrEmpty(ViewModel.Config.OcrProfileId))
@@ -175,19 +144,6 @@ namespace PromptMasterv5.Views
             var tencentTransProfile = ViewModel.Config.ApiProfiles.FirstOrDefault(p => 
                 p.Provider == ApiProvider.Tencent && p.ServiceType == ServiceType.Translation);
 
-            /*
-            if (tencentOcrProfile != null && TencentOcrSecretId != null && TencentOcrSecretKey != null)
-            {
-                TencentOcrSecretId.Text = tencentOcrProfile.Key1;
-                TencentOcrSecretKey.Text = tencentOcrProfile.Key2;
-            }
-
-            if (tencentTransProfile != null && TencentTranslateSecretId != null && TencentTranslateSecretKey != null)
-            {
-                TencentTranslateSecretId.Text = tencentTransProfile.Key1;
-                TencentTranslateSecretKey.Text = tencentTransProfile.Key2;
-            }
-            */
         }
 
         private void SaveTencentCredentials()

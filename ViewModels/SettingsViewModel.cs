@@ -202,7 +202,6 @@ namespace PromptMasterv5.ViewModels
                 SetBrush(resources, "HeaderIconBrush", "#ACBFBE");
                 SetBrush(resources, "HeaderIconHoverBrush", "#ACBFBE");
 
-                SetBrush(resources, "MiniCaretBrush", "#B8BFC6");
                 SetBrush(resources, "Block3EditorTextBrush", "#B8BFC6");
                 SetBrush(resources, "Block3EditorCaretBrush", "#B8BFC6");
                 SetBrush(resources, "Block3EditorSelectionBrush", "#4A89DC");
@@ -235,7 +234,6 @@ namespace PromptMasterv5.ViewModels
                 SetBrush(resources, "HeaderIconBrush", "#666666");
                 SetBrush(resources, "HeaderIconHoverBrush", "#333333");
 
-                SetBrush(resources, "MiniCaretBrush", "#333333");
                 SetBrush(resources, "Block3EditorTextBrush", "#333333");
                 SetBrush(resources, "Block3EditorCaretBrush", "#333333");
                 SetBrush(resources, "Block3EditorSelectionBrush", "#4A89DC");

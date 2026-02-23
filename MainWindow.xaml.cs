@@ -41,10 +41,6 @@ namespace PromptMasterv5
     {
         public MainViewModel ViewModel { get; }
 
-        private double _lastFullWidth = 1000;
-        private double _lastFullHeight = 600;
-        private double _lastFullLeft = 100;
-        private double _lastFullTop = 100;
         private DateTime _lastVarEnterTime = DateTime.MinValue;
         private DateTime _lastAddEnterTime = DateTime.MinValue;
 
@@ -58,7 +54,6 @@ namespace PromptMasterv5
         private bool _isExiting = false;
         private bool _isBackupExiting = false;
         private DispatcherTimer? _hideTimer;
-        private bool _isClosingToTray = true;
 
         public MainWindow(MainViewModel viewModel)
         {

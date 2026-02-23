@@ -33,7 +33,9 @@ namespace PromptMasterv5.Infrastructure.Services.Transcribers
         public event EventHandler<float>? OnAudioLevelChanged;
         public event EventHandler? OnRecordingStarted;
         public event EventHandler? OnRecordingStopped;
+#pragma warning disable CS0067
         public event EventHandler<string>? OnIntermediateResult;
+#pragma warning restore CS0067
         public event EventHandler<string>? OnFinalResult;
         public event EventHandler<Exception>? OnError;
 

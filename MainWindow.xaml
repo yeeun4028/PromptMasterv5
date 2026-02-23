@@ -1193,8 +1193,8 @@
                                     </ScrollViewer>
 
                                     <TextBox Grid.Row="1" Text="{Binding AdditionalInput, UpdateSourceTrigger=PropertyChanged}" 
-                                             Foreground="{DynamicResource MiniTextBrush}"
-                                             CaretBrush="{DynamicResource MiniCaretBrush}"
+                                             Foreground="{DynamicResource PrimaryTextBrush}"
+                                             CaretBrush="{DynamicResource PrimaryTextBrush}"
                                              PreviewKeyDown="AdditionalInputBox_PreviewKeyDown"
                                              AcceptsReturn="True" 
                                              TextWrapping="Wrap" 

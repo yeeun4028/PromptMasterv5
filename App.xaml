@@ -108,7 +108,7 @@
             <SolidColorBrush x:Key="ListItemSelectedBackgroundBrush" Color="#444A52"/>
             <SolidColorBrush x:Key="InputFocusBackgroundBrush" Color="#2E3033"/>
 
-            <SolidColorBrush x:Key="MiniCaretBrush" Color="#B8BFC6"/>
+            <SolidColorBrush x:Key="TextCaretBrush" Color="#B8BFC6"/>
             <SolidColorBrush x:Key="Block3EditorTextBrush" Color="#B8BFC6"/>
             <SolidColorBrush x:Key="Block3EditorCaretBrush" Color="#B8BFC6"/>
             <SolidColorBrush x:Key="Block3EditorSelectionBrush" Color="#4A89DC"/>
@@ -123,72 +123,11 @@
             <SolidColorBrush x:Key="HeaderIconBrush" Color="#B0B4B8"/>
             <SolidColorBrush x:Key="HeaderIconHoverBrush" Color="#E6E8EA"/>
 
-            <SolidColorBrush x:Key="MiniBackgroundBrush" Color="#1E1E1E"/>
-            <SolidColorBrush x:Key="MiniTextBrush" Color="#E0E0E0"/>
-            <SolidColorBrush x:Key="MiniSearchBackgroundBrush" Color="#252526"/>
-            <SolidColorBrush x:Key="MiniHighlightBrush" Color="#3C3C3C"/>
-            <SolidColorBrush x:Key="AccentBrush" Color="#4183C4"/>
             <Color x:Key="AccentColorValue">#4183C4</Color>
             <SolidColorBrush x:Key="AccentColor" Color="{StaticResource AccentColorValue}"/>
             <SolidColorBrush x:Key="DangerBrush" Color="#E74C3C"/>
             <SolidColorBrush x:Key="DangerHoverBrush" Color="#C0392B"/>
 
-            <SolidColorBrush x:Key="MiniModeBtnInactiveBrush" Color="#B0B4B8"/>
-            <SolidColorBrush x:Key="MiniModeBtnActiveBrush" Color="#4183C4"/>
-
-            <Style x:Key="MiniModeButtonStyle" TargetType="Button">
-                <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="Foreground" Value="{StaticResource MiniModeBtnInactiveBrush}"/>
-                <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="Padding" Value="6,2"/>
-                <Setter Property="FontSize" Value="12"/>
-                <Setter Property="Cursor" Value="Hand"/>
-                <Setter Property="Focusable" Value="False"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border x:Name="Bd"
-                                    Background="{TemplateBinding Background}"
-                                    CornerRadius="4"
-                                    Padding="{TemplateBinding Padding}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Bd" Property="Background" Value="{StaticResource MiniHighlightBrush}"/>
-                                </Trigger>
-                                <Trigger Property="IsPressed" Value="True">
-                                    <Setter TargetName="Bd" Property="Background" Value="{StaticResource MiniHighlightBrush}"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-
-            <Style x:Key="MiniTextBoxStyle" TargetType="TextBox">
-                <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="Foreground" Value="{StaticResource MiniTextBrush}"/>
-                <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="CaretBrush" Value="White"/>
-                <Setter Property="FontSize" Value="18"/>
-                <Setter Property="FontFamily" Value="Segoe UI, Microsoft YaHei UI"/>
-
-                <Setter Property="TextWrapping" Value="Wrap"/>
-                <Setter Property="AcceptsReturn" Value="True"/>
-                <Setter Property="VerticalScrollBarVisibility" Value="Hidden"/>
-
-                <Setter Property="VerticalContentAlignment" Value="Center"/>
-
-                <Setter Property="Padding" Value="5,2"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="TextBox">
-                            <ScrollViewer x:Name="PART_ContentHost" Background="Transparent"/>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
 
             <!-- Typography Styles -->
             <Style x:Key="HeaderTextStyle" TargetType="TextBlock">

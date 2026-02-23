@@ -53,7 +53,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     // Event handlers for proper unsubscription
     private EventHandler? _onDoubleCtrlDetectedHandler;
-    private EventHandler? _onDoubleSemiColonDetectedHandler;
     private EventHandler? _onVoiceControlKeyDownHandler;
     private EventHandler? _onVoiceControlTriggeredHandler;
     private EventHandler? _onLauncherTriggeredHandler;
@@ -843,7 +842,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
             SetBrush(resources, "HeaderIconBrush", "#ACBFBE");
             SetBrush(resources, "HeaderIconHoverBrush", "#ACBFBE");
 
-            SetBrush(resources, "MiniCaretBrush", "#B8BFC6");
             SetBrush(resources, "Block3EditorTextBrush", "#B8BFC6");
             SetBrush(resources, "Block3EditorCaretBrush", "#B8BFC6");
             SetBrush(resources, "Block3EditorSelectionBrush", "#4A89DC");
@@ -875,7 +873,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
             SetBrush(resources, "HeaderIconBrush", "#666666");
             SetBrush(resources, "HeaderIconHoverBrush", "#333333");
 
-            SetBrush(resources, "MiniCaretBrush", "#333333");
             SetBrush(resources, "Block3EditorTextBrush", "#333333");
             SetBrush(resources, "Block3EditorCaretBrush", "#333333");
             SetBrush(resources, "Block3EditorSelectionBrush", "#4A89DC");
@@ -1282,8 +1279,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
         {
             if (_onDoubleCtrlDetectedHandler != null)
                 _keyService.OnDoubleCtrlDetected -= _onDoubleCtrlDetectedHandler;
-            if (_onDoubleSemiColonDetectedHandler != null)
-                _keyService.OnDoubleSemiColonDetected -= _onDoubleSemiColonDetectedHandler;
             if (_onLauncherTriggeredHandler != null)
                 _keyService.OnLauncherTriggered -= _onLauncherTriggeredHandler;
             if (_onVoiceControlKeyDownHandler != null)
