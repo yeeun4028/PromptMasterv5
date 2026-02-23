@@ -28,11 +28,15 @@ namespace PromptMasterv5.Infrastructure.Helpers
                 double dpiScaleX = 1.0;
                 double dpiScaleY = 1.0;
 
-                var source = PresentationSource.FromVisual(System.Windows.Application.Current.MainWindow);
-                if (source != null && source.CompositionTarget != null)
+                var mainWindow = System.Windows.Application.Current.MainWindow;
+                if (mainWindow != null)
                 {
-                    dpiScaleX = source.CompositionTarget.TransformToDevice.M11;
-                    dpiScaleY = source.CompositionTarget.TransformToDevice.M22;
+                    var source = PresentationSource.FromVisual(mainWindow);
+                    if (source != null && source.CompositionTarget != null)
+                    {
+                        dpiScaleX = source.CompositionTarget.TransformToDevice.M11;
+                        dpiScaleY = source.CompositionTarget.TransformToDevice.M22;
+                    }
                 }
 
                 // Set the placement target to something active
@@ -46,8 +50,11 @@ namespace PromptMasterv5.Infrastructure.Helpers
                 menu.IsOpen = true;
 
                 // Win32 magic to ensure it closes when clicking outside
-                IntPtr handle = new System.Windows.Interop.WindowInteropHelper(System.Windows.Application.Current.MainWindow).Handle;
-                NativeMethods.SetForegroundWindow(handle);
+                if (mainWindow != null)
+                {
+                    IntPtr handle = new System.Windows.Interop.WindowInteropHelper(mainWindow).Handle;
+                    NativeMethods.SetForegroundWindow(handle);
+                }
             }
         }
     }
