@@ -8,6 +8,9 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.IO;
 using Microsoft.Extensions.DependencyInjection;
 using MessageBox = System.Windows.MessageBox;
 
@@ -28,6 +31,7 @@ namespace PromptMasterv5.ViewModels
         private readonly IDialogService _dialogService;
         private readonly ThemeService _themeService;
         private readonly HotkeyService _hotkeyService;
+        private readonly BaiduService _baiduService;
 
         // 引用 MainViewModel 以访问 Files、Folders 等数据（用于同步恢复）
         // 这是暂时的依赖，后续可以通过消息总线进一步解耦
@@ -71,6 +75,18 @@ namespace PromptMasterv5.ViewModels
 
         #endregion
 
+        #region Observable Properties - Baidu Credentials
+
+        // 百度 OCR 凭据
+        [ObservableProperty] private string? baiduOcrApiKey;
+        [ObservableProperty] private string? baiduOcrSecretKey;
+
+        // 百度翻译凭据
+        [ObservableProperty] private string? baiduTranslateAppId;
+        [ObservableProperty] private string? baiduTranslateSecretKey;
+
+        #endregion
+
         #region Observable Properties - OCR & Translation Test Status
 
         // 百度 OCR 测试
@@ -108,7 +124,8 @@ namespace PromptMasterv5.ViewModels
             IDataService dataService,
             FileDataService localDataService,
             GlobalKeyService keyService,
-            IDialogService dialogService)
+            IDialogService dialogService,
+            BaiduService baiduService)
         {
             _settingsService = settingsService;
             _aiService = aiService;
@@ -118,6 +135,7 @@ namespace PromptMasterv5.ViewModels
             _dialogService = dialogService;
             _themeService = new ThemeService();
             _hotkeyService = new HotkeyService();
+            _baiduService = baiduService;
 
             LoggerService.Instance.LogInfo("SettingsViewModel initialized", "SettingsViewModel.ctor");
         }
@@ -779,6 +797,140 @@ namespace PromptMasterv5.ViewModels
                         _dialogService.ShowAlert($"配置导入失败: {ex.Message}", "错误");
                     }
                 }
+            }
+        }
+
+        #endregion
+
+        #region Commands - Baidu API Testing
+
+        /// <summary>
+        /// 测试百度 OCR 连接
+        /// </summary>
+        [RelayCommand]
+        private async Task TestBaiduOcr()
+        {
+            // Find Baidu OCR profile
+            var profile = Config.ApiProfiles.FirstOrDefault(p =>
+                p.Provider == ApiProvider.Baidu && p.ServiceType == ServiceType.OCR);
+
+            if (profile == null || string.IsNullOrWhiteSpace(profile.Key1) || string.IsNullOrWhiteSpace(profile.Key2))
+            {
+                BaiduOcrTestStatus = "请先填写 API Key 和 Secret Key";
+                BaiduOcrTestStatusColor = System.Windows.Media.Brushes.Red;
+                return;
+            }
+
+            BaiduOcrTestStatus = "测试中...";
+            BaiduOcrTestStatusColor = System.Windows.Media.Brushes.Gray;
+
+            try
+            {
+                // Test with a minimal white 1x1 PNG image
+                byte[] testImage = CreateTestImage();
+                var result = await _baiduService.OcrAsync(testImage, profile);
+
+                if (result.StartsWith("错误") || result.Contains("错误"))
+                {
+                    BaiduOcrTestStatus = $"连接失败：{result}";
+                    BaiduOcrTestStatusColor = System.Windows.Media.Brushes.Red;
+                }
+                else
+                {
+                    BaiduOcrTestStatus = "连接成功！";
+                    BaiduOcrTestStatusColor = System.Windows.Media.Brushes.Green;
+                }
+            }
+            catch (Exception ex)
+            {
+                BaiduOcrTestStatus = $"测试出错: {ex.Message}";
+                BaiduOcrTestStatusColor = System.Windows.Media.Brushes.Red;
+                LoggerService.Instance.LogException(ex, "Failed to test Baidu OCR", "SettingsViewModel.TestBaiduOcr");
+            }
+        }
+
+        /// <summary>
+        /// 测试百度翻译连接
+        /// </summary>
+        [RelayCommand]
+        private async Task TestBaiduTranslate()
+        {
+            // Find Baidu Translation profile
+            var profile = Config.ApiProfiles.FirstOrDefault(p =>
+                p.Provider == ApiProvider.Baidu && p.ServiceType == ServiceType.Translation);
+
+            if (profile == null || string.IsNullOrWhiteSpace(profile.Key1) || string.IsNullOrWhiteSpace(profile.Key2))
+            {
+                BaiduTranslateTestStatus = "请先填写 App ID 和 Secret Key";
+                BaiduTranslateTestStatusColor = System.Windows.Media.Brushes.Red;
+                return;
+            }
+
+            BaiduTranslateTestStatus = "测试中...";
+            BaiduTranslateTestStatusColor = System.Windows.Media.Brushes.Gray;
+
+            try
+            {
+                // Test with a simple English phrase
+                var result = await _baiduService.TranslateAsync("Hello", profile, "en", "zh");
+
+                if (result.StartsWith("错误") || result.Contains("错误") || result.Contains("异常"))
+                {
+                    BaiduTranslateTestStatus = $"连接失败：{result}";
+                    BaiduTranslateTestStatusColor = System.Windows.Media.Brushes.Red;
+                }
+                else
+                {
+                    BaiduTranslateTestStatus = $"连接成功！翻译结果：{result}";
+                    BaiduTranslateTestStatusColor = System.Windows.Media.Brushes.Green;
+                }
+            }
+            catch (Exception ex)
+            {
+                BaiduTranslateTestStatus = $"测试出错: {ex.Message}";
+                BaiduTranslateTestStatusColor = System.Windows.Media.Brushes.Red;
+                LoggerService.Instance.LogException(ex, "Failed to test Baidu Translate", "SettingsViewModel.TestBaiduTranslate");
+            }
+        }
+
+        /// <summary>
+        /// 创建测试图片 (用于 OCR 测试)
+        /// </summary>
+        private byte[] CreateTestImage()
+        {
+            // Create a valid image with text to satisfy OCR requirements (min size and content)
+            var width = 200;
+            var height = 60;
+            var renderBitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+            var visual = new DrawingVisual();
+
+            using (var context = visual.RenderOpen())
+            {
+                // Background
+                context.DrawRectangle(System.Windows.Media.Brushes.White, null, new Rect(0, 0, width, height));
+
+                // Text
+                var formattedText = new FormattedText(
+                    "OCR TEST",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Windows.FlowDirection.LeftToRight,
+                    new Typeface("Arial"),
+                    24,
+                    System.Windows.Media.Brushes.Black,
+                    1.0); // PixelsPerDip
+
+                context.DrawText(formattedText, new System.Windows.Point(40, 15));
+            }
+
+            renderBitmap.Render(visual);
+
+            var encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(renderBitmap));
+
+            using (var stream = new MemoryStream())
+            {
+                encoder.Save(stream);
+                return stream.ToArray();
             }
         }
 

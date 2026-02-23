@@ -820,80 +820,7 @@ namespace PromptMasterv5.Views
         }
 
         // Connection Test Methods
-        private async void TestBaiduOcr_Click(object sender, RoutedEventArgs e)
-        {
-            if (ViewModel == null) return;
-
-            // Save current inputs first
-            SaveBaiduCredentials();
-
-            // Find Baidu OCR profile
-            var profile = ViewModel.Config.ApiProfiles.FirstOrDefault(p =>
-                p.Provider == ApiProvider.Baidu && p.ServiceType == ServiceType.OCR);
-
-            if (profile == null || string.IsNullOrWhiteSpace(profile.Key1) || string.IsNullOrWhiteSpace(profile.Key2))
-            {
-                ViewModel.SettingsVM.BaiduOcrTestStatus = "请先填写 API Key 和 Secret Key";
-                ViewModel.SettingsVM.BaiduOcrTestStatusColor = System.Windows.Media.Brushes.Red;
-                return;
-            }
-
-            // Create local Baidu service instance with HttpClient
-            using var httpClient = new HttpClient();
-            var baiduService = new BaiduService(httpClient);
-
-            // Test with a minimal white 1x1 PNG image
-            byte[] testImage = CreateTestImage();
-            var result = await baiduService.OcrAsync(testImage, profile);
-
-            if (result.StartsWith("错误") || result.Contains("错误"))
-            {
-                ViewModel.SettingsVM.BaiduOcrTestStatus = $"连接失败：{result}";
-                ViewModel.SettingsVM.BaiduOcrTestStatusColor = System.Windows.Media.Brushes.Red;
-            }
-            else
-            {
-                ViewModel.SettingsVM.BaiduOcrTestStatus = "连接成功！";
-                ViewModel.SettingsVM.BaiduOcrTestStatusColor = System.Windows.Media.Brushes.Green;
-            }
-        }
-
-        private async void TestBaiduTranslate_Click(object sender, RoutedEventArgs e)
-        {
-            if (ViewModel == null) return;
-
-            SaveBaiduCredentials();
-
-            var profile = ViewModel.Config.ApiProfiles.FirstOrDefault(p =>
-                p.Provider == ApiProvider.Baidu && p.ServiceType == ServiceType.Translation);
-
-            if (profile == null || string.IsNullOrWhiteSpace(profile.Key1) || string.IsNullOrWhiteSpace(profile.Key2))
-            {
-                ViewModel.SettingsVM.BaiduTranslateTestStatus = "请先填写 App ID 和 Secret Key";
-                ViewModel.SettingsVM.BaiduTranslateTestStatusColor = System.Windows.Media.Brushes.Red;
-                return;
-            }
-
-            // Create local Baidu service instance with HttpClient
-            using var httpClient = new HttpClient();
-            var baiduService = new BaiduService(httpClient);
-
-            // Test with a simple English phrase
-            var result = await baiduService.TranslateAsync("Hello", profile, "en", "zh");
-
-            if (result.StartsWith("错误") || result.Contains("错误") || result.Contains("异常"))
-            {
-                ViewModel.SettingsVM.BaiduTranslateTestStatus = $"连接失败：{result}";
-                ViewModel.SettingsVM.BaiduTranslateTestStatusColor = System.Windows.Media.Brushes.Red;
-            }
-            else
-            {
-                ViewModel.SettingsVM.BaiduTranslateTestStatus = $"连接成功！翻译结果：{result}";
-                ViewModel.SettingsVM.BaiduTranslateTestStatusColor = System.Windows.Media.Brushes.Green;
-            }
-        }
-
-
+        // Baidu test methods moved to SettingsViewModel
 
         private async void TestTencentCloud_Click(object sender, RoutedEventArgs e)
         {
@@ -935,43 +862,7 @@ namespace PromptMasterv5.Views
             ViewModel.SettingsVM.YoudaoTestStatusColor = System.Windows.Media.Brushes.Orange;
         }
 
-        private byte[] CreateTestImage()
-        {
-            // Create a valid image with text to satisfy OCR requirements (min size and content)
-            var width = 200;
-            var height = 60;
-            var renderBitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
-            var visual = new DrawingVisual();
-
-            using (var context = visual.RenderOpen())
-            {
-                // Background
-                context.DrawRectangle(System.Windows.Media.Brushes.White, null, new Rect(0, 0, width, height));
-                
-                // Text
-                var formattedText = new FormattedText(
-                    "OCR TEST",
-                    System.Globalization.CultureInfo.InvariantCulture,
-                    System.Windows.FlowDirection.LeftToRight,
-                    new Typeface("Arial"),
-                    24,
-                    System.Windows.Media.Brushes.Black,
-                    VisualTreeHelper.GetDpi(this).PixelsPerDip);
-
-                context.DrawText(formattedText, new System.Windows.Point(40, 15));
-            }
-
-            renderBitmap.Render(visual);
-
-            var encoder = new PngBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(renderBitmap));
-
-            using (var stream = new MemoryStream())
-            {
-                encoder.Save(stream);
-                return stream.ToArray();
-            }
-        }
+        // CreateTestImage method moved to SettingsViewModel
 
         #region Voice Control Sub-Tab Navigation
 
