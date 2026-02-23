@@ -7,11 +7,8 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Forms;
-using Application = System.Windows.Application;
 using Clipboard = System.Windows.Forms.Clipboard;
-using Views = PromptMasterv5.Views;
 
 using OpenAI.ObjectModels.RequestModels;
 using OpenAI.ObjectModels;
@@ -21,6 +18,7 @@ namespace PromptMasterv5.ViewModels
 {
     public partial class CaptureViewModel : ObservableObject
     {
+        private readonly IWindowManager _windowManager;
         private readonly IAiService? _aiService;
         private readonly IDataService? _dataService;
         private string _capturedText = "";
@@ -46,10 +44,12 @@ namespace PromptMasterv5.ViewModels
         // For history archiving
         private string _lastUserQuestion = "";
 
-        public CaptureViewModel()
+        public CaptureViewModel(IWindowManager windowManager)
         {
+            _windowManager = windowManager;
+            
             // Resolve services manually since we are creating this VM directly in Window
-            var services = ((App)Application.Current).ServiceProvider;
+            var services = ((App)System.Windows.Application.Current).ServiceProvider;
             _aiService = services.GetService(typeof(IAiService)) as IAiService;
             _dataService = services.GetService(typeof(IDataService)) as IDataService;
             
@@ -133,7 +133,7 @@ namespace PromptMasterv5.ViewModels
             _conversationHistory.Add(ChatMessage.FromUser(userMsg));
             
             // Call AI Service with history
-            var config = ((App)Application.Current).ServiceProvider.GetService(typeof(ISettingsService)) as ISettingsService;
+            var config = ((App)System.Windows.Application.Current).ServiceProvider.GetService(typeof(ISettingsService)) as ISettingsService;
             if (config != null)
             {
                 ResultText = ""; // Clear to show new answer
@@ -201,7 +201,7 @@ namespace PromptMasterv5.ViewModels
             
             // Call AI Service
             // Streaming support
-            var config = ((App)Application.Current).ServiceProvider.GetService(typeof(ISettingsService)) as ISettingsService;
+            var config = ((App)System.Windows.Application.Current).ServiceProvider.GetService(typeof(ISettingsService)) as ISettingsService;
             if (config != null)
             {
                 ResultText = ""; // Clear before streaming
@@ -272,8 +272,7 @@ namespace PromptMasterv5.ViewModels
         [RelayCommand]
         private void CloseWindow()
         {
-            Application.Current.Windows.OfType<Views.CaptureWindow>()
-                .FirstOrDefault()?.Close();
+            _windowManager.CloseWindow(this);
         }
     }
 }

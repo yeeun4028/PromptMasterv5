@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace PromptMasterv5.Core.Interfaces
 {
@@ -8,5 +7,8 @@ namespace PromptMasterv5.Core.Interfaces
     {
         Task<byte[]?> ShowCaptureWindowAsync(Func<byte[], System.Windows.Rect, Task>? onCaptureProcessing = null);
         void ShowTranslationPopup(string text, System.Windows.Rect? placementTarget = null);
+        
+        void CloseWindow(object viewModel);
+        void ShowLauncherWindow();
     }
 }

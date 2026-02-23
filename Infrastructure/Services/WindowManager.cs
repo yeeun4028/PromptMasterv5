@@ -1,10 +1,12 @@
 using PromptMasterv5.Core.Interfaces;
 using PromptMasterv5.Views;
+using PromptMasterv5.ViewModels;
 using System.Windows;
 using Application = System.Windows.Application;
 using PromptMasterv5.Infrastructure.Helpers;
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace PromptMasterv5.Infrastructure.Services
 {
@@ -116,6 +118,37 @@ namespace PromptMasterv5.Infrastructure.Services
                 }
                 popup.Show();
                 popup.Activate();
+            });
+        }
+
+        public void CloseWindow(object viewModel)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                foreach (Window win in Application.Current.Windows)
+                {
+                    if (win.DataContext == viewModel)
+                    {
+                        win.Close();
+                        return;
+                    }
+                }
+            });
+        }
+
+        public void ShowLauncherWindow()
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                var app = Application.Current as App;
+                if (app == null) return;
+                
+                var vm = app.ServiceProvider.GetRequiredService<LauncherViewModel>();
+                var window = new LauncherWindow(vm);
+                
+                vm.RequestClose = () => window.Close();
+                
+                window.Show();
             });
         }
     }

@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PromptMasterv5.Core.Interfaces;
 using PromptMasterv5.Core.Models;
+using PromptMasterv5.Infrastructure.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -9,7 +10,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace PromptMasterv5.ViewModels
 {
@@ -17,6 +17,7 @@ namespace PromptMasterv5.ViewModels
     {
         private readonly ILauncherService _launcherService;
         private readonly ISettingsService _settingsService;
+        private readonly IWindowManager _windowManager;
 
         [ObservableProperty]
         private ObservableCollection<LauncherItem> items = new();
@@ -27,10 +28,14 @@ namespace PromptMasterv5.ViewModels
         [ObservableProperty]
         private ObservableCollection<LauncherItem> filteredItems = new();
 
-        public LauncherViewModel(ILauncherService launcherService, ISettingsService settingsService)
+        public LauncherViewModel(
+            ILauncherService launcherService, 
+            ISettingsService settingsService,
+            IWindowManager windowManager)
         {
             _launcherService = launcherService;
             _settingsService = settingsService;
+            _windowManager = windowManager;
             
             InitializeItems();
         }
@@ -131,7 +136,6 @@ namespace PromptMasterv5.ViewModels
                 {
                     var info = new ProcessStartInfo(item.FilePath) { UseShellExecute = true };
                     
-                    // Respect global "Run as Admin" setting
                     if (_settingsService.Config.LauncherRunAsAdmin)
                     {
                         info.Verb = "runas";
@@ -144,7 +148,7 @@ namespace PromptMasterv5.ViewModels
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"执行失败: {ex.Message}");
+                LoggerService.Instance.LogException(ex, "Failed to execute launcher item", "LauncherViewModel.ExecuteItem");
             }
         }
 

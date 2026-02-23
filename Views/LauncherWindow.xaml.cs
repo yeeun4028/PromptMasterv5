@@ -13,6 +13,11 @@ namespace PromptMasterv5.Views
             Closing += (s, e) => _isClosing = true;
         }
 
+        public LauncherWindow(LauncherViewModel viewModel) : this()
+        {
+            DataContext = viewModel;
+        }
+
         private void Window_Deactivated(object sender, EventArgs e)
         {
             // 如果失去焦点，关闭窗口
