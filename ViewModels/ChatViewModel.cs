@@ -17,7 +17,6 @@ namespace PromptMasterv5.ViewModels
     public partial class ChatViewModel : ObservableObject
     {
         private readonly IAiService _aiService;
-        private readonly FabricService _fabricService;
 
         public Func<AppConfig>? ConfigProvider { get; set; }
         public Func<LocalSettings>? LocalConfigProvider { get; set; }
@@ -29,10 +28,9 @@ namespace PromptMasterv5.ViewModels
         [ObservableProperty]
         private bool isAiResultDisplayed = false;
 
-        public ChatViewModel(IAiService aiService, FabricService fabricService)
+        public ChatViewModel(IAiService aiService)
         {
             _aiService = aiService;
-            _fabricService = fabricService;
         }
 
         private static string NormalizeSymbols(string s) => StringUtils.NormalizeSymbols(s);

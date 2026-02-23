@@ -36,7 +36,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private readonly IDataService _localDataService;
     private readonly GlobalKeyService _keyService;
     private readonly IAiService _aiService;
-    private readonly FabricService _fabricService;
     private readonly IDialogService _dialogService;
     private readonly ClipboardService _clipboardService;
     private readonly IWindowManager _windowManager; // Injected
@@ -144,7 +143,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
         WebDavDataService dataService,
         FileDataService localDataService,
         GlobalKeyService keyService,
-        FabricService fabricService,
         ChatViewModel chatVM,
         SidebarViewModel sidebarVM,
         ExternalToolsViewModel externalToolsVM,
@@ -157,7 +155,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _dataService = dataService;
         _localDataService = localDataService;
         _keyService = keyService;
-        _fabricService = fabricService;
         _dialogService = dialogService;
         _clipboardService = clipboardService;
         _settingsService = settingsService;
