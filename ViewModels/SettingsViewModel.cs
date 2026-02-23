@@ -90,6 +90,38 @@ namespace PromptMasterv5.ViewModels
 
         #endregion
 
+        #region Observable Properties - Tencent Credentials
+
+        // 腾讯云 OCR 凭据
+        [ObservableProperty] private string? tencentOcrSecretId;
+        [ObservableProperty] private string? tencentOcrSecretKey;
+
+        // 腾讯云翻译凭据
+        [ObservableProperty] private string? tencentTranslateSecretId;
+        [ObservableProperty] private string? tencentTranslateSecretKey;
+
+        #endregion
+
+        #region Observable Properties - Youdao Credentials
+
+        // 有道 OCR 凭据
+        [ObservableProperty] private string? youdaoOcrAppKey;
+        [ObservableProperty] private string? youdaoOcrAppSecret;
+
+        // 有道翻译凭据
+        [ObservableProperty] private string? youdaoTranslateAppKey;
+        [ObservableProperty] private string? youdaoTranslateAppSecret;
+
+        #endregion
+
+        #region Observable Properties - Google Credentials
+
+        // Google 翻译凭据
+        [ObservableProperty] private string? googleBaseUrl;
+        [ObservableProperty] private string? googleApiKey;
+
+        #endregion
+
         #region Observable Properties - OCR & Translation Test Status
 
         // 百度 OCR 测试
@@ -129,7 +161,7 @@ namespace PromptMasterv5.ViewModels
             ISettingsService settingsService,
             IAiService aiService,
             IDataService dataService,
-            FileDataService localDataService,
+            IDataService localDataService,
             GlobalKeyService keyService,
             IDialogService dialogService,
             BaiduService baiduService,
@@ -147,6 +179,12 @@ namespace PromptMasterv5.ViewModels
             _baiduService = baiduService;
             _tencentService = tencentService;
             _googleService = googleService;
+
+            // 加载凭据到 UI 绑定的属性
+            LoadBaiduCredentials();
+            LoadTencentCredentials();
+            LoadYoudaoCredentials();
+            LoadGoogleCredentials();
 
             LoggerService.Instance.LogInfo("SettingsViewModel initialized", "SettingsViewModel.ctor");
         }
@@ -791,10 +829,23 @@ namespace PromptMasterv5.ViewModels
                     {
                         _settingsService.ImportSettings(dialog.FileName);
                         
+                        // 重新加载凭据到 UI 绑定的属性
+                        LoadBaiduCredentials();
+                        LoadTencentCredentials();
+                        LoadYoudaoCredentials();
+                        LoadGoogleCredentials();
+                        LoadXunfeiCredentials();
+                        
                         // 尝试重新应用设置
                         ApplyTheme();
                         UpdateWindowHotkeys();
                         UpdateExternalToolsHotkeys();
+                        
+                        // 刷新外部工具配置
+                        if (_mainViewModel?.ExternalToolsVM != null)
+                        {
+                            _mainViewModel.ExternalToolsVM.RefreshProfiles();
+                        }
                         
                         // 由于配置可能发生彻底变化，建议用户重启或重新初始化一些状态
                         // 这里我们刷新一下当前 ViewState
@@ -821,6 +872,9 @@ namespace PromptMasterv5.ViewModels
         [RelayCommand]
         private async Task TestBaiduOcr()
         {
+            // 先保存凭据到 Config
+            SaveBaiduCredentials();
+
             // Find Baidu OCR profile
             var profile = Config.ApiProfiles.FirstOrDefault(p =>
                 p.Provider == ApiProvider.Baidu && p.ServiceType == ServiceType.OCR);
@@ -866,6 +920,9 @@ namespace PromptMasterv5.ViewModels
         [RelayCommand]
         private async Task TestBaiduTranslate()
         {
+            // 先保存凭据到 Config
+            SaveBaiduCredentials();
+
             // Find Baidu Translation profile
             var profile = Config.ApiProfiles.FirstOrDefault(p =>
                 p.Provider == ApiProvider.Baidu && p.ServiceType == ServiceType.Translation);
@@ -997,6 +1054,18 @@ namespace PromptMasterv5.ViewModels
         [RelayCommand]
         private void TestYoudao()
         {
+            SaveYoudaoCredentials();
+            
+            var profile = Config.ApiProfiles.FirstOrDefault(p =>
+                p.Provider == ApiProvider.Youdao && p.ServiceType == ServiceType.Translation);
+
+            if (profile == null || string.IsNullOrWhiteSpace(profile.Key1) || string.IsNullOrWhiteSpace(profile.Key2))
+            {
+                YoudaoTestStatus = "请先填写 App Key 和 App Secret";
+                YoudaoTestStatusColor = System.Windows.Media.Brushes.Red;
+                return;
+            }
+
             YoudaoTestStatus = "有道连接测试功能将在未来版本中实现";
             YoudaoTestStatusColor = System.Windows.Media.Brushes.Orange;
         }
@@ -1295,8 +1364,19 @@ namespace PromptMasterv5.ViewModels
             var tencentTransProfile = Config.ApiProfiles.FirstOrDefault(p =>
                 p.Provider == ApiProvider.Tencent && p.ServiceType == ServiceType.Translation);
 
-            // 注意：腾讯云的凭据存储在 ApiProfile.Key1/Key2 中
-            // 这里我们不需要额外的 ObservableProperty，因为 UI 直接绑定到 ApiProfile
+            // 加载 OCR 凭据
+            if (tencentOcrProfile != null)
+            {
+                TencentOcrSecretId = tencentOcrProfile.Key1;
+                TencentOcrSecretKey = tencentOcrProfile.Key2;
+            }
+
+            // 加载翻译凭据
+            if (tencentTransProfile != null)
+            {
+                TencentTranslateSecretId = tencentTransProfile.Key1;
+                TencentTranslateSecretKey = tencentTransProfile.Key2;
+            }
         }
 
         /// <summary>
@@ -1319,6 +1399,9 @@ namespace PromptMasterv5.ViewModels
                 Config.ApiProfiles.Add(tencentOcrProfile);
             }
 
+            tencentOcrProfile.Key1 = TencentOcrSecretId ?? "";
+            tencentOcrProfile.Key2 = TencentOcrSecretKey ?? "";
+
             // Translation Profile
             var tencentTransProfile = Config.ApiProfiles.FirstOrDefault(p =>
                 p.Provider == ApiProvider.Tencent && p.ServiceType == ServiceType.Translation);
@@ -1333,6 +1416,9 @@ namespace PromptMasterv5.ViewModels
                 };
                 Config.ApiProfiles.Add(tencentTransProfile);
             }
+
+            tencentTransProfile.Key1 = TencentTranslateSecretId ?? "";
+            tencentTransProfile.Key2 = TencentTranslateSecretKey ?? "";
 
             // Auto-set as active profiles if undefined
             if (string.IsNullOrEmpty(Config.OcrProfileId))
@@ -1360,7 +1446,11 @@ namespace PromptMasterv5.ViewModels
             var googleProfile = Config.ApiProfiles.FirstOrDefault(p =>
                 p.Provider == ApiProvider.Google && p.ServiceType == ServiceType.Translation);
 
-            // Google 凭据直接存储在 ApiProfile 中，UI 绑定到 ApiProfile
+            if (googleProfile != null)
+            {
+                GoogleBaseUrl = googleProfile.BaseUrl;
+                GoogleApiKey = googleProfile.Key1;
+            }
         }
 
         /// <summary>
@@ -1382,6 +1472,9 @@ namespace PromptMasterv5.ViewModels
                 Config.ApiProfiles.Add(googleProfile);
             }
 
+            googleProfile.BaseUrl = GoogleBaseUrl ?? "";
+            googleProfile.Key1 = GoogleApiKey ?? "";
+
             _settingsService.SaveConfig();
 
             if (_mainViewModel?.ExternalToolsVM != null)
@@ -1397,6 +1490,80 @@ namespace PromptMasterv5.ViewModels
         {
             // 讯飞凭据直接存储在 Config 中，无需额外处理
             // UI 直接绑定到 Config.XunfeiAppId, Config.XunfeiApiKey, Config.XunfeiApiSecret
+        }
+
+        /// <summary>
+        /// 加载有道凭据
+        /// </summary>
+        private void LoadYoudaoCredentials()
+        {
+            var youdaoOcrProfile = Config.ApiProfiles.FirstOrDefault(p =>
+                p.Provider == ApiProvider.Youdao && p.ServiceType == ServiceType.OCR);
+            var youdaoTransProfile = Config.ApiProfiles.FirstOrDefault(p =>
+                p.Provider == ApiProvider.Youdao && p.ServiceType == ServiceType.Translation);
+
+            // 加载 OCR 凭据
+            if (youdaoOcrProfile != null)
+            {
+                YoudaoOcrAppKey = youdaoOcrProfile.Key1;
+                YoudaoOcrAppSecret = youdaoOcrProfile.Key2;
+            }
+
+            // 加载翻译凭据
+            if (youdaoTransProfile != null)
+            {
+                YoudaoTranslateAppKey = youdaoTransProfile.Key1;
+                YoudaoTranslateAppSecret = youdaoTransProfile.Key2;
+            }
+        }
+
+        /// <summary>
+        /// 保存有道凭据
+        /// </summary>
+        private void SaveYoudaoCredentials()
+        {
+            // OCR Profile
+            var youdaoOcrProfile = Config.ApiProfiles.FirstOrDefault(p =>
+                p.Provider == ApiProvider.Youdao && p.ServiceType == ServiceType.OCR);
+
+            if (youdaoOcrProfile == null)
+            {
+                youdaoOcrProfile = new ApiProfile
+                {
+                    Name = "有道 OCR",
+                    Provider = ApiProvider.Youdao,
+                    ServiceType = ServiceType.OCR
+                };
+                Config.ApiProfiles.Add(youdaoOcrProfile);
+            }
+
+            youdaoOcrProfile.Key1 = YoudaoOcrAppKey ?? "";
+            youdaoOcrProfile.Key2 = YoudaoOcrAppSecret ?? "";
+
+            // Translation Profile
+            var youdaoTransProfile = Config.ApiProfiles.FirstOrDefault(p =>
+                p.Provider == ApiProvider.Youdao && p.ServiceType == ServiceType.Translation);
+
+            if (youdaoTransProfile == null)
+            {
+                youdaoTransProfile = new ApiProfile
+                {
+                    Name = "有道翻译",
+                    Provider = ApiProvider.Youdao,
+                    ServiceType = ServiceType.Translation
+                };
+                Config.ApiProfiles.Add(youdaoTransProfile);
+            }
+
+            youdaoTransProfile.Key1 = YoudaoTranslateAppKey ?? "";
+            youdaoTransProfile.Key2 = YoudaoTranslateAppSecret ?? "";
+
+            _settingsService.SaveConfig();
+
+            if (_mainViewModel?.ExternalToolsVM != null)
+            {
+                _mainViewModel.ExternalToolsVM.RefreshProfiles();
+            }
         }
 
         #endregion

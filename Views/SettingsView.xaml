@@ -1322,12 +1322,12 @@
                                                 
                                                 <StackPanel Margin="0,0,0,12">
                                                     <TextBlock Text="API Key" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBox x:Name="BaiduOcrApiKey" Style="{StaticResource ApiKeyTextBoxStyle}"/>
+                                                    <TextBox Text="{Binding SettingsVM.BaiduOcrApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ApiKeyTextBoxStyle}"/>
                                                 </StackPanel>
 
                                                 <StackPanel Margin="0,0,0,12">
                                                     <TextBlock Text="Secret Key" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBox x:Name="BaiduOcrSecretKey" Style="{StaticResource ApiKeyTextBoxStyle}"/>
+                                                    <TextBox Text="{Binding SettingsVM.BaiduOcrSecretKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ApiKeyTextBoxStyle}"/>
                                                 </StackPanel>
 
                                                 <Grid>
@@ -1357,12 +1357,12 @@
                                                 
                                                 <StackPanel Margin="0,0,0,12">
                                                     <TextBlock Text="App ID" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBox x:Name="BaiduTranslateAppId" Style="{StaticResource ModernTextBoxStyle}"/>
+                                                    <TextBox Text="{Binding SettingsVM.BaiduTranslateAppId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
                                                 </StackPanel>
 
                                                 <StackPanel Margin="0,0,0,12">
                                                     <TextBlock Text="Secret Key" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBox x:Name="BaiduTranslateSecretKey" Style="{StaticResource ApiKeyTextBoxStyle}"/>
+                                                    <TextBox Text="{Binding SettingsVM.BaiduTranslateSecretKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ApiKeyTextBoxStyle}"/>
                                                 </StackPanel>
 
                                                 <Grid>
@@ -1395,12 +1395,12 @@
                                                 
                                                 <StackPanel Margin="0,0,0,12">
                                                     <TextBlock Text="Secret Id" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBox x:Name="TencentOcrSecretId" Style="{StaticResource ApiKeyTextBoxStyle}"/>
+                                                    <TextBox Text="{Binding SettingsVM.TencentOcrSecretId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ApiKeyTextBoxStyle}"/>
                                                 </StackPanel>
 
                                                 <StackPanel Margin="0,0,0,12">
                                                     <TextBlock Text="Secret Key" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBox x:Name="TencentOcrSecretKey" Style="{StaticResource ApiKeyTextBoxStyle}"/>
+                                                    <TextBox Text="{Binding SettingsVM.TencentOcrSecretKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ApiKeyTextBoxStyle}"/>
                                                 </StackPanel>
                                             </StackPanel>
                                         </Border>
@@ -1412,12 +1412,12 @@
                                                 
                                                 <StackPanel Margin="0,0,0,12">
                                                     <TextBlock Text="Secret Id" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBox x:Name="TencentTranslateSecretId" Style="{StaticResource ApiKeyTextBoxStyle}"/>
+                                                    <TextBox Text="{Binding SettingsVM.TencentTranslateSecretId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ApiKeyTextBoxStyle}"/>
                                                 </StackPanel>
 
                                                 <StackPanel Margin="0,0,0,12">
                                                     <TextBlock Text="Secret Key" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBox x:Name="TencentTranslateSecretKey" Style="{StaticResource ApiKeyTextBoxStyle}"/>
+                                                    <TextBox Text="{Binding SettingsVM.TencentTranslateSecretKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ApiKeyTextBoxStyle}"/>
                                                 </StackPanel>
 
                                                 <Grid>
@@ -1450,12 +1450,12 @@
                                                 
                                                 <StackPanel Margin="0,0,0,12">
                                                     <TextBlock Text="App Key" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBox x:Name="YoudaoOcrAppKey" Style="{StaticResource ModernTextBoxStyle}"/>
+                                                    <TextBox Text="{Binding SettingsVM.YoudaoOcrAppKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
                                                 </StackPanel>
 
                                                 <StackPanel Margin="0,0,0,12">
                                                     <TextBlock Text="App Secret" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBox x:Name="YoudaoOcrAppSecret" Style="{StaticResource ApiKeyTextBoxStyle}"/>
+                                                    <TextBox Text="{Binding SettingsVM.YoudaoOcrAppSecret, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ApiKeyTextBoxStyle}"/>
                                                 </StackPanel>
                                             </StackPanel>
                                         </Border>
@@ -1467,12 +1467,12 @@
                                                 
                                                 <StackPanel Margin="0,0,0,12">
                                                     <TextBlock Text="App Key" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBox x:Name="YoudaoTranslateAppKey" Style="{StaticResource ModernTextBoxStyle}"/>
+                                                    <TextBox Text="{Binding SettingsVM.YoudaoTranslateAppKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
                                                 </StackPanel>
 
                                                 <StackPanel Margin="0,0,0,12">
                                                     <TextBlock Text="App Secret" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBox x:Name="YoudaoTranslateAppSecret" Style="{StaticResource ApiKeyTextBoxStyle}"/>
+                                                    <TextBox Text="{Binding SettingsVM.YoudaoTranslateAppSecret, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ApiKeyTextBoxStyle}"/>
                                                 </StackPanel>
 
                                                 <Grid>
@@ -1508,13 +1508,13 @@
                                                 
                                                 <StackPanel Margin="0,0,0,12">
                                                     <TextBlock Text="API Base URL (可选, 支持 Cloudflare 代理)" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBox x:Name="GoogleBaseUrl" Style="{StaticResource ModernTextBoxStyle}"
+                                                    <TextBox Text="{Binding SettingsVM.GoogleBaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"
                                                              ToolTip="默认为 https://translation.googleapis.com。自定义地址示例：https://my-proxy.workers.dev"/>
                                                 </StackPanel>
 
                                                 <StackPanel Margin="0,0,0,12">
                                                     <TextBlock Text="API Key" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                    <TextBox x:Name="GoogleApiKey" Style="{StaticResource ApiKeyTextBoxStyle}"/>
+                                                    <TextBox Text="{Binding SettingsVM.GoogleApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ApiKeyTextBoxStyle}"/>
                                                 </StackPanel>
 
                                                 <Grid>
