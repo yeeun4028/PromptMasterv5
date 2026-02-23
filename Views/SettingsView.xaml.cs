@@ -564,7 +564,6 @@ namespace PromptMasterv5.Views
             var previousTab = _selectedExternalToolsSubTab;
             _selectedExternalToolsSubTab = tabIndex;
 
-            /*
             // Update button states directly - much simpler!
             if (BtnMainTab != null) BtnMainTab.Tag = tabIndex == 0 ? "Selected" : "0";
             if (BtnBaiduTab != null) BtnBaiduTab.Tag = tabIndex == 1 ? "Selected" : "1";
@@ -581,7 +580,6 @@ namespace PromptMasterv5.Views
             if (ExternalToolsYoudaoTab != null) ExternalToolsYoudaoTab.Visibility = tabIndex == 3 ? Visibility.Visible : Visibility.Collapsed;
             if (ExternalToolsGoogleTab != null) ExternalToolsGoogleTab.Visibility = tabIndex == 4 ? Visibility.Visible : Visibility.Collapsed;
             if (ExternalToolsAiTranslateTab != null) ExternalToolsAiTranslateTab.Visibility = tabIndex == 5 ? Visibility.Visible : Visibility.Collapsed;
-            */
 
             // Load credentials when switching to tabs
             if (tabIndex == 1) LoadBaiduCredentials();
@@ -608,15 +606,10 @@ namespace PromptMasterv5.Views
         {
             _selectedAiSubTab = tabIndex;
 
-            /*
-            // Update button states
-            if (BtnAiMainTab != null) BtnAiMainTab.Tag = tabIndex == 0 ? "Selected" : "0";
-
             // Tab 2 (Translations) and Tab 3 (Selection Assistant) removed
 
             // Show/hide tab content
             if (AiMainTab != null) AiMainTab.Visibility = tabIndex == 0 ? Visibility.Visible : Visibility.Collapsed;
-            */
         }
 
         // Sync Sub-Tab Handlers
@@ -635,7 +628,6 @@ namespace PromptMasterv5.Views
         {
             _selectedSyncSubTab = tabIndex;
 
-            /*
             // Update button states
             if (BtnSyncWebDavTab != null) BtnSyncWebDavTab.Tag = tabIndex == 0 ? "Selected" : "0";
             if (BtnSyncDataTab != null) BtnSyncDataTab.Tag = tabIndex == 1 ? "Selected" : "1";
@@ -645,7 +637,6 @@ namespace PromptMasterv5.Views
             if (SyncWebDavTab != null) SyncWebDavTab.Visibility = tabIndex == 0 ? Visibility.Visible : Visibility.Collapsed;
             if (SyncDataTab != null) SyncDataTab.Visibility = tabIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
             if (SyncLogTab != null) SyncLogTab.Visibility = tabIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
-            */
         }
 
 
@@ -878,7 +869,6 @@ namespace PromptMasterv5.Views
         {
             _selectedVoiceControlSubTab = tabIndex;
 
-            /*
             // Update button states
             if (BtnVoiceEngineTab != null) BtnVoiceEngineTab.Tag = tabIndex == 0 ? "Selected" : "0";
             if (BtnXunfeiConfigTab != null) BtnXunfeiConfigTab.Tag = tabIndex == 1 ? "Selected" : "1";
@@ -888,7 +878,6 @@ namespace PromptMasterv5.Views
             if (VoiceEngineTab != null) VoiceEngineTab.Visibility = tabIndex == 0 ? Visibility.Visible : Visibility.Collapsed;
             if (XunfeiConfigTab != null) XunfeiConfigTab.Visibility = tabIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
             if (VoiceCommandsTab != null) VoiceCommandsTab.Visibility = tabIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
-            */
 
             // Load Xunfei credentials when switching to Xunfei tab
             if (tabIndex == 1) LoadXunfeiCredentials();
@@ -903,11 +892,9 @@ namespace PromptMasterv5.Views
 
             var isXunfei = ViewModel.Config.VoiceProvider == VoiceProvider.Xunfei;
 
-            /*
             // Show/hide OpenAI model selection
             if (OpenAIModelSelection != null)
                 OpenAIModelSelection.Visibility = isXunfei ? Visibility.Collapsed : Visibility.Visible;
-            */
         }
 
         #endregion
