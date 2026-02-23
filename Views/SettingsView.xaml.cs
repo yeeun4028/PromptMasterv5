@@ -5,10 +5,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using PromptMasterv5.Core.Models;
 using PromptMasterv5.Infrastructure.Services;
 using PromptMasterv5.ViewModels;
@@ -50,20 +48,13 @@ namespace PromptMasterv5.Views
 
             // Initialize Voice Control sub-tab to Engine tab
             UpdateVoiceControlSubTab(0);
-
-            // Load Baidu credentials from AppConfig
-            LoadBaiduCredentials();
-            LoadTencentCredentials();
-            
-            // Load Xunfei credentials
-            LoadXunfeiCredentials();
             
             // Subscribe to VoiceProvider changes
             if (ViewModel?.Config != null)
             {
-                ViewModel.Config.PropertyChanged += (s, e) =>
+                ViewModel.Config.PropertyChanged += (s, ev) =>
                 {
-                    if (e.PropertyName == nameof(AppConfig.VoiceProvider))
+                    if (ev.PropertyName == nameof(AppConfig.VoiceProvider))
                     {
                         UpdateVoiceProviderUI();
                     }
@@ -71,148 +62,7 @@ namespace PromptMasterv5.Views
             }
         }
 
-        private void LoadBaiduCredentials()
-        {
-            if (ViewModel == null) return;
-
-            // Find Baidu OCR and Translation profiles in ApiProfiles
-            var baiduOcrProfile = ViewModel.Config.ApiProfiles.FirstOrDefault(p => 
-                p.Provider == ApiProvider.Baidu && p.ServiceType == ServiceType.OCR);
-            var baiduTransProfile = ViewModel.Config.ApiProfiles.FirstOrDefault(p => 
-                p.Provider == ApiProvider.Baidu && p.ServiceType == ServiceType.Translation);
-
-        }
-
-        private void SaveBaiduCredentials()
-        {
-            if (ViewModel == null) return;
-
-            // Find or create Baidu OCR profile
-            var baiduOcrProfile = ViewModel.Config.ApiProfiles.FirstOrDefault(p => 
-                p.Provider == ApiProvider.Baidu && p.ServiceType == ServiceType.OCR);
-            
-            if (baiduOcrProfile == null)
-            {
-                baiduOcrProfile = new ApiProfile
-                {
-                    Name = "百度 OCR",
-                    Provider = ApiProvider.Baidu,
-                    ServiceType = ServiceType.OCR
-                };
-                ViewModel.Config.ApiProfiles.Add(baiduOcrProfile);
-            }
-
-            // Find or create Baidu Translation profile
-            var baiduTransProfile = ViewModel.Config.ApiProfiles.FirstOrDefault(p => 
-                p.Provider == ApiProvider.Baidu && p.ServiceType == ServiceType.Translation);
-            
-            if (baiduTransProfile == null)
-            {
-                baiduTransProfile = new ApiProfile
-                {
-                    Name = "百度翻译",
-                    Provider = ApiProvider.Baidu,
-                    ServiceType = ServiceType.Translation
-                };
-                ViewModel.Config.ApiProfiles.Add(baiduTransProfile);
-            }
-
-            // Auto-set as active profiles if not already set
-            if (string.IsNullOrEmpty(ViewModel.Config.OcrProfileId))
-            {
-                ViewModel.Config.OcrProfileId = baiduOcrProfile.Id;
-            }
-            if (string.IsNullOrEmpty(ViewModel.Config.TranslateProfileId))
-            {
-                ViewModel.Config.TranslateProfileId = baiduTransProfile.Id;
-            }
-
-            ConfigService.Save(ViewModel.Config);
-            
-            if (ViewModel.ExternalToolsVM != null)
-            {
-                ViewModel.ExternalToolsVM.RefreshProfiles();
-            }
-        }
-
-        private void LoadTencentCredentials()
-        {
-            if (ViewModel == null) return;
-
-            var tencentOcrProfile = ViewModel.Config.ApiProfiles.FirstOrDefault(p => 
-                p.Provider == ApiProvider.Tencent && p.ServiceType == ServiceType.OCR);
-            var tencentTransProfile = ViewModel.Config.ApiProfiles.FirstOrDefault(p => 
-                p.Provider == ApiProvider.Tencent && p.ServiceType == ServiceType.Translation);
-
-        }
-
-        private void SaveTencentCredentials()
-        {
-            if (ViewModel == null) return;
-
-            // OCR Profile
-            var tencentOcrProfile = ViewModel.Config.ApiProfiles.FirstOrDefault(p => 
-                p.Provider == ApiProvider.Tencent && p.ServiceType == ServiceType.OCR);
-            
-            if (tencentOcrProfile == null)
-            {
-                tencentOcrProfile = new ApiProfile
-                {
-                    Name = "腾讯云 OCR",
-                    Provider = ApiProvider.Tencent,
-                    ServiceType = ServiceType.OCR
-                };
-                ViewModel.Config.ApiProfiles.Add(tencentOcrProfile);
-            }
-
-            /*
-            if (TencentOcrSecretId != null && TencentOcrSecretKey != null)
-            {
-                tencentOcrProfile.Key1 = TencentOcrSecretId.Text;
-                tencentOcrProfile.Key2 = TencentOcrSecretKey.Text;
-            }
-            */
-
-            // Translation Profile
-            var tencentTransProfile = ViewModel.Config.ApiProfiles.FirstOrDefault(p => 
-                p.Provider == ApiProvider.Tencent && p.ServiceType == ServiceType.Translation);
-            
-            if (tencentTransProfile == null)
-            {
-                tencentTransProfile = new ApiProfile
-                {
-                    Name = "腾讯云翻译",
-                    Provider = ApiProvider.Tencent,
-                    ServiceType = ServiceType.Translation
-                };
-                ViewModel.Config.ApiProfiles.Add(tencentTransProfile);
-            }
-
-            /*
-            if (TencentTranslateSecretId != null && TencentTranslateSecretKey != null)
-            {
-                tencentTransProfile.Key1 = TencentTranslateSecretId.Text;
-                tencentTransProfile.Key2 = TencentTranslateSecretKey.Text;
-            }
-            */
-
-            // Auto-set as active profiles if undefined
-            if (string.IsNullOrEmpty(ViewModel.Config.OcrProfileId))
-            {
-                ViewModel.Config.OcrProfileId = tencentOcrProfile.Id;
-            }
-            if (string.IsNullOrEmpty(ViewModel.Config.TranslateProfileId))
-            {
-                ViewModel.Config.TranslateProfileId = tencentTransProfile.Id;
-            }
-
-            ConfigService.Save(ViewModel.Config);
-
-            if (ViewModel.ExternalToolsVM != null)
-            {
-                ViewModel.ExternalToolsVM.RefreshProfiles();
-            }
-        }
+        // Baidu and Tencent credentials methods moved to SettingsViewModel
 
         private MainViewModel? ViewModel => DataContext as MainViewModel;
 
@@ -561,7 +411,6 @@ namespace PromptMasterv5.Views
 
         private void UpdateExternalToolsSubTab(int tabIndex)
         {
-            var previousTab = _selectedExternalToolsSubTab;
             _selectedExternalToolsSubTab = tabIndex;
 
             // Update button states directly - much simpler!
@@ -580,16 +429,6 @@ namespace PromptMasterv5.Views
             if (ExternalToolsYoudaoTab != null) ExternalToolsYoudaoTab.Visibility = tabIndex == 3 ? Visibility.Visible : Visibility.Collapsed;
             if (ExternalToolsGoogleTab != null) ExternalToolsGoogleTab.Visibility = tabIndex == 4 ? Visibility.Visible : Visibility.Collapsed;
             if (ExternalToolsAiTranslateTab != null) ExternalToolsAiTranslateTab.Visibility = tabIndex == 5 ? Visibility.Visible : Visibility.Collapsed;
-
-            // Load credentials when switching to tabs
-            if (tabIndex == 1) LoadBaiduCredentials();
-            if (tabIndex == 2) LoadTencentCredentials();
-            if (tabIndex == 4) LoadGoogleCredentials();
-
-            // Sync credentials when leaving tabs
-            if (previousTab == 1 && tabIndex != 1) SaveBaiduCredentials();
-            if (previousTab == 2 && tabIndex != 2) SaveTencentCredentials();
-            if (previousTab == 4 && tabIndex != 4) SaveGoogleCredentials();
         }
 
         // AI Sub-Tab Navigation
@@ -639,221 +478,13 @@ namespace PromptMasterv5.Views
             if (SyncLogTab != null) SyncLogTab.Visibility = tabIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
         }
 
+        // Google credentials methods moved to SettingsViewModel
 
-        private void LoadGoogleCredentials()
-        {
-            if (ViewModel == null) return;
-
-            var googleProfile = ViewModel.Config.ApiProfiles.FirstOrDefault(p => 
-                p.Provider == ApiProvider.Google && p.ServiceType == ServiceType.Translation);
-            
-            /*
-            if (googleProfile != null && GoogleBaseUrl != null && GoogleApiKey != null)
-            {
-                GoogleBaseUrl.Text = googleProfile.BaseUrl;
-                GoogleApiKey.Text = googleProfile.Key1;
-            }
-            */
-        }
-
-        private void SaveGoogleCredentials()
-        {
-            if (ViewModel == null) return;
-
-            var googleProfile = ViewModel.Config.ApiProfiles.FirstOrDefault(p => 
-                p.Provider == ApiProvider.Google && p.ServiceType == ServiceType.Translation);
-            
-            if (googleProfile == null)
-            {
-                googleProfile = new ApiProfile
-                {
-                    Name = "Google 翻译",
-                    Provider = ApiProvider.Google,
-                    ServiceType = ServiceType.Translation
-                };
-                ViewModel.Config.ApiProfiles.Add(googleProfile);
-            }
-
-            /*
-            if (GoogleBaseUrl != null && GoogleApiKey != null)
-            {
-                googleProfile.BaseUrl = GoogleBaseUrl.Text;
-                googleProfile.Key1 = GoogleApiKey.Text;
-            }
-            */
-
-            ConfigService.Save(ViewModel.Config);
-
-            if (ViewModel.ExternalToolsVM != null)
-            {
-                ViewModel.ExternalToolsVM.RefreshProfiles();
-            }
-        }
-
-        private async void TestGoogle_Click(object sender, RoutedEventArgs e)
-        {
-            if (ViewModel == null) return;
-            var btn = sender as Button;
-            if (btn != null) btn.IsEnabled = false;
-
-            try
-            {
-                SaveGoogleCredentials();
-                var profile = ViewModel.Config.ApiProfiles.FirstOrDefault(p => p.Provider == ApiProvider.Google && p.ServiceType == ServiceType.Translation);
-
-                if (profile == null || string.IsNullOrWhiteSpace(profile.Key1))
-                {
-                    ViewModel.SettingsVM.GoogleTestStatus = "请先填写 API Key";
-                    ViewModel.SettingsVM.GoogleTestStatusColor = System.Windows.Media.Brushes.Red;
-                    return;
-                }
-
-                using (var client = new HttpClient())
-                {
-                    var service = new PromptMasterv5.Infrastructure.Services.GoogleService(client);
-                    var result = await service.TranslateAsync("Hello World", profile);
-                    if (!string.IsNullOrWhiteSpace(result) && !result.StartsWith("Google"))
-                    {
-                        ViewModel.SettingsVM.GoogleTestStatus = $"连接成功！翻译结果：{result}";
-                        ViewModel.SettingsVM.GoogleTestStatusColor = System.Windows.Media.Brushes.Green;
-                    }
-                    else
-                    {
-                        ViewModel.SettingsVM.GoogleTestStatus = $"连接失败：{result}";
-                        ViewModel.SettingsVM.GoogleTestStatusColor = System.Windows.Media.Brushes.Red;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                ViewModel.SettingsVM.GoogleTestStatus = $"测试出错: {ex.Message}";
-                ViewModel.SettingsVM.GoogleTestStatusColor = System.Windows.Media.Brushes.Red;
-            }
-            finally
-            {
-                if (btn != null) btn.IsEnabled = true;
-            }
-        }
-
-        // AI Translation Prompt - Jump to Edit
-        private void JumpToEditPrompt_Click(object sender, RoutedEventArgs e)
-        {
-            if (ViewModel == null) return;
-
-            var promptId = ViewModel.Config.AiTranslationPromptId;
-            if (string.IsNullOrWhiteSpace(promptId)) return;
-
-            var prompt = ViewModel.Files.FirstOrDefault(f => f.Id == promptId);
-            if (prompt != null)
-            {
-                ViewModel.SelectedFile = prompt;
-                ViewModel.IsEditMode = true;
-                ViewModel.SaveSettingsCommand.Execute(null); // Close settings
-            }
-        }
-
-        // AI Translation Config - Save
-        private void SaveAiTranslationConfig_Click(object sender, RoutedEventArgs e)
-        {
-            if (ViewModel == null) return;
-
-            var promptId = ViewModel.Config.AiTranslationPromptId;
-            var promptTitle = "";
-            if (!string.IsNullOrWhiteSpace(promptId))
-            {
-                var prompt = ViewModel.Files.FirstOrDefault(f => f.Id == promptId);
-                promptTitle = prompt?.Title ?? "";
-            }
-
-            var config = new AiTranslationConfig
-            {
-                PromptId = promptId,
-                PromptTitle = promptTitle,
-                BaseUrl = ViewModel.Config.AiBaseUrl,
-                ApiKey = ViewModel.Config.AiApiKey,
-                Model = ViewModel.Config.AiModel
-            };
-
-            ViewModel.Config.SavedAiTranslationConfigs.Add(config);
-            ConfigService.Save(ViewModel.Config);
-        }
-
-        // AI Translation Config - Load from List
-        private void AiTranslationConfigList_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (ViewModel == null) return;
-            if (sender is not ListBox listBox) return;
-            if (listBox.SelectedItem is not AiTranslationConfig config) return;
-
-            // Load the configuration
-            ViewModel.Config.AiTranslationPromptId = config.PromptId;
-            ViewModel.Config.AiBaseUrl = config.BaseUrl;
-            ViewModel.Config.AiApiKey = config.ApiKey;
-            ViewModel.Config.AiModel = config.Model;
-
-            // Clear selection to allow re-selecting the same item
-            listBox.SelectedItem = null;
-        }
-
-        // AI Translation Config - Delete
-        private void DeleteAiTranslationConfig_Click(object sender, RoutedEventArgs e)
-        {
-            if (ViewModel == null) return;
-            if (sender is not Button btn) return;
-            if (btn.Tag is not string configId) return;
-
-            var config = ViewModel.Config.SavedAiTranslationConfigs.FirstOrDefault(c => c.Id == configId);
-            if (config != null)
-            {
-                ViewModel.Config.SavedAiTranslationConfigs.Remove(config);
-                ConfigService.Save(ViewModel.Config);
-            }
-        }
+        // AI Translation Config methods moved to SettingsViewModel
 
         // Connection Test Methods
         // Baidu test methods moved to SettingsViewModel
-
-        private async void TestTencentCloud_Click(object sender, RoutedEventArgs e)
-        {
-            if (ViewModel == null) return;
-
-            SaveTencentCredentials();
-
-            var profile = ViewModel.Config.ApiProfiles.FirstOrDefault(p =>
-                p.Provider == ApiProvider.Tencent && p.ServiceType == ServiceType.Translation);
-
-            if (profile == null || string.IsNullOrWhiteSpace(profile.Key1) || string.IsNullOrWhiteSpace(profile.Key2))
-            {
-                ViewModel.SettingsVM.TencentTranslateTestStatus = "请先填写 Secret ID 和 Secret Key";
-                ViewModel.SettingsVM.TencentTranslateTestStatusColor = System.Windows.Media.Brushes.Red;
-                return;
-            }
-
-            using var httpClient = new HttpClient();
-            var tencentService = new TencentService(httpClient);
-
-            var result = await tencentService.TranslateAsync("Hello", profile, "auto", "zh");
-
-            if (result.StartsWith("Error") || result.StartsWith("Tencent Error"))
-            {
-                ViewModel.SettingsVM.TencentTranslateTestStatus = $"连接失败：{result}";
-                ViewModel.SettingsVM.TencentTranslateTestStatusColor = System.Windows.Media.Brushes.Red;
-            }
-            else
-            {
-                ViewModel.SettingsVM.TencentTranslateTestStatus = $"连接成功！翻译结果：{result}";
-                ViewModel.SettingsVM.TencentTranslateTestStatusColor = System.Windows.Media.Brushes.Green;
-            }
-        }
-
-        private void TestYoudao_Click(object sender, RoutedEventArgs e)
-        {
-            if (ViewModel?.SettingsVM == null) return;
-            ViewModel.SettingsVM.YoudaoTestStatus = "有道连接测试功能将在未来版本中实现";
-            ViewModel.SettingsVM.YoudaoTestStatusColor = System.Windows.Media.Brushes.Orange;
-        }
-
-        // CreateTestImage method moved to SettingsViewModel
+        // Tencent, Youdao, Google, Xunfei test methods moved to SettingsViewModel
 
         #region Voice Control Sub-Tab Navigation
 
@@ -879,9 +510,6 @@ namespace PromptMasterv5.Views
             if (XunfeiConfigTab != null) XunfeiConfigTab.Visibility = tabIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
             if (VoiceCommandsTab != null) VoiceCommandsTab.Visibility = tabIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
 
-            // Load Xunfei credentials when switching to Xunfei tab
-            if (tabIndex == 1) LoadXunfeiCredentials();
-
             // Update voice provider UI
             UpdateVoiceProviderUI();
         }
@@ -901,86 +529,12 @@ namespace PromptMasterv5.Views
 
         #region Xunfei Configuration
 
-        private void LoadXunfeiCredentials()
-        {
-            if (ViewModel == null) return;
-
-            // Load API Secret to password box
-            /*
-            if (XunfeiApiSecretBox != null && !string.IsNullOrEmpty(ViewModel.Config.XunfeiApiSecret))
-            {
-                XunfeiApiSecretBox.Password = ViewModel.Config.XunfeiApiSecret;
-            }
-            */
-        }
-
         private void XunfeiApiSecretBox_PasswordChanged(object sender, RoutedEventArgs e)
         {
             if (ViewModel == null) return;
             if (sender is PasswordBox pb)
             {
                 ViewModel.Config.XunfeiApiSecret = pb.Password;
-            }
-        }
-
-        private async void TestXunfeiConnection_Click(object sender, RoutedEventArgs e)
-        {
-            if (ViewModel == null) return;
-
-            var btn = sender as Button;
-            if (btn != null) btn.IsEnabled = false;
-
-            try
-            {
-                // Check configuration
-                if (string.IsNullOrWhiteSpace(ViewModel.Config.XunfeiAppId) ||
-                    string.IsNullOrWhiteSpace(ViewModel.Config.XunfeiApiKey) ||
-                    string.IsNullOrWhiteSpace(ViewModel.Config.XunfeiApiSecret))
-                {
-                    System.Windows.MessageBox.Show("请先填写 AppID、API Key 和 API Secret", "配置不完整");
-                    return;
-                }
-
-                // Save config first
-                ConfigService.Save(ViewModel.Config);
-
-                // Test connection by creating a simple WebSocket connection
-                // We'll just validate the auth URL generation
-                var testResult = await TestXunfeiAuthAsync();
-
-                if (testResult)
-                {
-                    System.Windows.MessageBox.Show("连接成功！讯飞语音听写 API 配置正确。", "测试通过");
-                }
-                else
-                {
-                    System.Windows.MessageBox.Show("连接失败，请检查配置参数是否正确。", "测试失败");
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Windows.MessageBox.Show($"测试出错: {ex.Message}", "错误");
-            }
-            finally
-            {
-                if (btn != null) btn.IsEnabled = true;
-            }
-        }
-
-        private async Task<bool> TestXunfeiAuthAsync()
-        {
-            try
-            {
-                // Create a test transcriber to validate configuration
-                var settingsService = ((App)System.Windows.Application.Current).ServiceProvider.GetService(typeof(ISettingsService)) as ISettingsService;
-                if (settingsService == null) return false;
-
-                var transcriber = new Infrastructure.Services.Transcribers.XunfeiIatTranscriber(settingsService);
-                return await transcriber.IsConfiguredAsync();
-            }
-            catch
-            {
-                return false;
             }
         }
 

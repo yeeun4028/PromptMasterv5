@@ -1495,7 +1495,7 @@
                                                                Margin="0,0,10,0"/>
                                                     <Button Grid.Column="1"
                                                             Content="测试连接"
-                                                            Click="TestTencentCloud_Click"
+                                                            Command="{Binding SettingsVM.TestTencentCloudCommand}"
                                                             Style="{StaticResource TextLinkButtonStyle}"/>
                                                 </Grid>
                                             </StackPanel>
@@ -1550,7 +1550,7 @@
                                                                Margin="0,0,10,0"/>
                                                     <Button Grid.Column="1"
                                                             Content="测试连接"
-                                                            Click="TestYoudao_Click"
+                                                            Command="{Binding SettingsVM.TestYoudaoCommand}"
                                                             Style="{StaticResource TextLinkButtonStyle}"
                                                             IsEnabled="False"/>
                                                 </Grid>
@@ -1592,7 +1592,7 @@
                                                                Margin="0,0,10,0"/>
                                                     <Button Grid.Column="1"
                                                             Content="测试连接"
-                                                            Click="TestGoogle_Click"
+                                                            Command="{Binding SettingsVM.TestGoogleCommand}"
                                                             Style="{StaticResource TextLinkButtonStyle}"/>
                                                 </Grid>
                                             </StackPanel>
@@ -1916,12 +1916,12 @@
                                                 <!-- Test Button -->
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,10,0,0">
                                                     <TextBlock x:Name="XunfeiTestStatusText"
-                                                               Text="{Binding XunfeiTestStatus}"
+                                                               Text="{Binding SettingsVM.XunfeiTestStatus}"
                                                                VerticalAlignment="Center"
                                                                Margin="0,0,15,0"
                                                                Style="{StaticResource HintTextStyle}"/>
                                                     <Button Content="测试连接" 
-                                                            Click="TestXunfeiConnection_Click"
+                                                            Command="{Binding SettingsVM.TestXunfeiConnectionCommand}"
                                                             Style="{StaticResource PrimaryButtonStyle}"
                                                             Width="100"
                                                             Height="32"/>

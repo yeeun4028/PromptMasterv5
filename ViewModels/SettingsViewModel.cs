@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using PromptMasterv5.Core.Interfaces;
 using PromptMasterv5.Core.Models;
 using PromptMasterv5.Infrastructure.Services;
+using PromptMasterv5.Services;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -32,6 +33,8 @@ namespace PromptMasterv5.ViewModels
         private readonly ThemeService _themeService;
         private readonly HotkeyService _hotkeyService;
         private readonly BaiduService _baiduService;
+        private readonly TencentService _tencentService;
+        private readonly GoogleService _googleService;
 
         // 引用 MainViewModel 以访问 Files、Folders 等数据（用于同步恢复）
         // 这是暂时的依赖，后续可以通过消息总线进一步解耦
@@ -109,6 +112,10 @@ namespace PromptMasterv5.ViewModels
         [ObservableProperty] private string? googleTestStatus;
         [ObservableProperty] private System.Windows.Media.Brush googleTestStatusColor = System.Windows.Media.Brushes.Gray;
 
+        // 讯飞测试
+        [ObservableProperty] private string? xunfeiTestStatus;
+        [ObservableProperty] private System.Windows.Media.Brush xunfeiTestStatusColor = System.Windows.Media.Brushes.Gray;
+
         #endregion
 
         #region Configuration Access (通过 SettingsService)
@@ -125,7 +132,9 @@ namespace PromptMasterv5.ViewModels
             FileDataService localDataService,
             GlobalKeyService keyService,
             IDialogService dialogService,
-            BaiduService baiduService)
+            BaiduService baiduService,
+            TencentService tencentService,
+            GoogleService googleService)
         {
             _settingsService = settingsService;
             _aiService = aiService;
@@ -136,6 +145,8 @@ namespace PromptMasterv5.ViewModels
             _themeService = new ThemeService();
             _hotkeyService = new HotkeyService();
             _baiduService = baiduService;
+            _tencentService = tencentService;
+            _googleService = googleService;
 
             LoggerService.Instance.LogInfo("SettingsViewModel initialized", "SettingsViewModel.ctor");
         }
@@ -932,6 +943,459 @@ namespace PromptMasterv5.ViewModels
                 encoder.Save(stream);
                 return stream.ToArray();
             }
+        }
+
+        #endregion
+
+        #region Commands - Tencent Cloud API Testing
+
+        [RelayCommand]
+        private async Task TestTencentCloud()
+        {
+            SaveTencentCredentials();
+
+            var profile = Config.ApiProfiles.FirstOrDefault(p =>
+                p.Provider == ApiProvider.Tencent && p.ServiceType == ServiceType.Translation);
+
+            if (profile == null || string.IsNullOrWhiteSpace(profile.Key1) || string.IsNullOrWhiteSpace(profile.Key2))
+            {
+                TencentTranslateTestStatus = "请先填写 Secret ID 和 Secret Key";
+                TencentTranslateTestStatusColor = System.Windows.Media.Brushes.Red;
+                return;
+            }
+
+            TencentTranslateTestStatus = "测试中...";
+            TencentTranslateTestStatusColor = System.Windows.Media.Brushes.Gray;
+
+            try
+            {
+                var result = await _tencentService.TranslateAsync("Hello", profile, "auto", "zh");
+
+                if (result.StartsWith("Error") || result.StartsWith("Tencent Error"))
+                {
+                    TencentTranslateTestStatus = $"连接失败：{result}";
+                    TencentTranslateTestStatusColor = System.Windows.Media.Brushes.Red;
+                }
+                else
+                {
+                    TencentTranslateTestStatus = $"连接成功！翻译结果：{result}";
+                    TencentTranslateTestStatusColor = System.Windows.Media.Brushes.Green;
+                }
+            }
+            catch (Exception ex)
+            {
+                TencentTranslateTestStatus = $"测试出错: {ex.Message}";
+                TencentTranslateTestStatusColor = System.Windows.Media.Brushes.Red;
+                LoggerService.Instance.LogException(ex, "Failed to test Tencent Cloud", "SettingsViewModel.TestTencentCloud");
+            }
+        }
+
+        #endregion
+
+        #region Commands - Youdao API Testing
+
+        [RelayCommand]
+        private void TestYoudao()
+        {
+            YoudaoTestStatus = "有道连接测试功能将在未来版本中实现";
+            YoudaoTestStatusColor = System.Windows.Media.Brushes.Orange;
+        }
+
+        #endregion
+
+        #region Commands - Google API Testing
+
+        [RelayCommand]
+        private async Task TestGoogle()
+        {
+            SaveGoogleCredentials();
+
+            var profile = Config.ApiProfiles.FirstOrDefault(p =>
+                p.Provider == ApiProvider.Google && p.ServiceType == ServiceType.Translation);
+
+            if (profile == null || string.IsNullOrWhiteSpace(profile.Key1))
+            {
+                GoogleTestStatus = "请先填写 API Key";
+                GoogleTestStatusColor = System.Windows.Media.Brushes.Red;
+                return;
+            }
+
+            GoogleTestStatus = "测试中...";
+            GoogleTestStatusColor = System.Windows.Media.Brushes.Gray;
+
+            try
+            {
+                var result = await _googleService.TranslateAsync("Hello World", profile);
+
+                if (!string.IsNullOrWhiteSpace(result) && !result.StartsWith("Google") && !result.StartsWith("错误") && !result.StartsWith("Google API 错误"))
+                {
+                    GoogleTestStatus = $"连接成功！翻译结果：{result}";
+                    GoogleTestStatusColor = System.Windows.Media.Brushes.Green;
+                }
+                else
+                {
+                    GoogleTestStatus = $"连接失败：{result}";
+                    GoogleTestStatusColor = System.Windows.Media.Brushes.Red;
+                }
+            }
+            catch (Exception ex)
+            {
+                GoogleTestStatus = $"测试出错: {ex.Message}";
+                GoogleTestStatusColor = System.Windows.Media.Brushes.Red;
+                LoggerService.Instance.LogException(ex, "Failed to test Google", "SettingsViewModel.TestGoogle");
+            }
+        }
+
+        #endregion
+
+        #region Commands - Xunfei API Testing
+
+        [RelayCommand]
+        private async Task TestXunfeiConnection()
+        {
+            if (string.IsNullOrWhiteSpace(Config.XunfeiAppId) ||
+                string.IsNullOrWhiteSpace(Config.XunfeiApiKey) ||
+                string.IsNullOrWhiteSpace(Config.XunfeiApiSecret))
+            {
+                XunfeiTestStatus = "请先填写 AppID、API Key 和 API Secret";
+                XunfeiTestStatusColor = System.Windows.Media.Brushes.Red;
+                _dialogService.ShowAlert("请先填写 AppID、API Key 和 API Secret", "配置不完整");
+                return;
+            }
+
+            XunfeiTestStatus = "测试中...";
+            XunfeiTestStatusColor = System.Windows.Media.Brushes.Gray;
+
+            try
+            {
+                _settingsService.SaveConfig();
+
+                var transcriber = new Infrastructure.Services.Transcribers.XunfeiIatTranscriber(_settingsService);
+
+                bool connectionSuccess = await TestXunfeiWebSocketAsync(transcriber);
+
+                if (connectionSuccess)
+                {
+                    XunfeiTestStatus = "连接成功！讯飞语音听写 API 配置正确";
+                    XunfeiTestStatusColor = System.Windows.Media.Brushes.Green;
+                    _dialogService.ShowToast("连接成功！讯飞语音听写 API 配置正确。", "测试通过");
+                }
+                else
+                {
+                    XunfeiTestStatus = "连接失败，请检查配置参数";
+                    XunfeiTestStatusColor = System.Windows.Media.Brushes.Red;
+                    _dialogService.ShowToast("连接失败，请检查配置参数是否正确。", "测试失败");
+                }
+            }
+            catch (Exception ex)
+            {
+                XunfeiTestStatus = $"测试出错: {ex.Message}";
+                XunfeiTestStatusColor = System.Windows.Media.Brushes.Red;
+                _dialogService.ShowAlert($"测试出错: {ex.Message}", "错误");
+                LoggerService.Instance.LogException(ex, "Failed to test Xunfei connection", "SettingsViewModel.TestXunfeiConnection");
+            }
+        }
+
+        private async Task<bool> TestXunfeiWebSocketAsync(Infrastructure.Services.Transcribers.XunfeiIatTranscriber transcriber)
+        {
+            var tcs = new TaskCompletionSource<bool>();
+
+            EventHandler<Exception>? errorHandler = null;
+            EventHandler? startedHandler = null;
+
+            errorHandler = (s, e) =>
+            {
+                tcs.TrySetResult(false);
+            };
+
+            startedHandler = (s, e) =>
+            {
+                tcs.TrySetResult(true);
+            };
+
+            transcriber.OnError += errorHandler;
+            transcriber.OnRecordingStarted += startedHandler;
+
+            try
+            {
+                transcriber.StartRecording();
+
+                var completedTask = await Task.WhenAny(tcs.Task, Task.Delay(5000));
+
+                if (completedTask == tcs.Task)
+                {
+                    return await tcs.Task;
+                }
+
+                return transcriber.IsRecording;
+            }
+            finally
+            {
+                _ = transcriber.StopRecordingAndTranscribeAsync();
+                transcriber.OnError -= errorHandler;
+                transcriber.OnRecordingStarted -= startedHandler;
+            }
+        }
+
+        #endregion
+
+        #region Commands - AI Translation Config
+
+        [RelayCommand]
+        private void JumpToEditPrompt()
+        {
+            var promptId = Config.AiTranslationPromptId;
+            if (string.IsNullOrWhiteSpace(promptId)) return;
+
+            var prompt = _mainViewModel?.Files.FirstOrDefault(f => f.Id == promptId);
+            if (prompt != null)
+            {
+                _mainViewModel.SelectedFile = prompt;
+                _mainViewModel.IsEditMode = true;
+                _mainViewModel.SaveSettingsCommand.Execute(null);
+            }
+        }
+
+        [RelayCommand]
+        private void SaveAiTranslationConfig()
+        {
+            var promptId = Config.AiTranslationPromptId;
+            var promptTitle = "";
+            if (!string.IsNullOrWhiteSpace(promptId))
+            {
+                var prompt = _mainViewModel?.Files.FirstOrDefault(f => f.Id == promptId);
+                promptTitle = prompt?.Title ?? "";
+            }
+
+            var config = new AiTranslationConfig
+            {
+                PromptId = promptId,
+                PromptTitle = promptTitle,
+                BaseUrl = Config.AiBaseUrl,
+                ApiKey = Config.AiApiKey,
+                Model = Config.AiModel
+            };
+
+            Config.SavedAiTranslationConfigs.Add(config);
+            _settingsService.SaveConfig();
+            _dialogService.ShowToast("AI 翻译配置已保存！", "Success");
+        }
+
+        [RelayCommand]
+        private void DeleteAiTranslationConfig(string? configId)
+        {
+            if (string.IsNullOrWhiteSpace(configId)) return;
+
+            var config = Config.SavedAiTranslationConfigs.FirstOrDefault(c => c.Id == configId);
+            if (config != null)
+            {
+                Config.SavedAiTranslationConfigs.Remove(config);
+                _settingsService.SaveConfig();
+            }
+        }
+
+        #endregion
+
+        #region Private Methods - Credentials Management
+
+        /// <summary>
+        /// 加载百度凭据（从 ApiProfiles 加载到 ObservableProperty）
+        /// </summary>
+        private void LoadBaiduCredentials()
+        {
+            var baiduOcrProfile = Config.ApiProfiles.FirstOrDefault(p =>
+                p.Provider == ApiProvider.Baidu && p.ServiceType == ServiceType.OCR);
+            var baiduTransProfile = Config.ApiProfiles.FirstOrDefault(p =>
+                p.Provider == ApiProvider.Baidu && p.ServiceType == ServiceType.Translation);
+
+            // 加载 OCR 凭据
+            if (baiduOcrProfile != null)
+            {
+                BaiduOcrApiKey = baiduOcrProfile.Key1;
+                BaiduOcrSecretKey = baiduOcrProfile.Key2;
+            }
+
+            // 加载翻译凭据
+            if (baiduTransProfile != null)
+            {
+                BaiduTranslateAppId = baiduTransProfile.Key1;
+                BaiduTranslateSecretKey = baiduTransProfile.Key2;
+            }
+        }
+
+        /// <summary>
+        /// 保存百度凭据（从 ObservableProperty 保存到 ApiProfiles）
+        /// </summary>
+        private void SaveBaiduCredentials()
+        {
+            // Find or create Baidu OCR profile
+            var baiduOcrProfile = Config.ApiProfiles.FirstOrDefault(p =>
+                p.Provider == ApiProvider.Baidu && p.ServiceType == ServiceType.OCR);
+
+            if (baiduOcrProfile == null)
+            {
+                baiduOcrProfile = new ApiProfile
+                {
+                    Name = "百度 OCR",
+                    Provider = ApiProvider.Baidu,
+                    ServiceType = ServiceType.OCR
+                };
+                Config.ApiProfiles.Add(baiduOcrProfile);
+            }
+
+            // Update OCR credentials
+            baiduOcrProfile.Key1 = BaiduOcrApiKey;
+            baiduOcrProfile.Key2 = BaiduOcrSecretKey;
+
+            // Find or create Baidu Translation profile
+            var baiduTransProfile = Config.ApiProfiles.FirstOrDefault(p =>
+                p.Provider == ApiProvider.Baidu && p.ServiceType == ServiceType.Translation);
+
+            if (baiduTransProfile == null)
+            {
+                baiduTransProfile = new ApiProfile
+                {
+                    Name = "百度翻译",
+                    Provider = ApiProvider.Baidu,
+                    ServiceType = ServiceType.Translation
+                };
+                Config.ApiProfiles.Add(baiduTransProfile);
+            }
+
+            // Update Translation credentials
+            baiduTransProfile.Key1 = BaiduTranslateAppId;
+            baiduTransProfile.Key2 = BaiduTranslateSecretKey;
+
+            // Auto-set as active profiles if not already set
+            if (string.IsNullOrEmpty(Config.OcrProfileId))
+            {
+                Config.OcrProfileId = baiduOcrProfile.Id;
+            }
+            if (string.IsNullOrEmpty(Config.TranslateProfileId))
+            {
+                Config.TranslateProfileId = baiduTransProfile.Id;
+            }
+
+            _settingsService.SaveConfig();
+
+            if (_mainViewModel?.ExternalToolsVM != null)
+            {
+                _mainViewModel.ExternalToolsVM.RefreshProfiles();
+            }
+        }
+
+        /// <summary>
+        /// 加载腾讯云凭据
+        /// </summary>
+        private void LoadTencentCredentials()
+        {
+            var tencentOcrProfile = Config.ApiProfiles.FirstOrDefault(p =>
+                p.Provider == ApiProvider.Tencent && p.ServiceType == ServiceType.OCR);
+            var tencentTransProfile = Config.ApiProfiles.FirstOrDefault(p =>
+                p.Provider == ApiProvider.Tencent && p.ServiceType == ServiceType.Translation);
+
+            // 注意：腾讯云的凭据存储在 ApiProfile.Key1/Key2 中
+            // 这里我们不需要额外的 ObservableProperty，因为 UI 直接绑定到 ApiProfile
+        }
+
+        /// <summary>
+        /// 保存腾讯云凭据
+        /// </summary>
+        private void SaveTencentCredentials()
+        {
+            // OCR Profile
+            var tencentOcrProfile = Config.ApiProfiles.FirstOrDefault(p =>
+                p.Provider == ApiProvider.Tencent && p.ServiceType == ServiceType.OCR);
+
+            if (tencentOcrProfile == null)
+            {
+                tencentOcrProfile = new ApiProfile
+                {
+                    Name = "腾讯云 OCR",
+                    Provider = ApiProvider.Tencent,
+                    ServiceType = ServiceType.OCR
+                };
+                Config.ApiProfiles.Add(tencentOcrProfile);
+            }
+
+            // Translation Profile
+            var tencentTransProfile = Config.ApiProfiles.FirstOrDefault(p =>
+                p.Provider == ApiProvider.Tencent && p.ServiceType == ServiceType.Translation);
+
+            if (tencentTransProfile == null)
+            {
+                tencentTransProfile = new ApiProfile
+                {
+                    Name = "腾讯云翻译",
+                    Provider = ApiProvider.Tencent,
+                    ServiceType = ServiceType.Translation
+                };
+                Config.ApiProfiles.Add(tencentTransProfile);
+            }
+
+            // Auto-set as active profiles if undefined
+            if (string.IsNullOrEmpty(Config.OcrProfileId))
+            {
+                Config.OcrProfileId = tencentOcrProfile.Id;
+            }
+            if (string.IsNullOrEmpty(Config.TranslateProfileId))
+            {
+                Config.TranslateProfileId = tencentTransProfile.Id;
+            }
+
+            _settingsService.SaveConfig();
+
+            if (_mainViewModel?.ExternalToolsVM != null)
+            {
+                _mainViewModel.ExternalToolsVM.RefreshProfiles();
+            }
+        }
+
+        /// <summary>
+        /// 加载 Google 凭据
+        /// </summary>
+        private void LoadGoogleCredentials()
+        {
+            var googleProfile = Config.ApiProfiles.FirstOrDefault(p =>
+                p.Provider == ApiProvider.Google && p.ServiceType == ServiceType.Translation);
+
+            // Google 凭据直接存储在 ApiProfile 中，UI 绑定到 ApiProfile
+        }
+
+        /// <summary>
+        /// 保存 Google 凭据
+        /// </summary>
+        private void SaveGoogleCredentials()
+        {
+            var googleProfile = Config.ApiProfiles.FirstOrDefault(p =>
+                p.Provider == ApiProvider.Google && p.ServiceType == ServiceType.Translation);
+
+            if (googleProfile == null)
+            {
+                googleProfile = new ApiProfile
+                {
+                    Name = "Google 翻译",
+                    Provider = ApiProvider.Google,
+                    ServiceType = ServiceType.Translation
+                };
+                Config.ApiProfiles.Add(googleProfile);
+            }
+
+            _settingsService.SaveConfig();
+
+            if (_mainViewModel?.ExternalToolsVM != null)
+            {
+                _mainViewModel.ExternalToolsVM.RefreshProfiles();
+            }
+        }
+
+        /// <summary>
+        /// 加载讯飞凭据
+        /// </summary>
+        private void LoadXunfeiCredentials()
+        {
+            // 讯飞凭据直接存储在 Config 中，无需额外处理
+            // UI 直接绑定到 Config.XunfeiAppId, Config.XunfeiApiKey, Config.XunfeiApiSecret
         }
 
         #endregion
