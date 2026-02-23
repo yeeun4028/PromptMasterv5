@@ -6,7 +6,6 @@
     "GlobalHotkey": "",
     "SingleHotkey": "",
     "FullWindowHotkey": "Alt+W",
-    "MiniWindowHotkey": "F4",
     "EnableDoubleCtrl": false,
     "AiBaseUrl": "https://open.bigmodel.cn/api/paas/v4/",
     "AiApiKey": "Ys+AVKrRtG1RI04/oIjqS9w7vMegwEEzJyu4Tm49TABf/6Y1BC8PAjeXb2BlVEIdX88kRbi9uiGa2coGd2iZYqzMo3sBXOBGJK1uhnCefnE=",
@@ -134,7 +133,6 @@
         }
     ],
     "ActiveModelId": "45413802-e73c-4ec7-9706-296a8f68dec9",
-    "MiniWindowModelId": "",
     "TranslationModelId": "76629bbb-2dde-42a5-8aac-c5750be48410",
     "ApiProfiles": [
         {

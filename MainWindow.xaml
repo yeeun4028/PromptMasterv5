@@ -55,7 +55,6 @@
 
         <!-- 转换器 -->
         <utils:InverseBoolConverter x:Key="InverseBoolConverter"/>
-        <utils:SelectedIdToBrushConverter x:Key="SelectedIdToBrushConverter"/>
 
         <!-- 加载动画图标（旋转圆环） -->
         <Geometry x:Key="IconLoading">M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2M12 4A8 8 0 1 1 4 12A8 8 0 0 1 12 4Z</Geometry>

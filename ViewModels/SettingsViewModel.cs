@@ -375,7 +375,7 @@ namespace PromptMasterv5.ViewModels
                 HotkeyManager.Current.Remove("ToggleWindow");
                 HotkeyManager.Current.Remove("ToggleWindowSingle");
 
-                // Register Full and Mini window hotkeys using helper method
+                // Register Full window hotkey using helper method
                 RegisterWindowHotkey("ToggleFullWindowHotkey", Config.FullWindowHotkey, () => _mainViewModel?.OnWindowHotkeyPressed());
             }
             catch (Exception ex)
