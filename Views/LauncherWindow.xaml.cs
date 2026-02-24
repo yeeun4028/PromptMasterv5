@@ -1,16 +1,30 @@
 using System;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using PromptMasterv5.ViewModels;
 
 namespace PromptMasterv5.Views
 {
     public partial class LauncherWindow : Window
     {
+        private readonly DispatcherTimer _tabHoverTimer;
+        private System.Windows.Point _dragStartPoint;
+        private bool _isDragging;
+        private System.Windows.Controls.RadioButton? _hoveredTab;
+
         public LauncherWindow()
         {
             InitializeComponent();
             Closing += (s, e) => _isClosing = true;
+
+            _tabHoverTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(0.5)
+            };
+            _tabHoverTimer.Tick += TabHoverTimer_Tick;
+            PreviewMouseWheel += Window_PreviewMouseWheel;
         }
 
         public LauncherWindow(LauncherViewModel viewModel) : this()
@@ -18,9 +32,111 @@ namespace PromptMasterv5.Views
             DataContext = viewModel;
         }
 
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            var screenWidth = SystemParameters.PrimaryScreenWidth;
+            var screenHeight = SystemParameters.PrimaryScreenHeight;
+            Width = screenWidth * 0.67;
+            Height = screenHeight * 0.67;
+            Left = (screenWidth - Width) / 2;
+            Top = (screenHeight - Height) / 2;
+        }
+
+        private void Tab_Checked(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is LauncherViewModel vm && sender is System.Windows.Controls.RadioButton rb)
+            {
+                vm.SelectCategory(rb.Tag?.ToString() ?? "Bookmark");
+            }
+        }
+
+        private void Tab_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (sender is System.Windows.Controls.RadioButton tab)
+            {
+                _hoveredTab = tab;
+                _tabHoverTimer.Start();
+            }
+        }
+
+        private void Tab_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            _tabHoverTimer.Stop();
+            _hoveredTab = null;
+        }
+
+        private void TabHoverTimer_Tick(object? sender, EventArgs e)
+        {
+            _tabHoverTimer.Stop();
+            if (_hoveredTab != null)
+            {
+                _hoveredTab.IsChecked = true;
+            }
+        }
+
+        private void Window_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (e.Delta > 0)
+            {
+                if (TabBookmark.IsChecked == true)
+                    TabTool.IsChecked = true;
+                else if (TabApplication.IsChecked == true)
+                    TabBookmark.IsChecked = true;
+                else if (TabTool.IsChecked == true)
+                    TabApplication.IsChecked = true;
+            }
+            else
+            {
+                if (TabBookmark.IsChecked == true)
+                    TabApplication.IsChecked = true;
+                else if (TabApplication.IsChecked == true)
+                    TabTool.IsChecked = true;
+                else if (TabTool.IsChecked == true)
+                    TabBookmark.IsChecked = true;
+            }
+        }
+
+        private void ItemButton_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            _dragStartPoint = e.GetPosition(null);
+            _isDragging = false;
+        }
+
+        private void ItemButton_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed && !_isDragging)
+            {
+                System.Windows.Point currentPosition = e.GetPosition(null);
+                if (Math.Abs(currentPosition.X - _dragStartPoint.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                    Math.Abs(currentPosition.Y - _dragStartPoint.Y) > SystemParameters.MinimumVerticalDragDistance)
+                {
+                    _isDragging = true;
+                    if (sender is System.Windows.Controls.Button button && button.DataContext is Core.Models.LauncherItem item)
+                    {
+                        if (DataContext is LauncherViewModel vm)
+                        {
+                            vm.SaveItemOrder(item, (int)currentPosition.X, (int)currentPosition.Y);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void ItemButton_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (!_isDragging && sender is System.Windows.Controls.Button button)
+            {
+                if (button.Command?.CanExecute(button.CommandParameter) == true)
+                {
+                    button.Command.Execute(button.CommandParameter);
+                    SafeClose();
+                }
+            }
+            _isDragging = false;
+        }
+
         private void Window_Deactivated(object sender, EventArgs e)
         {
-            // 如果失去焦点，关闭窗口
             SafeClose();
         }
 

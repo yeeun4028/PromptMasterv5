@@ -5,90 +5,136 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:PromptMasterv5.ViewModels"
         mc:Ignorable="d"
-        Title="Launcher" Height="300" Width="500"
+        Title="Launcher" 
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
         ShowInTaskbar="False" Topmost="True"
-        Deactivated="Window_Deactivated" KeyDown="Window_KeyDown">
+        Deactivated="Window_Deactivated" KeyDown="Window_KeyDown"
+        Loaded="Window_Loaded">
 
-    <Border Background="{DynamicResource CardBackground}" 
+    <Border Background="#CC000000" 
             BorderBrush="{DynamicResource DividerBrush}" 
-            BorderThickness="1" CornerRadius="12" Padding="20">
+            BorderThickness="1" CornerRadius="12" Padding="15">
         <Border.Effect>
-            <DropShadowEffect BlurRadius="20" ShadowDepth="5" Opacity="0.3"/>
+            <DropShadowEffect BlurRadius="20" ShadowDepth="5" Opacity="0.5"/>
         </Border.Effect>
         
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <!-- 标签页 -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,15">
+                <RadioButton x:Name="TabBookmark" Content="书签" GroupName="Tabs" 
+                             Style="{StaticResource TabRadioButtonStyle}" 
+                             IsChecked="True" Checked="Tab_Checked" Tag="Bookmark"
+                             MouseEnter="Tab_MouseEnter" MouseLeave="Tab_MouseLeave"/>
+                <RadioButton x:Name="TabApplication" Content="应用" GroupName="Tabs" 
+                             Style="{StaticResource TabRadioButtonStyle}" 
+                             Checked="Tab_Checked" Tag="Application"
+                             MouseEnter="Tab_MouseEnter" MouseLeave="Tab_MouseLeave"/>
+                <RadioButton x:Name="TabTool" Content="工具" GroupName="Tabs" 
+                             Style="{StaticResource TabRadioButtonStyle}" 
+                             Checked="Tab_Checked" Tag="Tool"
+                             MouseEnter="Tab_MouseEnter" MouseLeave="Tab_MouseLeave"/>
+            </StackPanel>
+
+            <!-- 内容区域 -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <ItemsControl ItemsSource="{Binding FilteredItems}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal" HorizontalAlignment="Left"/>
+                            <WrapPanel x:Name="IconPanel" Orientation="Horizontal" HorizontalAlignment="Center"/>
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Button Command="{Binding DataContext.ExecuteItemCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                            <Button x:Name="ItemButton"
+                                    Command="{Binding DataContext.ExecuteItemCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
                                     CommandParameter="{Binding}"
-                                    Margin="5" Width="70" Height="70"
-                                    Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                    Margin="8" Width="55" Height="55"
+                                    Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                    MouseLeftButtonDown="ItemButton_MouseLeftButtonDown"
+                                    MouseMove="ItemButton_MouseMove"
+                                    MouseLeftButtonUp="ItemButton_MouseLeftButtonUp">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
-                                        <Border x:Name="border" Background="Transparent" CornerRadius="12" Padding="5">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                            </Grid.RowDefinitions>
+                                            
+                                            <!-- 图标名称（悬停时显示） -->
+                                            <TextBlock x:Name="NameText" Text="{Binding Title}" 
+                                                       HorizontalAlignment="Center" 
+                                                       Foreground="White" FontSize="11" 
+                                                       Margin="0,0,0,5" Opacity="0" 
+                                                       TextTrimming="CharacterEllipsis" MaxWidth="60"/>
+
+                                            <!-- 图标容器（带缩放动画） -->
+                                            <Border x:Name="IconBorder" Grid.Row="1" 
+                                                    Background="Transparent" 
+                                                    CornerRadius="8" Padding="5"
+                                                    RenderTransformOrigin="0.5,1">
+                                                <Border.RenderTransform>
+                                                    <ScaleTransform x:Name="IconScale" ScaleX="1" ScaleY="1"/>
+                                                </Border.RenderTransform>
+                                                <Grid Width="45" Height="45">
+                                                    <Path Data="{Binding IconGeometry}" 
+                                                          Visibility="{Binding IconGeometry, Converter={StaticResource StringToVis}}"
+                                                          Fill="#4A90D9" 
+                                                          Stretch="Uniform" />
+                                                    <Path Data="M13,9V3.5L18.5,9M6,2C4.89,2 4,2.89 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2H6Z"
+                                                          Visibility="{Binding IconGeometry, Converter={StaticResource StringToVisInverted}}"
+                                                          Fill="#888888" 
+                                                          Stretch="Uniform" Opacity="0.7"/>
+                                                </Grid>
+                                            </Border>
+                                        </Grid>
                                         <ControlTemplate.Triggers>
-                                            <DataTrigger Binding="{Binding IsFocused, RelativeSource={RelativeSource Self}}" Value="True">
-                                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ListItemHoverBackgroundBrush}"/>
-                                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource ActionIconBrush}"/>
-                                                <Setter TargetName="border" Property="BorderThickness" Value="1"/>
-                                            </DataTrigger>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ListItemHoverBackgroundBrush}"/>
+                                                <Trigger.EnterActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetName="IconScale" 
+                                                                             Storyboard.TargetProperty="ScaleX"
+                                                                             To="0.6" Duration="0:0:0.15"/>
+                                                            <DoubleAnimation Storyboard.TargetName="IconScale" 
+                                                                             Storyboard.TargetProperty="ScaleY"
+                                                                             To="0.6" Duration="0:0:0.15"/>
+                                                            <DoubleAnimation Storyboard.TargetName="NameText" 
+                                                                             Storyboard.TargetProperty="Opacity"
+                                                                             To="1" BeginTime="0:0:0.15" Duration="0:0:0.1"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </Trigger.EnterActions>
+                                                <Trigger.ExitActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetName="IconScale" 
+                                                                             Storyboard.TargetProperty="ScaleX"
+                                                                             To="1" Duration="0:0:0.15"/>
+                                                            <DoubleAnimation Storyboard.TargetName="IconScale" 
+                                                                             Storyboard.TargetProperty="ScaleY"
+                                                                             To="1" Duration="0:0:0.15"/>
+                                                            <DoubleAnimation Storyboard.TargetName="NameText" 
+                                                                             Storyboard.TargetProperty="Opacity"
+                                                                             To="0" Duration="0:0:0.1"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </Trigger.ExitActions>
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="*"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    
-                                    <!-- Icon based on type -->
-                                    <Grid Width="28" Height="28" VerticalAlignment="Center" HorizontalAlignment="Center">
-                                        <Path Data="{Binding IconGeometry}" 
-                                              Visibility="{Binding IconGeometry, Converter={StaticResource StringToVis}}"
-                                              Fill="{DynamicResource ActionIconBrush}" 
-                                              Stretch="Uniform" />
-                                        
-                                        <!-- Fallback or File Icon placeholder (we could use Image Source="{Binding IconPath}" here if we have a converter) -->
-                                        <Path Data="M13,9V3.5L18.5,9M6,2C4.89,2 4,2.89 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2H6Z"
-                                              Visibility="{Binding IconGeometry, Converter={StaticResource StringToVisInverted}}"
-                                              Fill="{DynamicResource TextSecondary}" 
-                                              Stretch="Uniform" Opacity="0.5"/>
-                                    </Grid>
-
-                                    <TextBlock Grid.Row="1" Text="{Binding Title}" Margin="2,5,2,2" 
-                                               TextAlignment="Center" TextWrapping="Wrap"
-                                               Foreground="{DynamicResource TextPrimary}" FontSize="10"
-                                               MaxHeight="28" TextTrimming="CharacterEllipsis"/>
-                                </Grid>
                             </Button>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </ScrollViewer>
-            
-            <TextBlock Text="Tab 切换 • Enter 启动 • Esc 关闭" Grid.Row="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" 
-                       Foreground="{DynamicResource TextSecondary}" FontSize="12" Opacity="0.5" Margin="0,15,0,0"/>
         </Grid>
     </Border>
 </Window>

@@ -123,6 +123,33 @@
             <SolidColorBrush x:Key="HeaderIconBrush" Color="#B0B4B8"/>
             <SolidColorBrush x:Key="HeaderIconHoverBrush" Color="#E6E8EA"/>
 
+            <!-- Launcher Tab Style -->
+            <Style x:Key="TabRadioButtonStyle" TargetType="RadioButton">
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Foreground" Value="#888888"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="Margin" Value="15,0"/>
+                <Setter Property="Padding" Value="10,8"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RadioButton">
+                            <Border x:Name="TabBorder" Background="Transparent" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter x:Name="Content" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter Property="Foreground" Value="White"/>
+                                    <Setter TargetName="TabBorder" Property="Background" Value="#3A3F45"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <Color x:Key="AccentColorValue">#4183C4</Color>
             <SolidColorBrush x:Key="AccentColor" Color="{StaticResource AccentColorValue}"/>
             <SolidColorBrush x:Key="DangerBrush" Color="#E74C3C"/>
