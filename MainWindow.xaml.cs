@@ -329,7 +329,8 @@ namespace PromptMasterv5
         private void StartHideTimer()
         {
             StopHideTimer();
-            _hideTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(10) };
+            int delay = ViewModel?.Config?.AutoHideDelay ?? 10;
+            _hideTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(delay) };
             _hideTimer.Tick += (s, e) =>
             {
                 StopHideTimer();

@@ -487,6 +487,24 @@
                                     <TextBlock Text="启动器" FontSize="14" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
+
+                            <Button Command="{Binding SelectSettingsTabCommand}" CommandParameter="8">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource ModernTabBtnStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedSettingsTab}" Value="8">
+                                                <Setter Property="Tag" Value="Selected"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <StackPanel Orientation="Horizontal">
+                                    <Viewbox Width="16" Height="16" Margin="0,1,12,1">
+                                        <Path Data="M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V8h14v10z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Stretch="Uniform"/>
+                                    </Viewbox>
+                                    <TextBlock Text="窗口" FontSize="14" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </Border>
 
@@ -713,6 +731,61 @@
                                                 </Border>
 
                                                  <Button Command="{Binding SettingsVM.AddLauncherSearchPathCommand}" Content="+ 添加文件夹" Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Right"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Tab 8: Window -->
+                                <StackPanel>
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel" BasedOn="{StaticResource FadeInContentStyle}">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedSettingsTab}" Value="8">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+                                    
+                                    <StackPanel Margin="0,0,0,14">
+                                        <Border Style="{StaticResource CardStyle}">
+                                            <StackPanel>
+                                                <TextBlock Text="窗口行为" FontSize="16" FontWeight="SemiBold" 
+                                                           Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,15"/>
+                                                
+                                                <!-- AutoHide 开关 -->
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,20">
+                                                    <CheckBox IsChecked="{Binding Config.AutoHide}" 
+                                                              Style="{StaticResource ToggleSwitchStyle}" 
+                                                              Cursor="Hand" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="窗口失焦自动隐藏" 
+                                                               Style="{StaticResource FieldLabelTextStyle}" 
+                                                               VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                                </StackPanel>
+                                                
+                                                <!-- 定时器延迟 -->
+                                                <Grid Margin="0,0,0,20">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="自动隐藏延迟" 
+                                                               Style="{StaticResource FieldLabelTextStyle}" 
+                                                               VerticalAlignment="Center"/>
+                                                    <ComboBox Grid.Column="1" 
+                                                              SelectedValue="{Binding Config.AutoHideDelay}" 
+                                                              SelectedValuePath="Tag"
+                                                              Style="{StaticResource ModernComboBoxStyle}"
+                                                              Width="100">
+                                                        <ComboBoxItem Content="5 秒" Tag="5"/>
+                                                        <ComboBoxItem Content="10 秒" Tag="10"/>
+                                                        <ComboBoxItem Content="15 秒" Tag="15"/>
+                                                        <ComboBoxItem Content="20 秒" Tag="20"/>
+                                                        <ComboBoxItem Content="30 秒" Tag="30"/>
+                                                    </ComboBox>
+                                                </Grid>
                                             </StackPanel>
                                         </Border>
                                     </StackPanel>

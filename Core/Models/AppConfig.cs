@@ -44,6 +44,8 @@ namespace PromptMasterv5.Core.Models
 
         [ObservableProperty] private bool autoHide = true;
 
+        [ObservableProperty] private int autoHideDelay = 10;
+
         // ★★★ 新增：AI 配置项 ★★★
 
         [ObservableProperty]
