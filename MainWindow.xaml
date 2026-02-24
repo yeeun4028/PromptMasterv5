@@ -44,6 +44,9 @@
         <Geometry x:Key="IconCopyThin">M20 2H10c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H10V4h10v12zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6z</Geometry>
         <Geometry x:Key="IconLockClosedThin">M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z</Geometry>
         <Geometry x:Key="IconLockOpenThin">M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h2c0-1.66 1.34-3 3-3s3 1.34 3 3v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z</Geometry>
+        <Geometry x:Key="IconCloseThin">M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z</Geometry>
+        <Geometry x:Key="IconMaximizeThin">M3 3h18v18H3V3zm2 2v14h14V5H5z</Geometry>
+        <Geometry x:Key="IconRestoreThin">M3 7v12h12v-2H5V7H3zm2 2h8v8H7V9H5z</Geometry>
         <Geometry x:Key="IconSunThin">M12,18 A6,6 0 1 1 12,6 A6,6 0 1 1 12,18 Z M12,2 L12,4 M12,20 L12,22 M2,12 L4,12 M20,12 L22,12 M4.22,4.22 L5.64,5.64 M18.36,18.36 L19.78,19.78 M19.78,4.22 L18.36,5.64 M5.64,18.36 L4.22,19.78</Geometry>
         <Geometry x:Key="IconMoonThin">M21,12.79 A9,9 0 1 1 11.21,3 A7,7 0 0 0 21,12.79 Z</Geometry>
         <Geometry x:Key="IconDelete">M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z</Geometry>
@@ -930,6 +933,47 @@
                                                             </Path.Style>
                                                         </Path>
                                                     </Grid>
+                                                </DataTemplate>
+                                            </Button.ContentTemplate>
+                                        </Button>
+
+                                        <Button x:Name="MaximizeRestoreButton" Click="MaximizeRestoreButton_Click" Style="{StaticResource ActionBtnStyle}">
+                                            <Button.ToolTip>
+                                                <TextBlock>
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding ElementName=FullModeContainer, Path=WindowState}" Value="Maximized">
+                                                                    <Setter Property="Text" Value="还原窗口"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding ElementName=FullModeContainer, Path=WindowState}" Value="Normal">
+                                                                    <Setter Property="Text" Value="最大化窗口"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Button.ToolTip>
+                                            <Button.ContentTemplate>
+                                                <DataTemplate>
+                                                    <Grid>
+                                                        <Path x:Name="MaximizeIcon" Data="{StaticResource IconMaximizeThin}" Style="{StaticResource SmallHeaderIconStyle}"/>
+                                                        <Path x:Name="RestoreIcon" Data="{StaticResource IconRestoreThin}" Style="{StaticResource SmallHeaderIconStyle}" Visibility="Collapsed"/>
+                                                    </Grid>
+                                                    <DataTemplate.Triggers>
+                                                        <DataTrigger Binding="{Binding ElementName=FullModeContainer, Path=WindowState}" Value="Maximized">
+                                                            <Setter TargetName="MaximizeIcon" Property="Visibility" Value="Collapsed"/>
+                                                            <Setter TargetName="RestoreIcon" Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </DataTemplate.Triggers>
+                                                </DataTemplate>
+                                            </Button.ContentTemplate>
+                                        </Button>
+
+                                        <Button Click="CloseButton_Click" Style="{StaticResource ActionBtnStyle}" ToolTip="关闭窗口 (隐藏)">
+                                            <Button.ContentTemplate>
+                                                <DataTemplate>
+                                                    <Path Data="{StaticResource IconCloseThin}" Style="{StaticResource SmallHeaderIconStyle}"/>
                                                 </DataTemplate>
                                             </Button.ContentTemplate>
                                         </Button>
