@@ -535,19 +535,6 @@
                                             <StackPanel>
                                                 
                                                 <StackPanel>
-                                                    <!-- Row 0: Double Ctrl -->
-                                                    <Grid Margin="0,0,0,20">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <TextBlock Text="双击 Ctrl 键唤醒" Style="{StaticResource FieldLabelTextStyle}" VerticalAlignment="Center"/>
-                                                        <CheckBox Grid.Column="1" 
-                                                                  IsChecked="{Binding Config.EnableDoubleCtrl}" 
-                                                                  Style="{StaticResource ToggleSwitchStyle}"
-                                                                  VerticalAlignment="Center"/>
-                                                    </Grid>
-
                                                     <!-- Row 1: Full Window -->
                                                     <Grid Margin="0,0,0,20">
                                                         <Grid.ColumnDefinitions>

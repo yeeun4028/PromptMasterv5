@@ -11,15 +11,11 @@ namespace PromptMasterv5.Infrastructure.Services
     {
         private IKeyboardMouseEvents? _globalHook;
 
-        private DateTime _lastCtrlPressTime = DateTime.MinValue;
-        private const int DoubleClickInterval = 400;
-
         private string _sequenceBuffer = "";
         private DateTime _lastSequenceTime = DateTime.MinValue;
 
         public string AlwaysOnTopSequence { get; set; } = "";
 
-        public event EventHandler? OnDoubleCtrlDetected;
         public event EventHandler? OnDoubleSemiColonDetected;
         public event EventHandler? OnAlwaysOnTopSequenceDetected;
         public event EventHandler<System.Windows.Forms.KeyEventArgs>? OnAnyKeyDown;
@@ -302,19 +298,6 @@ namespace PromptMasterv5.Infrastructure.Services
                     // e.Handled = true;
                     // e.SuppressKeyPress = true;
                 }
-            }
-
-            if (e.KeyCode == Keys.LControlKey || e.KeyCode == Keys.RControlKey || e.KeyCode == Keys.ControlKey)
-            {
-                var now = DateTime.Now;
-                var span = (now - _lastCtrlPressTime).TotalMilliseconds;
-
-                if (span > 50 && span < DoubleClickInterval)
-                {
-                    OnDoubleCtrlDetected?.Invoke(this, EventArgs.Empty);
-                    _lastCtrlPressTime = DateTime.MinValue;
-                }
-                else _lastCtrlPressTime = now;
             }
         }
 

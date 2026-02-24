@@ -52,7 +52,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private readonly Subject<System.Reactive.Unit> _saveLocalSettingsSubject = new();
 
     // Event handlers for proper unsubscription
-    private EventHandler? _onDoubleCtrlDetectedHandler;
     private EventHandler? _onVoiceControlKeyDownHandler;
     private EventHandler? _onVoiceControlTriggeredHandler;
     private EventHandler? _onLauncherTriggeredHandler;
@@ -255,14 +254,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
             }
         };
         LocalConfig.PropertyChanged += _localConfigPropertyChangedHandler;
-
-        _onDoubleCtrlDetectedHandler = (_, __) => Application.Current.Dispatcher.Invoke(() =>
-        {
-            if (_isSimulatingKeys) return;
-            ToggleMainWindow();
-        });
-        _keyService.OnDoubleCtrlDetected += _onDoubleCtrlDetectedHandler;
-
 
         _onLauncherTriggeredHandler = (_, __) => HandleLauncherTriggered();
         _keyService.OnLauncherTriggered += _onLauncherTriggeredHandler;
@@ -1050,8 +1041,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
         // Unsubscribe from GlobalKeyService events and dispose
         if (_keyService != null)
         {
-            if (_onDoubleCtrlDetectedHandler != null)
-                _keyService.OnDoubleCtrlDetected -= _onDoubleCtrlDetectedHandler;
             if (_onLauncherTriggeredHandler != null)
                 _keyService.OnLauncherTriggered -= _onLauncherTriggeredHandler;
             if (_onVoiceControlKeyDownHandler != null)

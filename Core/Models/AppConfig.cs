@@ -43,8 +43,6 @@ namespace PromptMasterv5.Core.Models
         private string fullWindowHotkey = "";
 
         [ObservableProperty] private bool autoHide = true;
-        [ObservableProperty]
-        private bool enableDoubleCtrl = true;
 
         // ★★★ 新增：AI 配置项 ★★★
 
