@@ -250,7 +250,7 @@ namespace PromptMasterv5.Services
                     new KeyValuePair<string, string>("image", base64Image),
                     new KeyValuePair<string, string>("language_type", languageType),
                     new KeyValuePair<string, string>("detect_direction", "false"), // 是否检测朝向
-                    new KeyValuePair<string, string>("paragraph", "false"),        // 是否分段
+                    new KeyValuePair<string, string>("paragraph", "true"),         // YES: 启用分段，以保留有序列表等格式
                     new KeyValuePair<string, string>("probability", "false")       // 是否返回置信度
                 });
 
@@ -270,19 +270,47 @@ namespace PromptMasterv5.Services
                         return $"OCR 接口返回错误 ({errorCode}): {msg}";
                     }
 
-                    // 提取识别文字
+                    // 1. 先提取所有的文字行到列表中，方便后续按索引查表
+                    List<string> allWordsLines = new List<string>();
                     if (root.TryGetProperty("words_result", out var wordsResult))
                     {
-                        StringBuilder sb = new StringBuilder();
                         foreach (var item in wordsResult.EnumerateArray())
                         {
                             if (item.TryGetProperty("words", out var words))
+                                allWordsLines.Add(words.ToString());
+                        }
+                    }
+
+                    if (allWordsLines.Count == 0) return "未识别到文字";
+
+                    // 2. 优先提取 paragraphs_result，根据其中的索引重新组合段落
+                    if (root.TryGetProperty("paragraphs_result", out var paragraphsResult))
+                    {
+                        StringBuilder sb = new StringBuilder();
+                        foreach (var paragraph in paragraphsResult.EnumerateArray())
+                        {
+                            // 百度返回的是该段落对应的文字行在 words_result 中的索引数组
+                            if (paragraph.TryGetProperty("words_result_idx", out var idxArray))
                             {
-                                sb.AppendLine(words.ToString());
+                                foreach (var idxElement in idxArray.EnumerateArray())
+                                {
+                                    int idx = idxElement.GetInt32();
+                                    if (idx >= 0 && idx < allWordsLines.Count)
+                                    {
+                                        sb.AppendLine(allWordsLines[idx]);
+                                    }
+                                }
+                                // 段落结束，增加一个额外的换行符，确保 Google 翻译识别为独立段落/列表项
+                                sb.AppendLine(); 
                             }
                         }
                         string result = sb.ToString().Trim();
                         return string.IsNullOrWhiteSpace(result) ? "未识别到文字" : result;
+                    }
+                    else
+                    {
+                        // 降级：如果没有分段信息，直接按行拼接
+                        return string.Join(Environment.NewLine, allWordsLines).Trim();
                     }
                 }
                 return "错误: 未能解析 OCR 结果";

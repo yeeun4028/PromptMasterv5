@@ -45,10 +45,12 @@ namespace PromptMasterv5.Infrastructure.Services
                 requestUrl += $"?key={profile.Key1}";
 
                 // 4. 准备请求体
-                // source 留空表示自动检测
+                // 将文本按行拆分，作为数组发送。这能强制 Google 翻译保留每一行的独立性，防止有序列表被合并成一段话。
+                var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+                
                 var payload = new
                 {
-                    q = text,
+                    q = lines,
                     target = "zh"
                 };
                 
@@ -76,17 +78,31 @@ namespace PromptMasterv5.Infrastructure.Services
                 }
 
                 // 6. 解析响应
-                // 格式: { "data": { "translations": [ { "translatedText": "..." } ] } }
+                // 格式: { "data": { "translations": [ { "translatedText": "..." }, { "translatedText": "..." } ] } }
                 var jsonNode = JsonNode.Parse(responseString);
-                var translatedText = jsonNode?["data"]?["translations"]?[0]?["translatedText"]?.GetValue<string>();
+                var translationsArray = jsonNode?["data"]?["translations"]?.AsArray();
 
-                if (string.IsNullOrWhiteSpace(translatedText))
+                if (translationsArray == null || translationsArray.Count == 0)
                 {
                     return "Google 翻译返回了空结果";
                 }
+
+                StringBuilder sb = new StringBuilder();
+                foreach (var item in translationsArray)
+                {
+                    var translatedRow = item?["translatedText"]?.GetValue<string>();
+                    if (translatedRow != null)
+                    {
+                        // 解码 HTML 实体并追加，保持换行
+                        sb.AppendLine(System.Net.WebUtility.HtmlDecode(translatedRow));
+                    }
+                    else
+                    {
+                        sb.AppendLine();
+                    }
+                }
                 
-                // 解码 HTML 实体 (例如 &#39; -> ')
-                return System.Net.WebUtility.HtmlDecode(translatedText);
+                return sb.ToString().TrimEnd();
             }
             catch (Exception ex)
             {
