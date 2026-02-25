@@ -108,43 +108,8 @@ namespace PromptMasterv5.ViewModels
 
         private async void InitializeItems()
         {
-            var staticItems = GetStaticItems();
-            foreach (var item in staticItems)
-            {
-                Items.Add(item);
-            }
-
             await LoadDiscoveredItemsAsync();
-            
             UpdateFilter();
-        }
-
-        private List<LauncherItem> GetStaticItems()
-        {
-            return new List<LauncherItem>
-            {
-                new LauncherItem
-                {
-                    Title = "Google",
-                    IconGeometry = "M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12.69C5,9.15 8.2,6.13 12.18,6.13C14.01,6.13 15.33,6.73 16.41,7.74L18.5,5.6C16.89,4.19 14.76,3.27 12.18,3.27C7.12,3.27 3,7.21 3,12.69C3,18.17 7.12,22.11 12.18,22.11C17.06,22.11 20.88,18.96 21.05,14.4H21.35V11.1Z",
-                    Category = LauncherCategory.Bookmark,
-                    Action = () => Process.Start(new ProcessStartInfo("https://www.google.com") { UseShellExecute = true })
-                },
-                new LauncherItem
-                {
-                    Title = "命令提示符",
-                    IconGeometry = "M20,19V7H4V19H20M20,3A2,2 0 0,1 22,5V19A2,2 0 0,1 20,21H4A2,2 0 0,1 2,19V5C2,3.89 2.9,3 4,3H20M13,17V15H18V17H13M9.68,13.69L8.27,15.11L5.44,12.28L8.27,9.44L9.68,10.86L8.27,12.28L9.68,13.69Z",
-                    Category = LauncherCategory.Application,
-                    Action = () => Process.Start(new ProcessStartInfo("cmd.exe") { UseShellExecute = true })
-                },
-                new LauncherItem
-                {
-                    Title = "记事本",
-                    IconGeometry = "M14,10H19.5L14,4.5V10M5,3H15L21,9V19A2,2 0 0,1 19,21H5C3.89,21 3,20.1 3,19V5C3,3.89 3.89,3 5,3M5,12V14H19V12H5M5,16V18H14V16H5Z",
-                    Category = LauncherCategory.Tool,
-                    Action = () => Process.Start(new ProcessStartInfo("notepad.exe") { UseShellExecute = true })
-                }
-            };
         }
 
         private async Task LoadDiscoveredItemsAsync()
