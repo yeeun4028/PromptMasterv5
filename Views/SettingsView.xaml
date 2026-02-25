@@ -1996,56 +1996,96 @@
                                             <TextBlock Text="启动分段配置 (从上到下等比例分布)" Style="{StaticResource FieldLabelTextStyle}" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
                                             <TextBlock Text="鼠标悬浮时展开，点击触发指定操作。颜色请使用 HEX 格式 (如 #FF4183C4)。" Style="{StaticResource HintTextStyle}" Margin="0,0,0,15"/>
 
+                                            <Grid Margin="15,0,25,10">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="30"/>  <!-- Color Preview -->
+                                                    <ColumnDefinition Width="100"/> <!-- Color Hex -->
+                                                    <ColumnDefinition Width="110"/> <!-- Action Type -->
+                                                    <ColumnDefinition Width="180"/> <!-- Action Target -->
+                                                    <ColumnDefinition Width="*"/>   <!-- Label -->
+                                                    <ColumnDefinition Width="120"/> <!-- Buttons -->
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Text="颜色" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}" Margin="5,0"/>
+                                                <TextBlock Grid.Column="2" Text="操作类型" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}" Margin="5,0"/>
+                                                <TextBlock Grid.Column="3" Text="执行目标" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}" Margin="5,0"/>
+                                                <TextBlock Grid.Column="4" Text="提示文字" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}" Margin="5,0"/>
+                                                <TextBlock Grid.Column="5" Text="操作" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center"/>
+                                            </Grid>
+
                                             <ItemsControl ItemsSource="{Binding Config.LaunchBarItems}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
-                                                        <Border Background="{DynamicResource ShellBackground}" BorderBrush="{DynamicResource DividerColor}" BorderThickness="1" CornerRadius="8" Padding="15" Margin="0,0,0,10">
+                                                        <Border Background="{DynamicResource ShellBackground}" BorderBrush="{DynamicResource DividerColor}" BorderThickness="1" CornerRadius="6" Padding="10,5" Margin="0,0,0,8">
                                                             <Grid>
-                                                                <Grid.RowDefinitions>
-                                                                    <RowDefinition Height="Auto"/>
-                                                                    <RowDefinition Height="Auto"/>
-                                                                </Grid.RowDefinitions>
                                                                 <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="*"/>
-                                                                    <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="30"/>  <!-- Color Preview -->
+                                                                    <ColumnDefinition Width="100"/> <!-- Color Hex -->
+                                                                    <ColumnDefinition Width="110"/> <!-- Action Type -->
+                                                                    <ColumnDefinition Width="180"/> <!-- Action Target -->
+                                                                    <ColumnDefinition Width="*"/>   <!-- Label -->
+                                                                    <ColumnDefinition Width="120"/> <!-- Buttons -->
                                                                 </Grid.ColumnDefinitions>
                                                                 
-                                                                <StackPanel Grid.Row="0" Grid.Column="0">
-                                                                    <Grid Margin="0,0,0,10">
-                                                                        <Grid.ColumnDefinitions>
-                                                                            <ColumnDefinition Width="80"/>
-                                                                            <ColumnDefinition Width="*"/>
-                                                                            <ColumnDefinition Width="80"/>
-                                                                            <ColumnDefinition Width="*"/>
-                                                                        </Grid.ColumnDefinitions>
-                                                                        <TextBlock Grid.Column="0" Text="提示文字" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"/>
-                                                                        <TextBox Grid.Column="1" Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,10,0"/>
+                                                                <!-- Color Preview -->
+                                                                <Rectangle Grid.Column="0" Width="10" Height="28" RadiusX="2" RadiusY="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5,0">
+                                                                    <Rectangle.Fill>
+                                                                        <Binding Path="ColorHex">
+                                                                            <Binding.Converter>
+                                                                                <converters:HexToSolidColorBrushConverter/>
+                                                                            </Binding.Converter>
+                                                                        </Binding>
+                                                                    </Rectangle.Fill>
+                                                                </Rectangle>
 
-                                                                        <TextBlock Grid.Column="2" Text="图标颜色" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"/>
-                                                                        <TextBox Grid.Column="3" Text="{Binding ColorHex, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
-                                                                    </Grid>
-                                                                    <Grid>
-                                                                        <Grid.ColumnDefinitions>
-                                                                            <ColumnDefinition Width="80"/>
-                                                                            <ColumnDefinition Width="*"/>
-                                                                            <ColumnDefinition Width="80"/>
-                                                                            <ColumnDefinition Width="*"/>
-                                                                        </Grid.ColumnDefinitions>
-                                                                        <TextBlock Grid.Column="0" Text="操作类型" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"/>
-                                                                        <ComboBox Grid.Column="1" SelectedValue="{Binding ActionType}" SelectedValuePath="Tag" Style="{StaticResource ModernComboBoxStyle}" Margin="0,0,10,0">
-                                                                            <ComboBoxItem Tag="{x:Static models:LaunchBarActionType.BuiltIn}" Content="内置功能"/>
-                                                                            <ComboBoxItem Tag="{x:Static models:LaunchBarActionType.CustomApp}" Content="外部程序"/>
-                                                                        </ComboBox>
+                                                                <!-- Color Hex -->
+                                                                <TextBox Grid.Column="1" Text="{Binding ColorHex, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="5,0" VerticalAlignment="Center" Height="30"/>
 
-                                                                        <TextBlock Grid.Column="2" Text="执行目标" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"/>
-                                                                        <TextBox Grid.Column="3" Text="{Binding ActionTarget, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" ToolTip="内置功能参数 (如 ToggleWindow, Translate, Ocr) 或 外部程序路径"/>
-                                                                    </Grid>
-                                                                </StackPanel>
+                                                                <!-- Action Type -->
+                                                                <ComboBox Grid.Column="2" SelectedValue="{Binding ActionType}" SelectedValuePath="Tag" Style="{StaticResource ModernComboBoxStyle}" Margin="5,0" VerticalAlignment="Center" Height="30">
+                                                                    <ComboBoxItem Tag="{x:Static models:LaunchBarActionType.BuiltIn}" Content="内置功能"/>
+                                                                    <ComboBoxItem Tag="{x:Static models:LaunchBarActionType.CustomApp}" Content="外部程序"/>
+                                                                </ComboBox>
 
-                                                                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Vertical" VerticalAlignment="Center" Margin="15,0,0,0">
-                                                                    <Button Command="{Binding DataContext.SettingsVM.MoveLaunchBarItemUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Content="↑" Width="30" Height="25" Margin="0,0,0,5" Style="{StaticResource ModernTabBtnStyle}" Padding="0" HorizontalContentAlignment="Center"/>
-                                                                    <Button Command="{Binding DataContext.SettingsVM.MoveLaunchBarItemDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Content="↓" Width="30" Height="25" Margin="0,0,0,5" Style="{StaticResource ModernTabBtnStyle}" Padding="0" HorizontalContentAlignment="Center"/>
-                                                                    <Button Command="{Binding DataContext.SettingsVM.RemoveLaunchBarItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Content="✕" Width="30" Height="25" Style="{StaticResource ModernTabBtnStyle}" Padding="0" HorizontalContentAlignment="Center" Foreground="{StaticResource DangerBrush}"/>
+                                                                <!-- Action Target -->
+                                                                <Grid Grid.Column="3" Margin="5,0" VerticalAlignment="Center">
+                                                                    <TextBox Text="{Binding ActionTarget, UpdateSourceTrigger=PropertyChanged}" Height="30" ToolTip="外部程序绝对路径或命令">
+                                                                        <TextBox.Style>
+                                                                            <Style TargetType="TextBox" BasedOn="{StaticResource ModernTextBoxStyle}">
+                                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding ActionType}" Value="{x:Static models:LaunchBarActionType.CustomApp}">
+                                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </TextBox.Style>
+                                                                    </TextBox>
+                                                                    <ComboBox SelectedValue="{Binding ActionTarget, UpdateSourceTrigger=PropertyChanged}" SelectedValuePath="Tag" Height="30" ToolTip="请选择内置功能指令">
+                                                                        <ComboBox.Style>
+                                                                            <Style TargetType="ComboBox" BasedOn="{StaticResource ModernComboBoxStyle}">
+                                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding ActionType}" Value="{x:Static models:LaunchBarActionType.BuiltIn}">
+                                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </ComboBox.Style>
+                                                                        <ComboBoxItem Tag="ToggleWindow" Content="主界面显示/隐藏"/>
+                                                                        <ComboBoxItem Tag="Launcher" Content="快捷启动器"/>
+                                                                        <ComboBoxItem Tag="Translate" Content="截图翻译"/>
+                                                                        <ComboBoxItem Tag="Ocr" Content="截图文字识别"/>
+                                                                    </ComboBox>
+                                                                </Grid>
+
+                                                                <!-- Label -->
+                                                                <TextBox Grid.Column="4" Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="5,0" VerticalAlignment="Center" Height="30" ToolTip="鼠标悬停时显示的提示文字"/>
+
+                                                                <!-- Buttons -->
+                                                                <StackPanel Grid.Column="5" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                    <Button Command="{Binding DataContext.SettingsVM.MoveLaunchBarItemUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Content="↑" Width="28" Height="28" Margin="0,0,4,0" Style="{StaticResource ModernTabBtnStyle}" Padding="0" HorizontalContentAlignment="Center"/>
+                                                                    <Button Command="{Binding DataContext.SettingsVM.MoveLaunchBarItemDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Content="↓" Width="28" Height="28" Margin="0,0,4,0" Style="{StaticResource ModernTabBtnStyle}" Padding="0" HorizontalContentAlignment="Center"/>
+                                                                    <Button Command="{Binding DataContext.SettingsVM.RemoveLaunchBarItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Content="✕" Width="28" Height="28" Style="{StaticResource ModernTabBtnStyle}" Padding="0" HorizontalContentAlignment="Center" Foreground="{StaticResource DangerBrush}"/>
                                                                 </StackPanel>
                                                             </Grid>
                                                         </Border>
