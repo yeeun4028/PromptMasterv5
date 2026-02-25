@@ -35,7 +35,8 @@ namespace PromptMasterv5.Infrastructure.Services
                             {
                                 Title = Path.GetFileNameWithoutExtension(file),
                                 FilePath = file,
-                                IconPath = file // UI can use converter to display icon from path
+                                IconPath = file, // UI can use converter to display icon from path
+                                Category = GetCategoryFromExtension(file)
                             });
                         }
                     }
@@ -59,7 +60,19 @@ namespace PromptMasterv5.Infrastructure.Services
         private bool IsLaunchable(string filePath)
         {
             var ext = Path.GetExtension(filePath).ToLower();
-            return ext == ".exe" || ext == ".lnk" || ext == ".bat" || ext == ".cmd" || ext == ".ps1";
+            return ext == ".exe" || ext == ".lnk" || ext == ".bat" || ext == ".cmd" || ext == ".ps1" || ext == ".url" || ext == ".vbs" || ext == ".ahk" || ext == ".website";
+        }
+        
+        private LauncherCategory GetCategoryFromExtension(string filePath)
+        {
+            var ext = Path.GetExtension(filePath).ToLower();
+            if (ext == ".url" || ext == ".website") 
+                return LauncherCategory.Bookmark;
+            
+            if (ext == ".bat" || ext == ".cmd" || ext == ".ps1" || ext == ".vbs" || ext == ".ahk")
+                return LauncherCategory.Tool;
+                
+            return LauncherCategory.Application;
         }
     }
 }
