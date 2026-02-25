@@ -69,7 +69,7 @@ namespace PromptMasterv5
                 MainWindow.Show();
                 
                 var launchBarWindow = _serviceProvider.GetRequiredService<PromptMasterv5.Views.LaunchBarWindow>();
-                // The visibility logic is handled internally by the window based on Config.EnableLaunchBar
+                launchBarWindow.Show(); // Trigger Window_Loaded → UpdateVisibility()
                 
                 // Initialize Voice Hotkey
                 var keyService = _serviceProvider.GetRequiredService<GlobalKeyService>();
