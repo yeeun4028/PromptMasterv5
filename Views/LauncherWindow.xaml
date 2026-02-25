@@ -12,7 +12,7 @@
         Deactivated="Window_Deactivated" KeyDown="Window_KeyDown"
         Loaded="Window_Loaded">
 
-    <Border Background="#00000000" 
+    <Border Background="#F2121212" 
             CornerRadius="12" Padding="15">
         
         <Grid>

@@ -19,9 +19,10 @@ namespace PromptMasterv5.Views
             InitializeComponent();
             Closing += (s, e) => _isClosing = true;
 
+            // Reduce hover auto-click delay to 150ms for instant feel
             _tabHoverTimer = new DispatcherTimer
             {
-                Interval = TimeSpan.FromSeconds(0.5)
+                Interval = TimeSpan.FromMilliseconds(150)
             };
             _tabHoverTimer.Tick += TabHoverTimer_Tick;
             PreviewMouseWheel += Window_PreviewMouseWheel;
@@ -76,24 +77,22 @@ namespace PromptMasterv5.Views
 
         private void Window_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
+            // Scrolling up cycles left, scrolling down cycles right
             if (e.Delta > 0)
             {
-                if (TabBookmark.IsChecked == true)
-                    TabTool.IsChecked = true;
-                else if (TabApplication.IsChecked == true)
-                    TabBookmark.IsChecked = true;
-                else if (TabTool.IsChecked == true)
-                    TabApplication.IsChecked = true;
+                if (TabTool.IsChecked == true) TabApplication.IsChecked = true;
+                else if (TabApplication.IsChecked == true) TabBookmark.IsChecked = true;
+                else if (TabBookmark.IsChecked == true) TabTool.IsChecked = true; // cycle to end if on first
             }
             else
             {
-                if (TabBookmark.IsChecked == true)
-                    TabApplication.IsChecked = true;
-                else if (TabApplication.IsChecked == true)
-                    TabTool.IsChecked = true;
-                else if (TabTool.IsChecked == true)
-                    TabBookmark.IsChecked = true;
+                if (TabBookmark.IsChecked == true) TabApplication.IsChecked = true;
+                else if (TabApplication.IsChecked == true) TabTool.IsChecked = true;
+                else if (TabTool.IsChecked == true) TabBookmark.IsChecked = true; // cycle to start if on last
             }
+            
+            // Mark handled to avoid scrolling the inner ScrollViewer simultaneously if we only want to switch tabs
+            e.Handled = true;
         }
 
         private void ItemButton_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
