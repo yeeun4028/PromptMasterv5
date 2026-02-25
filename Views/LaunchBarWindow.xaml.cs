@@ -118,6 +118,7 @@ namespace PromptMasterv5.Views
                             _mainViewModel.OnWindowHotkeyPressed();
                             break;
                         case "ScreenshotTranslate":
+                        case "Translate": // config.json saves "Translate" for screenshot translation
                             _mainViewModel.ExternalToolsVM.TriggerTranslateCommand.Execute(null);
                             break;
                         case "OcrOnly":
