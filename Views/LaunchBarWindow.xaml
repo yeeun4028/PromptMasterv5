@@ -34,13 +34,6 @@
             <Setter Property="ToolTip" Value="{Binding Label}"/>
             <Setter Property="ToolTipService.InitialShowDelay" Value="0"/>
             <Setter Property="ToolTipService.ShowDuration" Value="5000"/>
-            <!-- Add a transparent background to the grid behind it to catch mouse events easily -->
-            
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Width" Value="6"/>
-                </Trigger>
-            </Style.Triggers>
         </Style>
 
     </Window.Resources>
