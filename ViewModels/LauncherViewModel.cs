@@ -65,11 +65,26 @@ namespace PromptMasterv5.ViewModels
             }
         }
 
-        public void SaveItemOrder(LauncherItem item, int x, int y)
+        public void MoveItem(LauncherItem source, LauncherItem target)
         {
-            var key = $"{item.Category}_{item.Title}";
-            var order = y / 70 * 10 + x / 70;
-            _itemOrders[key] = order;
+            if (source == null || target == null || source == target) return;
+
+            var oldIndex = FilteredItems.IndexOf(source);
+            var newIndex = FilteredItems.IndexOf(target);
+
+            if (oldIndex < 0 || newIndex < 0) return;
+
+            FilteredItems.Move(oldIndex, newIndex);
+
+            // Update all DisplayOrders based on new index and save
+            for (int i = 0; i < FilteredItems.Count; i++)
+            {
+                var item = FilteredItems[i];
+                item.DisplayOrder = i;
+                
+                var key = $"{item.Category}_{item.Title}";
+                _itemOrders[key] = i;
+            }
             
             try
             {

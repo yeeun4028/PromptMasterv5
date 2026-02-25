@@ -112,10 +112,22 @@ namespace PromptMasterv5.Views
                     _isDragging = true;
                     if (sender is System.Windows.Controls.Button button && button.DataContext is Core.Models.LauncherItem item)
                     {
-                        if (DataContext is LauncherViewModel vm)
-                        {
-                            vm.SaveItemOrder(item, (int)currentPosition.X, (int)currentPosition.Y);
-                        }
+                        System.Windows.DragDrop.DoDragDrop(button, new System.Windows.DataObject("LauncherItem", item), System.Windows.DragDropEffects.Move);
+                    }
+                }
+            }
+        }
+
+        private void ItemButton_Drop(object sender, System.Windows.DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent("LauncherItem"))
+            {
+                var sourceItem = e.Data.GetData("LauncherItem") as Core.Models.LauncherItem;
+                if (sender is System.Windows.Controls.Button targetButton && targetButton.DataContext is Core.Models.LauncherItem targetItem)
+                {
+                    if (DataContext is LauncherViewModel vm && sourceItem != null && sourceItem != targetItem)
+                    {
+                        vm.MoveItem(sourceItem, targetItem);
                     }
                 }
             }
@@ -123,10 +135,15 @@ namespace PromptMasterv5.Views
 
         private void ItemButton_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            if (!_isDragging && sender is System.Windows.Controls.Button button)
+            if (_isDragging)
+            {
+                e.Handled = true; // Prevent the Button's Click command from firing
+            }
+            else if (sender is System.Windows.Controls.Button button)
             {
                 if (button.Command?.CanExecute(button.CommandParameter) == true)
                 {
+                    e.Handled = true;
                     button.Command.Execute(button.CommandParameter);
                     SafeClose();
                 }
