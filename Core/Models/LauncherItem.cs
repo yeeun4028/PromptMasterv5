@@ -15,9 +15,10 @@ namespace PromptMasterv5.Core.Models
         public string? IconGeometry { get; set; }
         public string? IconPath { get; set; }
         public string? FilePath { get; set; }
+        public string? CustomImagePath { get; set; }
         public Action? Action { get; set; }
         public bool RunAsAdmin { get; set; }
-        public LauncherCategory Category { get; set; } = LauncherCategory.Application;
         public int DisplayOrder { get; set; }
+        public LauncherCategory Category { get; set; } = LauncherCategory.Application;
     }
 }

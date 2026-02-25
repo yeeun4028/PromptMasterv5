@@ -102,16 +102,27 @@
                                                     </Rectangle.Effect>
                                                 </Rectangle>
                                                 
-                                                <!-- Icon Vector -->
+                                                <!-- Custom Uploaded Image Icon (Full Size 55x55 Container) -->
+                                                <Border x:Name="CardImageBorder" CornerRadius="18" 
+                                                        Visibility="{Binding CustomImagePath, Converter={StaticResource StringToVis}}">
+                                                    <Border.Background>
+                                                        <ImageBrush ImageSource="{Binding CustomImagePath}" Stretch="UniformToFill"/>
+                                                    </Border.Background>
+                                                </Border>
+
+                                                <!-- Icon Display Area (Fallback Vector 24x24) -->
                                                 <Grid Width="24" Height="24" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
-                                                    <Path Data="{Binding IconGeometry}" 
-                                                          Visibility="{Binding IconGeometry, Converter={StaticResource StringToVis}}"
-                                                          Fill="#4A90D9" 
-                                                          Stretch="Uniform" />
-                                                    <Path Data="M13,9V3.5L18.5,9M6,2C4.89,2 4,2.89 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2H6Z"
-                                                          Visibility="{Binding IconGeometry, Converter={StaticResource StringToVisInverted}}"
-                                                          Fill="#888888" 
-                                                          Stretch="Uniform" Opacity="0.7"/>
+                                                    <!-- Vector Fallback Icon -->
+                                                    <Grid x:Name="VectorContent" Visibility="{Binding CustomImagePath, Converter={StaticResource StringToVisInverted}}">
+                                                        <Path Data="{Binding IconGeometry}" 
+                                                              Visibility="{Binding IconGeometry, Converter={StaticResource StringToVis}}"
+                                                              Fill="#4A90D9" 
+                                                              Stretch="Uniform" />
+                                                        <Path Data="M13,9V3.5L18.5,9M6,2C4.89,2 4,2.89 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2H6Z"
+                                                              Visibility="{Binding IconGeometry, Converter={StaticResource StringToVisInverted}}"
+                                                              Fill="#888888" 
+                                                              Stretch="Uniform" Opacity="0.7"/>
+                                                    </Grid>
                                                 </Grid>
                                             </Grid>
                                         </Grid>
@@ -132,6 +143,7 @@
                                                             <DoubleAnimation Storyboard.TargetName="CardBg" Storyboard.TargetProperty="RadiusY" To="15" Duration="0:0:0.4">
                                                                 <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
                                                             </DoubleAnimation>
+
                                                             <DoubleAnimation Storyboard.TargetName="CardTranslate" Storyboard.TargetProperty="Y" To="10" Duration="0:0:0.4">
                                                                 <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
                                                             </DoubleAnimation>
@@ -174,6 +186,7 @@
                                                             <DoubleAnimation Storyboard.TargetName="CardBg" Storyboard.TargetProperty="RadiusY" To="18" Duration="0:0:0.4">
                                                                 <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
                                                             </DoubleAnimation>
+
                                                             <DoubleAnimation Storyboard.TargetName="CardTranslate" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.4">
                                                                 <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
                                                             </DoubleAnimation>

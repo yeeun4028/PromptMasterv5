@@ -31,13 +31,24 @@ namespace PromptMasterv5.Infrastructure.Services
 
                         foreach (var file in files)
                         {
-                            items.Add(new LauncherItem
+                            var baseName = Path.GetFileNameWithoutExtension(file);
+                            var dirPath = Path.GetDirectoryName(file);
+                            var customPngPath = Path.Combine(dirPath!, $"{baseName}.png");
+                            
+                            var item = new LauncherItem
                             {
-                                Title = Path.GetFileNameWithoutExtension(file),
+                                Title = baseName,
                                 FilePath = file,
                                 IconPath = file, // UI can use converter to display icon from path
                                 Category = GetCategoryFromExtension(file)
-                            });
+                            };
+                            
+                            if (File.Exists(customPngPath))
+                            {
+                                item.CustomImagePath = customPngPath;
+                            }
+                            
+                            items.Add(item);
                         }
                     }
                     catch (Exception ex)
