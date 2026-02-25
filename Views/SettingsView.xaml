@@ -2043,9 +2043,9 @@
                                                                 </StackPanel>
 
                                                                 <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Vertical" VerticalAlignment="Center" Margin="15,0,0,0">
-                                                                    <Button Command="{Binding DataContext.MoveLaunchBarItemUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Content="↑" Width="30" Height="25" Margin="0,0,0,5" Style="{StaticResource ModernTabBtnStyle}" Padding="0" HorizontalContentAlignment="Center"/>
-                                                                    <Button Command="{Binding DataContext.MoveLaunchBarItemDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Content="↓" Width="30" Height="25" Margin="0,0,0,5" Style="{StaticResource ModernTabBtnStyle}" Padding="0" HorizontalContentAlignment="Center"/>
-                                                                    <Button Command="{Binding DataContext.RemoveLaunchBarItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Content="✕" Width="30" Height="25" Style="{StaticResource ModernTabBtnStyle}" Padding="0" HorizontalContentAlignment="Center" Foreground="{StaticResource DangerBrush}"/>
+                                                                    <Button Command="{Binding DataContext.SettingsVM.MoveLaunchBarItemUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Content="↑" Width="30" Height="25" Margin="0,0,0,5" Style="{StaticResource ModernTabBtnStyle}" Padding="0" HorizontalContentAlignment="Center"/>
+                                                                    <Button Command="{Binding DataContext.SettingsVM.MoveLaunchBarItemDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Content="↓" Width="30" Height="25" Margin="0,0,0,5" Style="{StaticResource ModernTabBtnStyle}" Padding="0" HorizontalContentAlignment="Center"/>
+                                                                    <Button Command="{Binding DataContext.SettingsVM.RemoveLaunchBarItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Content="✕" Width="30" Height="25" Style="{StaticResource ModernTabBtnStyle}" Padding="0" HorizontalContentAlignment="Center" Foreground="{StaticResource DangerBrush}"/>
                                                                 </StackPanel>
                                                             </Grid>
                                                         </Border>
@@ -2054,7 +2054,7 @@
                                             </ItemsControl>
 
                                             <Button Content="+ 添加新分段" 
-                                                    Command="{Binding AddLaunchBarItemCommand}"
+                                                    Command="{Binding SettingsVM.AddLaunchBarItemCommand}"
                                                     Style="{StaticResource PrimaryButtonStyle}"
                                                     HorizontalAlignment="Center"
                                                     Margin="0,15,0,0"
