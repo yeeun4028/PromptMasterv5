@@ -41,9 +41,27 @@ namespace PromptMasterv5.Views
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            // Lock to primary screen left edge, full height
-            this.Top = SystemParameters.WorkArea.Top;
-            this.Height = SystemParameters.WorkArea.Height;
+            // Calculate taskbar height (or breadth) to use as top margin
+            double taskbarHeight = SystemParameters.PrimaryScreenHeight - SystemParameters.WorkArea.Height;
+            if (taskbarHeight <= 0)
+            {
+                taskbarHeight = SystemParameters.PrimaryScreenWidth - SystemParameters.WorkArea.Width;
+            }
+            if (taskbarHeight <= 0)
+            {
+                taskbarHeight = 48; // Sensible default
+            }
+
+            double topPos = SystemParameters.WorkArea.Top;
+            if (topPos == 0)
+            {
+                // If taskbar is at bottom or sides, leave a gap at the top equivalent to the taskbar height
+                topPos = taskbarHeight;
+            }
+
+            // Lock to primary screen left edge, adjust top and height
+            this.Top = topPos;
+            this.Height = SystemParameters.WorkArea.Height - (topPos - SystemParameters.WorkArea.Top);
             this.Left = 0;
             
             UpdateVisibility();
