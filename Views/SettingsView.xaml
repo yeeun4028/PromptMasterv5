@@ -8,7 +8,7 @@
              xmlns:converters="clr-namespace:PromptMasterv5.Converters"
              xmlns:utils="clr-namespace:PromptMasterv5.Utils"
              mc:Ignorable="d" 
-             d:DesignHeight="600" d:DesignWidth="750">
+             d:DesignHeight="600" d:DesignWidth="900">
     <UserControl.Resources>
         <converters:ApiKeyMaskConverter x:Key="ApiKeyMaskConverter"/>
         <converters:EnumToBoolConverter x:Key="EnumToBoolConverter"/>
@@ -344,7 +344,7 @@
         <!-- Modal Overlay -->
         <Border Background="#66000000">
             <!-- Main Settings Window -->
-            <Border Width="750" Height="500" Background="{DynamicResource AppBackground}" CornerRadius="12" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <Border Width="900" Height="500" Background="{DynamicResource AppBackground}" CornerRadius="12" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Border.Effect>
                     <DropShadowEffect Color="#000000" Opacity="0.15" BlurRadius="25" ShadowDepth="0"/>
                 </Border.Effect>
@@ -2000,10 +2000,10 @@
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="30"/>  <!-- Color Preview -->
                                                     <ColumnDefinition Width="100"/> <!-- Color Hex -->
-                                                    <ColumnDefinition Width="110"/> <!-- Action Type -->
-                                                    <ColumnDefinition Width="180"/> <!-- Action Target -->
+                                                    <ColumnDefinition Width="105"/> <!-- Action Type -->
+                                                    <ColumnDefinition Width="160"/> <!-- Action Target -->
                                                     <ColumnDefinition Width="*"/>   <!-- Label -->
-                                                    <ColumnDefinition Width="120"/> <!-- Buttons -->
+                                                    <ColumnDefinition Width="90"/> <!-- Buttons -->
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Text="颜色" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}" Margin="5,0"/>
                                                 <TextBlock Grid.Column="2" Text="操作类型" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}" Margin="5,0"/>
@@ -2020,10 +2020,10 @@
                                                                 <Grid.ColumnDefinitions>
                                                                     <ColumnDefinition Width="30"/>  <!-- Color Preview -->
                                                                     <ColumnDefinition Width="100"/> <!-- Color Hex -->
-                                                                    <ColumnDefinition Width="110"/> <!-- Action Type -->
-                                                                    <ColumnDefinition Width="180"/> <!-- Action Target -->
+                                                                    <ColumnDefinition Width="105"/> <!-- Action Type -->
+                                                                    <ColumnDefinition Width="160"/> <!-- Action Target -->
                                                                     <ColumnDefinition Width="*"/>   <!-- Label -->
-                                                                    <ColumnDefinition Width="120"/> <!-- Buttons -->
+                                                                    <ColumnDefinition Width="90"/> <!-- Buttons -->
                                                                 </Grid.ColumnDefinitions>
                                                                 
                                                                 <!-- Color Preview -->
@@ -2038,17 +2038,17 @@
                                                                 </Rectangle>
 
                                                                 <!-- Color Hex -->
-                                                                <TextBox Grid.Column="1" Text="{Binding ColorHex, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="5,0" VerticalAlignment="Center" Height="30"/>
+                                                                <TextBox Grid.Column="1" Text="{Binding ColorHex, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="5,0" VerticalAlignment="Center" Height="28" Padding="5,0"/>
 
                                                                 <!-- Action Type -->
-                                                                <ComboBox Grid.Column="2" SelectedValue="{Binding ActionType}" SelectedValuePath="Tag" Style="{StaticResource ModernComboBoxStyle}" Margin="5,0" VerticalAlignment="Center" Height="30">
+                                                                <ComboBox Grid.Column="2" SelectedValue="{Binding ActionType}" SelectedValuePath="Tag" Style="{StaticResource ModernComboBoxStyle}" Margin="5,0" VerticalAlignment="Center" Height="28" Padding="5,0,20,0">
                                                                     <ComboBoxItem Tag="{x:Static models:LaunchBarActionType.BuiltIn}" Content="内置功能"/>
                                                                     <ComboBoxItem Tag="{x:Static models:LaunchBarActionType.CustomApp}" Content="外部程序"/>
                                                                 </ComboBox>
 
                                                                 <!-- Action Target -->
                                                                 <Grid Grid.Column="3" Margin="5,0" VerticalAlignment="Center">
-                                                                    <TextBox Text="{Binding ActionTarget, UpdateSourceTrigger=PropertyChanged}" Height="30" ToolTip="外部程序绝对路径或命令">
+                                                                    <TextBox Text="{Binding ActionTarget, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="5,0" ToolTip="外部程序绝对路径或命令">
                                                                         <TextBox.Style>
                                                                             <Style TargetType="TextBox" BasedOn="{StaticResource ModernTextBoxStyle}">
                                                                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -2060,7 +2060,7 @@
                                                                             </Style>
                                                                         </TextBox.Style>
                                                                     </TextBox>
-                                                                    <ComboBox SelectedValue="{Binding ActionTarget, UpdateSourceTrigger=PropertyChanged}" SelectedValuePath="Tag" Height="30" ToolTip="请选择内置功能指令">
+                                                                    <ComboBox SelectedValue="{Binding ActionTarget, UpdateSourceTrigger=PropertyChanged}" SelectedValuePath="Tag" Height="28" Padding="5,0,20,0" ToolTip="请选择内置功能指令">
                                                                         <ComboBox.Style>
                                                                             <Style TargetType="ComboBox" BasedOn="{StaticResource ModernComboBoxStyle}">
                                                                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -2079,7 +2079,7 @@
                                                                 </Grid>
 
                                                                 <!-- Label -->
-                                                                <TextBox Grid.Column="4" Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="5,0" VerticalAlignment="Center" Height="30" ToolTip="鼠标悬停时显示的提示文字"/>
+                                                                <TextBox Grid.Column="4" Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="5,0" VerticalAlignment="Center" Height="28" Padding="5,0" ToolTip="鼠标悬停时显示的提示文字"/>
 
                                                                 <!-- Buttons -->
                                                                 <StackPanel Grid.Column="5" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
