@@ -152,7 +152,7 @@
                                                             <DoubleAnimation Storyboard.TargetName="NameText" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4">
                                                                 <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
                                                             </DoubleAnimation>
-                                                            <DoubleAnimation Storyboard.TargetName="NameTextTranslate" Storyboard.TargetProperty="Y" To="-35" Duration="0:0:0.4">
+                                                            <DoubleAnimation Storyboard.TargetName="NameTextTranslate" Storyboard.TargetProperty="Y" To="-10" Duration="0:0:0.4">
                                                                 <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
                                                             </DoubleAnimation>
                                                         </Storyboard>
