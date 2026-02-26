@@ -43,16 +43,11 @@ namespace PromptMasterv5.Views
         /// </summary>
         public new WpfThickness BorderThickness { get; private set; }
 
-        private int _imageScale = 100;
         private int _imageOpacity = 100;
         private bool _isDragging = false;
         private WpfPoint _dragStartPoint;
         private bool _isMinimized = false;
         private DispatcherTimer? _toolbarTimer;
-
-        /// <summary>
-        /// 当前缩放比例 (20-500)
-        /// <summary>
         /// 当前透明度 (10-100)
         /// </summary>
         public int ImageOpacity
