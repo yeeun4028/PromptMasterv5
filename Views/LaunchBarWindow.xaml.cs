@@ -82,8 +82,17 @@ namespace PromptMasterv5.Views
             }
         }
 
+        private DateTime _lastActionTime = DateTime.MinValue;
+
         private void ExecuteLaunchBarAction(LaunchBarItem item)
         {
+            // Simple debounce/cooldown mechanism to prevent multiple triggers from mouse hovering over multiple items quickly
+            if ((DateTime.Now - _lastActionTime).TotalMilliseconds < 500)
+            {
+                return;
+            }
+            _lastActionTime = DateTime.Now;
+
             try
             {
                 if (item.ActionType == LaunchBarActionType.BuiltIn)
@@ -127,6 +136,7 @@ namespace PromptMasterv5.Views
                 Infrastructure.Services.LoggerService.Instance.LogException(ex, $"Failed to execute launch bar action: {item.Label}", "LaunchBarWindow");
             }
         }
+
         
         protected override void OnSourceInitialized(EventArgs e)
         {
