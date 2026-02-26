@@ -67,7 +67,7 @@
                                 <Border x:Name="CardImageBorder" CornerRadius="18" 
                                         Visibility="{Binding CustomImagePath, Converter={StaticResource StringToVis}}">
                                     <Border.Background>
-                                        <ImageBrush ImageSource="{Binding CustomImagePath}" Stretch="UniformToFill"/>
+                                        <ImageBrush ImageSource="{Binding CustomImagePath, IsAsync=True}" Stretch="UniformToFill"/>
                                     </Border.Background>
                                 </Border>
 

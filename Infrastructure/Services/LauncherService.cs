@@ -14,6 +14,12 @@ namespace PromptMasterv5.Infrastructure.Services
 
         public async Task<List<LauncherItem>> GetItemsAsync(IEnumerable<string> paths)
         {
+            if (_cache != null && _cache.Any())
+            {
+                // Return a copy of the cache to avoid unintended modifications
+                return _cache.ToList();
+            }
+
             return await Task.Run(() =>
             {
                 var items = new List<LauncherItem>();
@@ -58,7 +64,7 @@ namespace PromptMasterv5.Infrastructure.Services
                     }
                 }
 
-                _cache = items;
+                _cache = items.ToList();
                 return items;
             });
         }
