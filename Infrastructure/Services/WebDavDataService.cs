@@ -37,7 +37,9 @@ namespace PromptMasterv5.Infrastructure.Services
             {
                 Folders = new List<FolderItem>(folders),
                 Files = new List<PromptItem>(files),
-                VoiceCommands = voiceCommands ?? new()
+                VoiceCommands = voiceCommands ?? new(),
+                ApiProfiles = new List<ApiProfile>(config.ApiProfiles),
+                SavedModels = new List<AiModelConfig>(config.SavedModels)
             };
             var options = new JsonSerializerOptions 
             { 

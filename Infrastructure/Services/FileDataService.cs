@@ -16,11 +16,14 @@ namespace PromptMasterv5.Infrastructure.Services
 
         public async Task SaveAsync(IEnumerable<FolderItem> folders, IEnumerable<PromptItem> files, Dictionary<string, string> voiceCommands)
         {
+            var config = ConfigService.Load();
             var data = new AppData
             {
                 Folders = new List<FolderItem>(folders),
                 Files = new List<PromptItem>(files),
-                VoiceCommands = voiceCommands ?? new()
+                VoiceCommands = voiceCommands ?? new(),
+                ApiProfiles = new List<ApiProfile>(config.ApiProfiles),
+                SavedModels = new List<AiModelConfig>(config.SavedModels)
             };
             var options = new JsonSerializerOptions 
             { 
@@ -46,6 +49,9 @@ namespace PromptMasterv5.Infrastructure.Services
 
                 File.Move(tempPath, _filePath, overwrite: true);
                 
+                // --- 新增：自动导出所有的提示词为 .md 文件 ---
+                Task.Run(() => ExportPromptsToMarkdown(folders, files));
+
                 // 记录保存成功
                 LoggerService.Instance.LogInfo($"数据已保存到 {_filePath} ({data.Files.Count} 个提示词)", "FileDataService.SaveAsync");
             }
@@ -60,6 +66,76 @@ namespace PromptMasterv5.Infrastructure.Services
                 {
                     LoggerService.Instance.LogException(delEx, $"Failed to delete temp file: {tempPath}", "FileDataService.SaveAsync");
                 }
+            }
+        }
+
+        private void ExportPromptsToMarkdown(IEnumerable<FolderItem> folders, IEnumerable<PromptItem> files)
+        {
+            try
+            {
+                string exportDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MyPrompts");
+                if (!Directory.Exists(exportDir))
+                {
+                    Directory.CreateDirectory(exportDir);
+                }
+
+                var folderDict = folders.ToDictionary(f => f.Id, f => f.Name);
+                var generatedFileNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                // 1. 获取目前 MyPrompts 文件夹里所有的现存 .md 文件，准备做对比删除
+                var existingFiles = new HashSet<string>(Directory.GetFiles(exportDir, "*.md"), StringComparer.OrdinalIgnoreCase);
+                var filesToKeep = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                // 2. 遍历保存每一个提示词
+                foreach (var file in files)
+                {
+                    if (string.IsNullOrWhiteSpace(file.Title)) continue;
+
+                    string folderName = "";
+                    if (!string.IsNullOrEmpty(file.FolderId) && folderDict.TryGetValue(file.FolderId, out var fName))
+                    {
+                        folderName = $"[{fName}] ";
+                    }
+
+                    // 构造基础文件名： [文件夹名] 标题
+                    string rawName = $"{folderName}{file.Title}";
+                    
+                    // 替换非法字符
+                    string safeName = string.Join("_", rawName.Split(Path.GetInvalidFileNameChars()));
+
+                    // 处理重名 (如果有完全重名的，在其后追加 (1), (2)...)
+                    string finalName = safeName;
+                    int counter = 1;
+                    while (generatedFileNames.Contains(finalName))
+                    {
+                        finalName = $"{safeName} ({counter})";
+                        counter++;
+                    }
+                    generatedFileNames.Add(finalName);
+
+                    string filePath = Path.Combine(exportDir, $"{finalName}.md");
+                    filesToKeep.Add(filePath);
+
+                    // 只有当文件不存在，或者内容有差异时才写入，减少磁盘损耗
+                    bool shouldWrite = true;
+                    if (File.Exists(filePath))
+                    {
+                        string existingContent = File.ReadAllText(filePath);
+                        if (existingContent == (file.Content ?? ""))
+                        {
+                            shouldWrite = false;
+                        }
+                    }
+
+                    if (shouldWrite)
+                    {
+                        File.WriteAllText(filePath, file.Content ?? "");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Instance.LogException(ex, "Failed to export prompts to markdown", "FileDataService.ExportPromptsToMarkdown");
             }
         }
 
