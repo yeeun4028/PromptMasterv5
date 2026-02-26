@@ -179,5 +179,10 @@ namespace PromptMasterv5.Views
                 SafeClose();
             }
         }
+
+        private void Window_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            SafeClose();
+        }
     }
 }

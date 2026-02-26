@@ -11,6 +11,7 @@
         ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
         ShowInTaskbar="False" Topmost="True"
         Deactivated="Window_Deactivated" KeyDown="Window_KeyDown"
+        MouseRightButtonUp="Window_MouseRightButtonUp"
         Loaded="Window_Loaded"
         UseLayoutRounding="True" SnapsToDevicePixels="True">
 
