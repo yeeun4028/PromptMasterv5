@@ -25,6 +25,9 @@ namespace PromptMasterv5.Views
         
         public byte[]? CapturedImageBytes { get; private set; }
 
+        /// <summary>用户框选的逻辑区域（WPF 坐标）</summary>
+        public System.Windows.Rect CapturedRect { get; private set; }
+
         public ScreenCaptureOverlay(Bitmap? capturedScreen = null, Func<byte[], System.Windows.Rect, Task>? processingCallback = null)
         {
             InitializeComponent();
@@ -210,6 +213,8 @@ namespace PromptMasterv5.Views
 
             // Capture the selected region
             CaptureSelectedRegion((int)x, (int)y, (int)width, (int)height);
+            // 保存用户框选的逻辑坐标，用于后续贴图定位
+            CapturedRect = new System.Windows.Rect(x, y, width, height);
             
             if (_processingCallback != null && CapturedImageBytes != null)
             {

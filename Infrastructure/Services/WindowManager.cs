@@ -19,6 +19,13 @@ namespace PromptMasterv5.Infrastructure.Services
     {
         public async Task<byte[]?> ShowCaptureWindowAsync(Func<byte[], System.Windows.Rect, Task>? onCaptureProcessing = null)
         {
+            // 内部调用带定位信息的重载，丢弃 rect
+            var (bytes, _) = await ShowCaptureWindowWithRectAsync(onCaptureProcessing);
+            return bytes;
+        }
+
+        private async Task<(byte[]? bytes, System.Windows.Rect rect)> ShowCaptureWindowWithRectAsync(Func<byte[], System.Windows.Rect, Task>? onCaptureProcessing = null)
+        {
             // 1. Capture screen instantly before any UI thread manipulation or window closing
             // This is the "Static Screen Freeze" approach. It prevents tooltips from hiding when focus changes.
             Bitmap? screenBmp = null;
@@ -29,7 +36,7 @@ namespace PromptMasterv5.Infrastructure.Services
             catch (Exception ex)
             {
                 LoggerService.Instance.LogError($"Failed to capture screen instantly: {ex.Message}", "WindowManager");
-                return null;
+                return (null, default);
             }
 
             // 2. Cleanup: Close any existing TranslationPopup windows AFTER capture
@@ -88,11 +95,13 @@ namespace PromptMasterv5.Infrastructure.Services
                 screenBmp = null; // 显式释放引用，所有权已转交
 
                 byte[]? result = null;
+                System.Windows.Rect capturedRect = default;
                 try
                 {
                     if (capture.ShowDialog() == true)
                     {
                         result = capture.CapturedImageBytes;
+                        capturedRect = capture.CapturedRect;
                     }
                 }
                 finally
@@ -120,7 +129,7 @@ namespace PromptMasterv5.Infrastructure.Services
                         }), System.Windows.Threading.DispatcherPriority.Background);
                     }
                 }
-                return result;
+                return (result, capturedRect);
             });
         }
 
@@ -176,7 +185,7 @@ namespace PromptMasterv5.Infrastructure.Services
 
         public async Task ShowPinToScreenFromCaptureAsync(PinToScreenOptions? options = null)
         {
-            var imageBytes = await ShowCaptureWindowAsync();
+            var (imageBytes, capturedRect) = await ShowCaptureWindowWithRectAsync();
             if (imageBytes == null || imageBytes.Length == 0) return;
 
             try
@@ -184,7 +193,11 @@ namespace PromptMasterv5.Infrastructure.Services
                 var bitmap = LoadBitmapFromBytes(imageBytes);
                 if (bitmap != null)
                 {
-                    ShowPinToScreen(bitmap, options);
+                    // 将贴图窗口定位于用户框选区域的左上角
+                    var location = capturedRect == default
+                        ? (System.Windows.Point?)null
+                        : new System.Windows.Point(capturedRect.X, capturedRect.Y);
+                    ShowPinToScreen(bitmap, options, location);
                 }
             }
             catch (Exception ex)
