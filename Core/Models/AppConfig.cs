@@ -172,6 +172,8 @@ namespace PromptMasterv5.Core.Models
         [ObservableProperty]
         private ObservableCollection<string> launcherSearchPaths = new();
 
+        [ObservableProperty]
+        private bool isLauncherSinglePageDisplayEnabled = true;
 
         [ObservableProperty]
         private ObservableCollection<WebTarget> webDirectTargets = new();

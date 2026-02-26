@@ -77,6 +77,12 @@ namespace PromptMasterv5.Views
 
         private void Window_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
+            if (DataContext is LauncherViewModel vm && vm.Config.IsLauncherSinglePageDisplayEnabled)
+            {
+                // In single page mode, allow the ScrollViewer to handle the scroll
+                return;
+            }
+
             // Scrolling up cycles left, scrolling down cycles right
             if (e.Delta > 0)
             {

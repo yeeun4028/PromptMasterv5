@@ -31,7 +31,18 @@ namespace PromptMasterv5.ViewModels
         private ObservableCollection<LauncherItem> filteredItems = new();
 
         [ObservableProperty]
+        private ObservableCollection<LauncherItem> bookmarks = new();
+
+        [ObservableProperty]
+        private ObservableCollection<LauncherItem> applications = new();
+
+        [ObservableProperty]
+        private ObservableCollection<LauncherItem> tools = new();
+
+        [ObservableProperty]
         private string currentCategory = "Bookmark";
+
+        public AppConfig Config => _settingsService.Config;
 
         public LauncherViewModel(
             ILauncherService launcherService, 
@@ -138,17 +149,7 @@ namespace PromptMasterv5.ViewModels
 
         private void UpdateFilter()
         {
-            var enumCategory = CurrentCategory switch
-            {
-                "Bookmark" => LauncherCategory.Bookmark,
-                "Application" => LauncherCategory.Application,
-                "Tool" => LauncherCategory.Tool,
-                _ => LauncherCategory.Bookmark
-            };
-
-            var filtered = Items.Where(i => i.Category == enumCategory).ToList();
-            
-            foreach (var item in filtered)
+            foreach (var item in Items)
             {
                 var key = $"{item.Category}_{item.Title}";
                 if (_itemOrders.TryGetValue(key, out var order))
@@ -161,8 +162,25 @@ namespace PromptMasterv5.ViewModels
                 }
             }
 
-            var ordered = filtered.OrderBy(i => i.DisplayOrder).ToList();
-            FilteredItems = new ObservableCollection<LauncherItem>(ordered);
+            if (Config.IsLauncherSinglePageDisplayEnabled)
+            {
+                Bookmarks = new ObservableCollection<LauncherItem>(Items.Where(i => i.Category == LauncherCategory.Bookmark).OrderBy(i => i.DisplayOrder));
+                Applications = new ObservableCollection<LauncherItem>(Items.Where(i => i.Category == LauncherCategory.Application).OrderBy(i => i.DisplayOrder));
+                Tools = new ObservableCollection<LauncherItem>(Items.Where(i => i.Category == LauncherCategory.Tool).OrderBy(i => i.DisplayOrder));
+            }
+            else
+            {
+                var enumCategory = CurrentCategory switch
+                {
+                    "Bookmark" => LauncherCategory.Bookmark,
+                    "Application" => LauncherCategory.Application,
+                    "Tool" => LauncherCategory.Tool,
+                    _ => LauncherCategory.Bookmark
+                };
+
+                var filtered = Items.Where(i => i.Category == enumCategory).OrderBy(i => i.DisplayOrder).ToList();
+                FilteredItems = new ObservableCollection<LauncherItem>(filtered);
+            }
         }
 
         [RelayCommand]

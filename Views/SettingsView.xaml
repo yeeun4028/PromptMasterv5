@@ -708,6 +708,18 @@
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
                                                     <StackPanel Grid.Column="0">
+                                                        <TextBlock Text="同一页显示" Style="{StaticResource FieldLabelTextStyle}"/>
+                                                        <TextBlock Text="将书签、应用和工具并排显示在同一页" Style="{StaticResource HintTextStyle}"/>
+                                                    </StackPanel>
+                                                    <CheckBox Grid.Column="1" IsChecked="{Binding Config.IsLauncherSinglePageDisplayEnabled}" Style="{StaticResource ToggleSwitchStyle}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                                </Grid>
+
+                                                <Grid Margin="0,0,0,20">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0">
                                                         <TextBlock Text="唤醒快捷键" Style="{StaticResource FieldLabelTextStyle}"/>
                                                         <TextBlock Text="全局呼出启动面板" Style="{StaticResource HintTextStyle}"/>
                                                     </StackPanel>
