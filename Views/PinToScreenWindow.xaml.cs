@@ -47,7 +47,7 @@ namespace PromptMasterv5.Views
         private bool _isDragging = false;
         private WpfPoint _dragStartPoint;
         private bool _isMinimized = false;
-        private DispatcherTimer? _toolbarTimer;
+
         /// 当前透明度 (10-100)
         /// </summary>
         public int ImageOpacity
@@ -119,17 +119,6 @@ namespace PromptMasterv5.Views
                 Left = workArea.Right - Width - 20;
                 Top = workArea.Bottom - Height - 20;
             }
-
-            // 初始化工具栏自动隐藏计时器
-            _toolbarTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromSeconds(2)
-            };
-            _toolbarTimer.Tick += (s, e) =>
-            {
-                Toolbar.Visibility = Visibility.Collapsed;
-                _toolbarTimer.Stop();
-            };
 
             // 设置焦点以接收键盘输入
             Focusable = true;
@@ -272,19 +261,6 @@ namespace PromptMasterv5.Views
             RenderOptions.SetBitmapScalingMode(PinnedImage, BitmapScalingMode.NearestNeighbor);
         }
 
-        private void ShowToolbar()
-        {
-            Toolbar.Visibility = Visibility.Visible;
-            _toolbarTimer?.Stop();
-            _toolbarTimer?.Start();
-        }
-
-        private void HideToolbar()
-        {
-            _toolbarTimer?.Stop();
-            Toolbar.Visibility = Visibility.Collapsed;
-        }
-
         private void ResetImage()
         {
             ImageOpacity = 100;
@@ -378,19 +354,6 @@ namespace PromptMasterv5.Views
             }
         }
 
-        private void Window_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            ShowToolbar();
-        }
-
-        private void Window_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            if (!_isDragging)
-            {
-                HideToolbar();
-            }
-        }
-
         #endregion
 
         #region 键盘事件
@@ -448,18 +411,8 @@ namespace PromptMasterv5.Views
 
         #endregion
 
-        #region 按钮事件
-
-        private void CloseButton_Click(object sender, RoutedEventArgs e)
-        {
-            Close();
-        }
-
-        #endregion
-
         protected override void OnClosed(EventArgs e)
         {
-            _toolbarTimer?.Stop();
             base.OnClosed(e);
             // 关闭此窗口所在 STA 线程的 Dispatcher 消息循环，
             // 使 PinToScreenAsync 中 Dispatcher.Run() 返回，线程正常退出。
