@@ -857,17 +857,7 @@
                                             </Button.ContentTemplate>
                                         </Button>
 
-                                        <Button Command="{Binding CopyCompiledTextCommand}" Style="{StaticResource ActionBtnStyle}" ToolTip="复制最终结果 (Ctrl+C)">
-                                            <Button.ContentTemplate>
-                                                <DataTemplate>
-                                                    <Path Data="{StaticResource IconCopyThin}">
-                                                        <Path.Style>
-                                                            <Style TargetType="Path" BasedOn="{StaticResource SmallHeaderIconStyle}"/>
-                                                        </Path.Style>
-                                                    </Path>
-                                                </DataTemplate>
-                                            </Button.ContentTemplate>
-                                        </Button>
+
 
                                         <Button Command="{Binding ToggleThemeCommand}" Style="{StaticResource ActionBtnStyle}" ToolTip="切换主题">
                                             <Button.ContentTemplate>
@@ -1114,7 +1104,8 @@
                                     </Grid.RowDefinitions>
 
                                     <!-- ★★★ Web Direct Targets (Block4 顶部) ★★★ -->
-                                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
+                                    <Grid Grid.Row="0" Margin="0,0,0,6">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                                         <ItemsControl ItemsSource="{Binding Config.WebDirectTargets}">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
@@ -1192,7 +1183,35 @@
                                                 </ControlTemplate>
                                             </Button.Template>
                                         </Button>
-                                    </StackPanel>
+                                        </StackPanel>
+
+                                        <!-- Copy Result Button (Far Right) -->
+                                        <Button Command="{Binding CopyCompiledTextCommand}"
+                                                ToolTip="复制最终结果 (Ctrl+C)"
+                                                HorizontalAlignment="Right"
+                                                Margin="0,0,0,0"
+                                                Padding="6,4"
+                                                Cursor="Hand"
+                                                Background="Transparent"
+                                                BorderThickness="0">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                                        <Path x:Name="Icon" 
+                                                              Data="{StaticResource IconCopyThin}"
+                                                              Fill="{DynamicResource ActionIconBrush}"
+                                                              Stretch="Uniform" Width="14" Height="14" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ListItemHoverBackgroundBrush}"/>
+                                                            <Setter TargetName="Icon" Property="Fill" Value="{DynamicResource ActionIconHoverBrush}"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                    </Grid>
                                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" BorderThickness="0">
                                         <ScrollViewer.Style>
                                             <Style TargetType="ScrollViewer">
