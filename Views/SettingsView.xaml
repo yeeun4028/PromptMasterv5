@@ -840,14 +840,19 @@
 
                                                 
                                                 <!-- AutoHide 开关 -->
-                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,20">
-                                                    <CheckBox IsChecked="{Binding Config.AutoHide}" 
-                                                              Style="{StaticResource ToggleSwitchStyle}" 
-                                                              Cursor="Hand" VerticalAlignment="Center"/>
+                                                <Grid Margin="0,0,0,20">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
                                                     <TextBlock Text="窗口失焦自动隐藏" 
                                                                Style="{StaticResource FieldLabelTextStyle}" 
-                                                               VerticalAlignment="Center" Margin="12,0,0,0"/>
-                                                </StackPanel>
+                                                               VerticalAlignment="Center"/>
+                                                    <CheckBox Grid.Column="1" 
+                                                              IsChecked="{Binding Config.AutoHide}" 
+                                                              Style="{StaticResource ToggleSwitchStyle}" 
+                                                              Cursor="Hand" VerticalAlignment="Center"/>
+                                                </Grid>
                                                 
                                                 <!-- 定时器延迟 -->
                                                 <Grid Margin="0,0,0,20">
