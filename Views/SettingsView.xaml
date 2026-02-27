@@ -52,7 +52,6 @@
                             <Trigger Property="Tag" Value="Selected">
                                 <Setter TargetName="border" Property="Background" Value="{DynamicResource ListItemSelectedBackgroundBrush}"/>
                                 <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-                                <Setter Property="FontWeight" Value="SemiBold"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -731,7 +730,7 @@
                                         <!-- Card 1: General -->
                                         <Border Style="{StaticResource CardStyle}">
                                             <StackPanel>
-                                                <TextBlock Text="通用" Style="{StaticResource SectionHeaderTextStyle}"/>
+
                                                 
                                                 <Grid Margin="0,0,0,20">
                                                     <Grid.ColumnDefinitions>
@@ -751,8 +750,7 @@
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
                                                     <StackPanel Grid.Column="0">
-                                                        <TextBlock Text="唤醒快捷键" Style="{StaticResource FieldLabelTextStyle}"/>
-                                                        <TextBlock Text="全局呼出启动面板" Style="{StaticResource HintTextStyle}"/>
+                                                        <TextBlock Text="快捷键" Style="{StaticResource FieldLabelTextStyle}"/>
                                                     </StackPanel>
                                                     <TextBox Grid.Column="1" 
                                                              x:Name="LauncherHotkeyTextBox"
@@ -839,8 +837,7 @@
                                     <StackPanel Margin="0,0,0,14">
                                         <Border Style="{StaticResource CardStyle}">
                                             <StackPanel>
-                                                <TextBlock Text="窗口行为" FontSize="16" FontWeight="SemiBold" 
-                                                           Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,15"/>
+
                                                 
                                                 <!-- AutoHide 开关 -->
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,20">
