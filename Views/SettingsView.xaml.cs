@@ -61,6 +61,13 @@ namespace PromptMasterv5.Views
             }
         }
 
+        private void ModalOverlay_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            // Close settings when right-clicking on the modal overlay
+            ViewModel?.SettingsVM?.CloseSettingsCommand.Execute(null);
+            e.Handled = true;
+        }
+
         // Baidu and Tencent credentials methods moved to SettingsViewModel
 
         private MainViewModel? ViewModel => DataContext as MainViewModel;

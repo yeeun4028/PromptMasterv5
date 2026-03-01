@@ -367,7 +367,7 @@
 
     <Grid>
         <!-- Modal Overlay -->
-        <Border Background="#66000000">
+        <Border Background="#66000000" x:Name="ModalOverlay" PreviewMouseRightButtonDown="ModalOverlay_PreviewMouseRightButtonDown">
             <!-- Main Settings Window -->
             <Border Width="900" Height="600" Background="{DynamicResource AppBackground}" CornerRadius="12" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Border.Effect>
