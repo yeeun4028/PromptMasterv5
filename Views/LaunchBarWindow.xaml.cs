@@ -1,10 +1,13 @@
 using PromptMasterv5.Core.Models;
+using PromptMasterv5.Infrastructure.Services;
 using PromptMasterv5.ViewModels;
 using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace PromptMasterv5.Views
@@ -97,6 +100,24 @@ namespace PromptMasterv5.Views
 
         private DateTime _lastActionTime = DateTime.MinValue;
 
+        private void MoveCursorToScreenCenter()
+        {
+            // Get DPI scale factor
+            double dpiX = 1.0;
+            double dpiY = 1.0;
+            var source = PresentationSource.FromVisual(this);
+            if (source != null)
+            {
+                dpiX = source.CompositionTarget.TransformToDevice.M11;
+                dpiY = source.CompositionTarget.TransformToDevice.M22;
+            }
+
+            // Convert WPF logical coordinates to physical pixels
+            int centerX = (int)((SystemParameters.PrimaryScreenWidth / 2) * dpiX);
+            int centerY = (int)((SystemParameters.PrimaryScreenHeight / 2) * dpiY);
+            NativeMethods.SetCursorPos(centerX, centerY);
+        }
+
         private void ExecuteLaunchBarAction(LaunchBarItem item)
         {
             // Simple debounce/cooldown mechanism to prevent multiple triggers from mouse hovering over multiple items quickly
@@ -143,6 +164,9 @@ namespace PromptMasterv5.Views
                         });
                     }
                 }
+
+                // Move cursor to screen center after triggering the action
+                MoveCursorToScreenCenter();
             }
             catch (Exception ex)
             {
