@@ -263,6 +263,7 @@ namespace PromptMasterv5.Views
         private void EnterProcessingState()
         {
             _isProcessing = true;
+            SelectionCanvas.IsHitTestVisible = false;
             
             // Calculate final selection bounds before hiding
             double rectX = Canvas.GetLeft(SelectionRect);
@@ -308,24 +309,24 @@ namespace PromptMasterv5.Views
                     CapturedImageBytes = ms.ToArray();
                     return;
                 }
-                // Get DPI scale factor
-                var source = PresentationSource.FromVisual(this);
-                double dpiX = 1.0;
-                double dpiY = 1.0;
-                if (source?.CompositionTarget != null) 
-                {
-                    dpiX = source.CompositionTarget.TransformToDevice.M11;
-                    dpiY = source.CompositionTarget.TransformToDevice.M22;
-                }
 
-                int physX = (int)(x * dpiX);
-                int physY = (int)(y * dpiY);
-                int physWidth = (int)(width * dpiX);
-                int physHeight = (int)(height * dpiY);
+                // 使用 WPF 原生的屏幕坐标转换，自动处理多屏异构 DPI
+                var logicalTopLeft = new System.Windows.Point(x, y);
+                var logicalBottomRight = new System.Windows.Point(x + width, y + height);
+
+                // 让 WPF 底层自己处理多屏幕的 DPI 缩放映射
+                var physTopLeft = this.PointToScreen(logicalTopLeft);
+                var physBottomRight = this.PointToScreen(logicalBottomRight);
+
+                // 计算在 _screenBitmap (完整物理大图) 上的准确裁剪坐标
+                int physX = (int)physTopLeft.X - System.Windows.Forms.SystemInformation.VirtualScreen.Left;
+                int physY = (int)physTopLeft.Y - System.Windows.Forms.SystemInformation.VirtualScreen.Top;
+                int physWidth = (int)(physBottomRight.X - physTopLeft.X);
+                int physHeight = (int)(physBottomRight.Y - physTopLeft.Y);
 
                 LoggerService.Instance.LogInfo(
                     $"[PIN-DIAG] CaptureSelectedRegion: _screenBitmap=[{_screenBitmap.Width}x{_screenBitmap.Height}], " +
-                    $"Logical selection=[{x},{y} {width}x{height}], DPI=[{dpiX}x{dpiY}], " +
+                    $"Logical selection=[{x},{y} {width}x{height}], " +
                     $"Physical crop=[{physX},{physY} {physWidth}x{physHeight}]",
                     "ScreenCaptureOverlay");
 
@@ -337,7 +338,7 @@ namespace PromptMasterv5.Views
 
                 if (physWidth <= 0 || physHeight <= 0)
                 {
-                    LoggerService.Instance.LogError($"Invalid Capture Dimensions after DPI scaling: {physWidth}x{physHeight}", "ScreenCaptureOverlay");
+                    LoggerService.Instance.LogError($"Invalid Capture Dimensions after coordinate transform: {physWidth}x{physHeight}", "ScreenCaptureOverlay");
                     CapturedImageBytes = null;
                     return;
                 }
@@ -351,12 +352,8 @@ namespace PromptMasterv5.Views
                         GraphicsUnit.Pixel);
                 }
 
-                // 将屏幕实际 DPI 写入位图元数据
-                croppedBmp.SetResolution((float)(96 * dpiX), (float)(96 * dpiY));
-
                 LoggerService.Instance.LogInfo(
-                    $"[PIN-DIAG] CaptureSelectedRegion: croppedBmp=[{croppedBmp.Width}x{croppedBmp.Height}], " +
-                    $"Resolution=[{croppedBmp.HorizontalResolution}x{croppedBmp.VerticalResolution}]",
+                    $"[PIN-DIAG] CaptureSelectedRegion: croppedBmp=[{croppedBmp.Width}x{croppedBmp.Height}]",
                     "ScreenCaptureOverlay");
 
                 using var stream = new MemoryStream();
