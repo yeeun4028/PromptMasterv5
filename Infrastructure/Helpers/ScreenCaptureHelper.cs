@@ -1,47 +1,52 @@
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Windows;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using PromptMasterv5.Infrastructure.Services;
 
 namespace PromptMasterv5.Infrastructure.Helpers
 {
     public static class ScreenCaptureHelper
     {
+        [DllImport("user32.dll", ExactSpelling = true, SetLastError = true)]
+        private static extern IntPtr SetThreadDpiAwarenessContext(IntPtr dpiContext);
+
+        private static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new IntPtr(-4);
+
         public static Bitmap CaptureFullScreen()
         {
-            int minX = 0, minY = 0, maxX = 0, maxY = 0;
-            foreach (var screen in Screen.AllScreens)
+            IntPtr originalContext = SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+
+            try
             {
-                if (screen.Bounds.X < minX) minX = screen.Bounds.X;
-                if (screen.Bounds.Y < minY) minY = screen.Bounds.Y;
-                if (screen.Bounds.Right > maxX) maxX = screen.Bounds.Right;
-                if (screen.Bounds.Bottom > maxY) maxY = screen.Bounds.Bottom;
+                int minX = int.MaxValue, minY = int.MaxValue;
+                int maxX = int.MinValue, maxY = int.MinValue;
+
+                foreach (Screen screen in Screen.AllScreens)
+                {
+                    minX = Math.Min(minX, screen.Bounds.X);
+                    minY = Math.Min(minY, screen.Bounds.Y);
+                    maxX = Math.Max(maxX, screen.Bounds.Right);
+                    maxY = Math.Max(maxY, screen.Bounds.Bottom);
+                }
+
+                int width = maxX - minX;
+                int height = maxY - minY;
+
+                if (width <= 0 || height <= 0) return null;
+
+                Bitmap bmp = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+                using (Graphics g = Graphics.FromImage(bmp))
+                {
+                    g.CopyFromScreen(minX, minY, 0, 0, new Size(width, height), CopyPixelOperation.SourceCopy);
+                }
+
+                return bmp;
             }
-            
-            int width = maxX - minX;
-            int height = maxY - minY;
-
-            // 诊断日志：记录 Screen.AllScreens 返回的像素尺寸 vs WPF 逻辑尺寸
-            LoggerService.Instance.LogInfo(
-                $"[PIN-DIAG] CaptureFullScreen: Screen.AllScreens bounds=[{minX},{minY} {width}x{height}], " +
-                $"SystemParameters.VirtualScreen=[{SystemParameters.VirtualScreenLeft},{SystemParameters.VirtualScreenTop} " +
-                $"{SystemParameters.VirtualScreenWidth}x{SystemParameters.VirtualScreenHeight}]",
-                "ScreenCaptureHelper");
-
-            var bmp = new Bitmap(width, height, PixelFormat.Format32bppArgb);
-            using (var g = Graphics.FromImage(bmp))
+            finally
             {
-                g.CopyFromScreen(minX, minY, 0, 0, new System.Drawing.Size(width, height));
+                SetThreadDpiAwarenessContext(originalContext);
             }
-
-            LoggerService.Instance.LogInfo(
-                $"[PIN-DIAG] CaptureFullScreen: bitmap created = {bmp.Width}x{bmp.Height}, " +
-                $"bitmap.HorizontalResolution={bmp.HorizontalResolution}, bitmap.VerticalResolution={bmp.VerticalResolution}",
-                "ScreenCaptureHelper");
-
-            return bmp;
         }
     }
 }
