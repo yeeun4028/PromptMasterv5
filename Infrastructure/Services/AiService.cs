@@ -23,11 +23,10 @@ namespace PromptMasterv5.Infrastructure.Services
 
         // 缓存 OpenAIService 实例，避免每次请求都创建新实例
         // 使用 (apiKey + baseUrl) 作为缓存键
-        // 限制最大缓存数量，防止内存无限增长
+        // 使用标准 LRU 缓存，确保淘汰最旧的未使用元素
         private const int MaxCacheSize = 10;
-        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, OpenAIService> _serviceCache 
-            = new System.Collections.Concurrent.ConcurrentDictionary<string, OpenAIService>();
-        private static readonly object _cacheLock = new();
+        private static readonly ConcurrentLruCache<string, OpenAIService> _serviceCache 
+            = new ConcurrentLruCache<string, OpenAIService>(MaxCacheSize);
 
         public AiService(IHttpClientFactory httpClientFactory)
         {
@@ -40,24 +39,6 @@ namespace PromptMasterv5.Infrastructure.Services
         private OpenAIService GetOrCreateOpenAiService(string apiKey, string baseUrl)
         {
             string cacheKey = $"{apiKey}|{baseUrl}";
-            
-            // 如果缓存已满，清理最旧的条目
-            if (_serviceCache.Count >= MaxCacheSize)
-            {
-                lock (_cacheLock)
-                {
-                    if (_serviceCache.Count >= MaxCacheSize)
-                    {
-                        // 移除一个条目（简单策略：移除第一个）
-                        var firstKey = _serviceCache.Keys.FirstOrDefault();
-                        if (firstKey != null && _serviceCache.TryRemove(firstKey, out var oldService))
-                        {
-                            LoggerService.Instance.LogInfo($"Cache full, removed service for: {firstKey.Substring(0, Math.Min(20, firstKey.Length))}...", "AiService.GetOrCreateOpenAiService");
-                        }
-                    }
-                }
-            }
-            
             return _serviceCache.GetOrAdd(cacheKey, key => CreateOpenAiServiceInternal(apiKey, baseUrl));
         }
 
@@ -659,6 +640,78 @@ namespace PromptMasterv5.Infrastructure.Services
             }
             
             return response;
+        }
+    }
+
+    public class ConcurrentLruCache<TKey, TValue> where TKey : notnull
+    {
+        private readonly int _capacity;
+        private readonly Dictionary<TKey, LinkedListNode<LruItem>> _cache;
+        private readonly LinkedList<LruItem> _lruList;
+        private readonly object _lock = new object();
+
+        private class LruItem
+        {
+            public TKey Key { get; }
+            public TValue Value { get; }
+            public LruItem(TKey k, TValue v) { Key = k; Value = v; }
+        }
+
+        public ConcurrentLruCache(int capacity)
+        {
+            if (capacity <= 0) throw new ArgumentOutOfRangeException(nameof(capacity), "缓存容量必须大于 0");
+            _capacity = capacity;
+            _cache = new Dictionary<TKey, LinkedListNode<LruItem>>(capacity);
+            _lruList = new LinkedList<LruItem>();
+        }
+
+        public TValue GetOrAdd(TKey key, Func<TKey, TValue> valueFactory)
+        {
+            lock (_lock)
+            {
+                if (_cache.TryGetValue(key, out var node))
+                {
+                    _lruList.Remove(node);
+                    _lruList.AddFirst(node);
+                    return node.Value.Value;
+                }
+
+                var value = valueFactory(key);
+                var newItem = new LruItem(key, value);
+                var newNode = new LinkedListNode<LruItem>(newItem);
+
+                if (_cache.Count >= _capacity)
+                {
+                    var last = _lruList.Last;
+                    if (last != null)
+                    {
+                        _cache.Remove(last.Value.Key);
+                        _lruList.RemoveLast();
+                        
+                        if (last.Value.Value is IDisposable disposable)
+                        {
+                            disposable.Dispose();
+                        }
+                    }
+                }
+
+                _lruList.AddFirst(newNode);
+                _cache[key] = newNode;
+                return value;
+            }
+        }
+        
+        public void Clear()
+        {
+            lock (_lock)
+            {
+                foreach (var item in _lruList)
+                {
+                    if (item.Value is IDisposable disposable) disposable.Dispose();
+                }
+                _cache.Clear();
+                _lruList.Clear();
+            }
         }
     }
 }
