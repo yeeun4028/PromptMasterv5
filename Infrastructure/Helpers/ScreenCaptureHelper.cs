@@ -13,7 +13,7 @@ namespace PromptMasterv5.Infrastructure.Helpers
 
         private static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new IntPtr(-4);
 
-        public static Bitmap CaptureFullScreen()
+        public static Bitmap? CaptureFullScreen()
         {
             IntPtr originalContext = SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 

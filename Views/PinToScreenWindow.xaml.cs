@@ -44,8 +44,6 @@ namespace PromptMasterv5.Views
         public new WpfThickness BorderThickness { get; private set; }
 
         private int _imageOpacity = 100;
-        private bool _isDragging = false;
-        private WpfPoint _dragStartPoint;
         private bool _isMinimized = false;
 
         /// 当前透明度 (10-100)
@@ -289,53 +287,27 @@ namespace PromptMasterv5.Views
             {
                 if (e.ClickCount > 1)
                 {
-                    // 双击切换最小化
                     ToggleMinimize();
                 }
-                else
+                else if (e.ButtonState == MouseButtonState.Pressed)
                 {
-                    // 开始拖拽
-                    _isDragging = true;
-                    _dragStartPoint = e.GetPosition(this);
-                    Mouse.Capture(this);
-                    Cursor = WpfCursors.SizeAll;
+                    try
+                    {
+                        this.DragMove();
+                    }
+                    catch { }
                 }
             }
             else if (e.ChangedButton == MouseButton.Right)
             {
-                // 右键关闭
                 Close();
             }
             else if (e.ChangedButton == MouseButton.Middle)
             {
-                // 中键重置
                 if (!IsMinimized)
                 {
                     ResetImage();
                 }
-            }
-        }
-
-        private void Window_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            if (_isDragging)
-            {
-                WpfPoint currentPoint = e.GetPosition(this);
-                double offsetX = currentPoint.X - _dragStartPoint.X;
-                double offsetY = currentPoint.Y - _dragStartPoint.Y;
-
-                Left += offsetX;
-                Top += offsetY;
-            }
-        }
-
-        private void Window_MouseUp(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ChangedButton == MouseButton.Left && _isDragging)
-            {
-                _isDragging = false;
-                Mouse.Capture(null);
-                Cursor = WpfCursors.Arrow;
             }
         }
 
