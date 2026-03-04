@@ -25,10 +25,10 @@ namespace PromptMasterv5.Views
             }
         }
 
-        private void Window_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        private void Grid_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
-            Close();
             e.Handled = true;
+            Close();
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)

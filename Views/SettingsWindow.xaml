@@ -11,7 +11,8 @@
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
         MouseLeftButtonDown="Window_MouseLeftButtonDown"
-        PreviewMouseRightButtonDown="Window_PreviewMouseRightButtonDown"
         Closing="Window_Closing">
-    <views:SettingsView x:Name="SettingsViewContent"/>
+    <Grid Background="#01000000" PreviewMouseRightButtonDown="Grid_PreviewMouseRightButtonDown">
+        <views:SettingsView x:Name="SettingsViewContent"/>
+    </Grid>
 </Window>
