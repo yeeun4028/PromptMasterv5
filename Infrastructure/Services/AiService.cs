@@ -11,6 +11,7 @@ using OpenAI.ObjectModels.RequestModels;
 using OpenAI.ObjectModels;
 using PromptMasterv5.Core.Models;
 using PromptMasterv5.Core.Interfaces;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
@@ -20,34 +21,27 @@ namespace PromptMasterv5.Infrastructure.Services
     public class AiService : IAiService
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ISettingsService _settingsService;
 
-        // 缓存 OpenAIService 实例，避免每次请求都创建新实例
-        // 使用 (apiKey + baseUrl) 作为缓存键
-        // 使用标准 LRU 缓存，确保淘汰最旧的未使用元素
         private const int MaxCacheSize = 10;
         private static readonly ConcurrentLruCache<string, OpenAIService> _serviceCache 
             = new ConcurrentLruCache<string, OpenAIService>(MaxCacheSize);
 
-        public AiService(IHttpClientFactory httpClientFactory)
+        public AiService(IHttpClientFactory httpClientFactory, ISettingsService settingsService)
         {
             _httpClientFactory = httpClientFactory;
+            _settingsService = settingsService;
         }
 
-        /// <summary>
-        /// 获取缓存的 OpenAIService 实例，如果不存在则创建并缓存
-        /// </summary>
-        private OpenAIService GetOrCreateOpenAiService(string apiKey, string baseUrl)
+        private OpenAIService GetOrCreateOpenAiService(string apiKey, string baseUrl, bool useProxy = false)
         {
-            string cacheKey = $"{apiKey}|{baseUrl}";
-            return _serviceCache.GetOrAdd(cacheKey, key => CreateOpenAiServiceInternal(apiKey, baseUrl));
+            string cacheKey = $"{apiKey}|{baseUrl}|{useProxy}";
+            return _serviceCache.GetOrAdd(cacheKey, key => CreateOpenAiServiceInternal(apiKey, baseUrl, useProxy));
         }
 
-        /// <summary>
-        /// 内部方法：创建新的 OpenAIService 实例
-        /// </summary>
-        private OpenAIService CreateOpenAiServiceInternal(string apiKey, string baseUrl)
+        private OpenAIService CreateOpenAiServiceInternal(string apiKey, string baseUrl, bool useProxy)
         {
-            LoggerService.Instance.LogInfo($"Creating new OpenAiService: BaseUrl={baseUrl}", "AiService.CreateOpenAiServiceInternal");
+            LoggerService.Instance.LogInfo($"Creating new OpenAiService: BaseUrl={baseUrl}, UseProxy={useProxy}", "AiService.CreateOpenAiServiceInternal");
             
             var options = new OpenAiOptions
             {
@@ -55,8 +49,43 @@ namespace PromptMasterv5.Infrastructure.Services
                 BaseDomain = baseUrl
             };
 
-            // 使用 IHttpClientFactory 创建 HttpClient
-            var httpClient = _httpClientFactory.CreateClient("AiServiceClient");
+            HttpClient httpClient;
+            
+            if (useProxy)
+            {
+                var proxyAddress = _settingsService.Config?.ProxyAddress;
+                if (!string.IsNullOrWhiteSpace(proxyAddress))
+                {
+                    var handler = new HttpClientHandler
+                    {
+                        UseProxy = true,
+                        Proxy = new WebProxy(proxyAddress) { BypassProxyOnLocal = false }
+                    };
+                    httpClient = new HttpClient(handler);
+                    LoggerService.Instance.LogInfo($"HttpClient created with proxy: {proxyAddress}", "AiService.CreateOpenAiServiceInternal");
+                }
+                else
+                {
+                    var handler = new HttpClientHandler
+                    {
+                        UseProxy = false,
+                        Proxy = null
+                    };
+                    httpClient = new HttpClient(handler);
+                    LoggerService.Instance.LogInfo("HttpClient created without proxy (proxy address empty)", "AiService.CreateOpenAiServiceInternal");
+                }
+            }
+            else
+            {
+                var handler = new HttpClientHandler
+                {
+                    UseProxy = false,
+                    Proxy = null
+                };
+                httpClient = new HttpClient(handler);
+                LoggerService.Instance.LogInfo("HttpClient created with explicit bypass (UseProxy=false)", "AiService.CreateOpenAiServiceInternal");
+            }
+            
             httpClient.Timeout = TimeSpan.FromMinutes(2);
 
             return new OpenAIService(options, httpClient);
@@ -67,6 +96,7 @@ namespace PromptMasterv5.Infrastructure.Services
             string apiKey = config.AiApiKey;
             string baseUrl = config.AiBaseUrl;
             string model = config.AiModel;
+            bool useProxy = false;
 
             if (!string.IsNullOrEmpty(config.ActiveModelId))
             {
@@ -76,20 +106,21 @@ namespace PromptMasterv5.Infrastructure.Services
                     apiKey = savedModel.ApiKey;
                     baseUrl = savedModel.BaseUrl;
                     model = savedModel.ModelName;
+                    useProxy = savedModel.UseProxy;
                 }
             }
 
-            return ChatAsync(userContent, apiKey, baseUrl, model, systemPrompt);
+            return ChatAsync(userContent, apiKey, baseUrl, model, systemPrompt, useProxy);
         }
 
-        public async Task<string> ChatAsync(string userContent, string apiKey, string baseUrl, string model, string? systemPrompt = null)
+        public async Task<string> ChatAsync(string userContent, string apiKey, string baseUrl, string model, string? systemPrompt = null, bool useProxy = false)
         {
             if (string.IsNullOrWhiteSpace(apiKey))
             {
                 return "[设置错误] 请先在设置中配置 API Key";
             }
 
-            var openAiService = GetOrCreateOpenAiService(apiKey, baseUrl);
+            var openAiService = GetOrCreateOpenAiService(apiKey, baseUrl, useProxy);
 
             string finalSystemPrompt = systemPrompt ?? "You are a helpful assistant. Output result directly without unnecessary conversational filler. IMPORTANT: Always answer in Simplified Chinese unless the user explicitly asks for another language.";
 
@@ -131,12 +162,12 @@ namespace PromptMasterv5.Infrastructure.Services
             }
         }
 
-        public async Task<string> ChatWithImageAsync(byte[] imageBytes, string apiKey, string baseUrl, string model, string? systemPrompt = null)
+        public async Task<string> ChatWithImageAsync(byte[] imageBytes, string apiKey, string baseUrl, string model, string? systemPrompt = null, bool useProxy = false)
         {
             if (string.IsNullOrWhiteSpace(apiKey)) return "[设置错误] 请先配置 API Key";
             if (imageBytes == null || imageBytes.Length == 0) return "[输入错误] 图片数据为空";
 
-            var openAiService = GetOrCreateOpenAiService(apiKey, baseUrl);
+            var openAiService = GetOrCreateOpenAiService(apiKey, baseUrl, useProxy);
 
             string finalSystemPrompt = systemPrompt ?? "You are a helpful assistant. Please perform OCR on the provided image.";
             string base64Image = Convert.ToBase64String(imageBytes);
@@ -201,6 +232,7 @@ Begin extraction now:";
             string apiKey = config.AiApiKey;
             string baseUrl = config.AiBaseUrl;
             string model = config.AiModel;
+            bool useProxy = false;
 
             if (!string.IsNullOrEmpty(config.ActiveModelId))
             {
@@ -210,13 +242,14 @@ Begin extraction now:";
                     apiKey = savedModel.ApiKey;
                     baseUrl = savedModel.BaseUrl;
                     model = savedModel.ModelName;
+                    useProxy = savedModel.UseProxy;
                 }
             }
 
-            return ChatStreamAsync(userContent, apiKey, baseUrl, model, systemPrompt);
+            return ChatStreamAsync(userContent, apiKey, baseUrl, model, systemPrompt, useProxy);
         }
 
-        public async IAsyncEnumerable<string> ChatStreamAsync(string userContent, string apiKey, string baseUrl, string model, string? systemPrompt = null)
+        public async IAsyncEnumerable<string> ChatStreamAsync(string userContent, string apiKey, string baseUrl, string model, string? systemPrompt = null, bool useProxy = false)
         {
             if (string.IsNullOrWhiteSpace(apiKey))
             {
@@ -224,7 +257,7 @@ Begin extraction now:";
                 yield break;
             }
 
-            var openAiService = GetOrCreateOpenAiService(apiKey, baseUrl);
+            var openAiService = GetOrCreateOpenAiService(apiKey, baseUrl, useProxy);
 
             string finalSystemPrompt = systemPrompt ?? "You are a helpful assistant. Output result directly without unnecessary conversational filler. IMPORTANT: Always answer in Simplified Chinese unless the user explicitly asks for another language.";
 
@@ -289,6 +322,7 @@ Begin extraction now:";
             string apiKey = config.AiApiKey;
             string baseUrl = config.AiBaseUrl;
             string model = config.AiModel;
+            bool useProxy = false;
 
             if (!string.IsNullOrEmpty(config.ActiveModelId))
             {
@@ -298,13 +332,14 @@ Begin extraction now:";
                     apiKey = savedModel.ApiKey;
                     baseUrl = savedModel.BaseUrl;
                     model = savedModel.ModelName;
+                    useProxy = savedModel.UseProxy;
                 }
             }
 
-            return ChatStreamAsync(messages, apiKey, baseUrl, model);
+            return ChatStreamAsync(messages, apiKey, baseUrl, model, useProxy);
         }
 
-        public async IAsyncEnumerable<string> ChatStreamAsync(List<ChatMessage> messages, string apiKey, string baseUrl, string model)
+        public async IAsyncEnumerable<string> ChatStreamAsync(List<ChatMessage> messages, string apiKey, string baseUrl, string model, bool useProxy = false)
         {
             if (string.IsNullOrWhiteSpace(apiKey))
             {
@@ -327,14 +362,14 @@ Begin extraction now:";
             {
                 LoggerService.Instance.LogInfo($"Using native HttpClient for GLM stream: Model={model}", "AiService.ChatStreamAsync");
                 
-                await foreach (var chunk in NativeStreamAsync(messages, apiKey, baseUrl, model).ConfigureAwait(false))
+                await foreach (var chunk in NativeStreamAsync(messages, apiKey, baseUrl, model, useProxy).ConfigureAwait(false))
                 {
                     yield return chunk;
                 }
                 yield break;
             }
 
-            var openAiService = GetOrCreateOpenAiService(apiKey, baseUrl);
+            var openAiService = GetOrCreateOpenAiService(apiKey, baseUrl, useProxy);
 
             var request = new ChatCompletionCreateRequest
             {
@@ -387,11 +422,11 @@ Begin extraction now:";
         /// <summary>
         /// 原生 HttpClient SSE 流式请求 - 专为 GLM 等不兼容 Betalgo SDK 流式功能的 API 设计
         /// </summary>
-        private async IAsyncEnumerable<string> NativeStreamAsync(List<ChatMessage> messages, string apiKey, string baseUrl, string model)
+        private async IAsyncEnumerable<string> NativeStreamAsync(List<ChatMessage> messages, string apiKey, string baseUrl, string model, bool useProxy = false)
         {
             // 构建正确的 URL
             var url = baseUrl.TrimEnd('/') + "/chat/completions";
-            LoggerService.Instance.LogInfo($"[GLM Native] Sending to: {url}", "AiService.NativeStreamAsync");
+            LoggerService.Instance.LogInfo($"[GLM Native] Sending to: {url}, UseProxy={useProxy}", "AiService.NativeStreamAsync");
 
             // 构建请求体
             var requestBody = new
@@ -407,7 +442,7 @@ Begin extraction now:";
             LoggerService.Instance.LogInfo($"[GLM Native] Request body: {jsonContent.Substring(0, Math.Min(200, jsonContent.Length))}...", "AiService.NativeStreamAsync");
 
             // 发送请求（非迭代器方法，可以使用 try-catch）
-            var (response, httpError) = await NativeStreamSendAsync(url, apiKey, jsonContent).ConfigureAwait(false);
+            var (response, httpError) = await NativeStreamSendAsync(url, apiKey, jsonContent, useProxy).ConfigureAwait(false);
             
             if (httpError != null)
             {
@@ -465,11 +500,48 @@ Begin extraction now:";
         /// <summary>
         /// 发送原生 HTTP 请求（非迭代器方法，可以安全使用 try-catch）
         /// </summary>
-        private async Task<(HttpResponseMessage? Response, string? Error)> NativeStreamSendAsync(string url, string apiKey, string jsonContent)
+        private async Task<(HttpResponseMessage? Response, string? Error)> NativeStreamSendAsync(string url, string apiKey, string jsonContent, bool useProxy = false)
         {
             try
             {
-                var httpClient = _httpClientFactory.CreateClient("NativeAiClient");
+                HttpClient httpClient;
+                
+                if (useProxy)
+                {
+                    var proxyAddress = _settingsService.Config?.ProxyAddress;
+                    if (!string.IsNullOrWhiteSpace(proxyAddress))
+                    {
+                        var handler = new HttpClientHandler
+                        {
+                            UseProxy = true,
+                            Proxy = new WebProxy(proxyAddress) { BypassProxyOnLocal = false }
+                        };
+                        httpClient = new HttpClient(handler);
+                        LoggerService.Instance.LogInfo($"[GLM Native] HttpClient created with proxy: {proxyAddress}", "AiService.NativeStreamSendAsync");
+                    }
+                    else
+                    {
+                        var handler = new HttpClientHandler
+                        {
+                            UseProxy = false,
+                            Proxy = null
+                        };
+                        httpClient = new HttpClient(handler);
+                        LoggerService.Instance.LogInfo("[GLM Native] HttpClient created without proxy (proxy address empty)", "AiService.NativeStreamSendAsync");
+                    }
+                }
+                else
+                {
+                    var handler = new HttpClientHandler
+                    {
+                        UseProxy = false,
+                        Proxy = null
+                    };
+                    httpClient = new HttpClient(handler);
+                    LoggerService.Instance.LogInfo("[GLM Native] HttpClient created with explicit bypass (UseProxy=false)", "AiService.NativeStreamSendAsync");
+                }
+                
+                httpClient.Timeout = TimeSpan.FromMinutes(2);
                 
                 var request = new HttpRequestMessage(HttpMethod.Post, url);
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
@@ -528,12 +600,29 @@ Begin extraction now:";
 
         public Task<(bool Success, string Message, long? ResponseTimeMs)> TestConnectionAsync(AppConfig config)
         {
-            return TestConnectionAsync(config.AiApiKey, config.AiBaseUrl, config.AiModel);
+            string apiKey = config.AiApiKey;
+            string baseUrl = config.AiBaseUrl;
+            string model = config.AiModel;
+            bool useProxy = false;
+
+            if (!string.IsNullOrEmpty(config.ActiveModelId))
+            {
+                var savedModel = config.SavedModels.FirstOrDefault(m => m.Id == config.ActiveModelId);
+                if (savedModel != null)
+                {
+                    apiKey = savedModel.ApiKey;
+                    baseUrl = savedModel.BaseUrl;
+                    model = savedModel.ModelName;
+                    useProxy = savedModel.UseProxy;
+                }
+            }
+
+            return TestConnectionAsync(apiKey, baseUrl, model, useProxy);
         }
 
-        public async Task<(bool Success, string Message, long? ResponseTimeMs)> TestConnectionAsync(string apiKey, string baseUrl, string model)
+        public async Task<(bool Success, string Message, long? ResponseTimeMs)> TestConnectionAsync(string apiKey, string baseUrl, string model, bool useProxy = false)
         {
-            LoggerService.Instance.LogInfo($"Testing connection: BaseUrl={baseUrl}, Model={model}", "AiService.TestConnectionAsync");
+            LoggerService.Instance.LogInfo($"Testing connection: BaseUrl={baseUrl}, Model={model}, UseProxy={useProxy}", "AiService.TestConnectionAsync");
             
             if (string.IsNullOrWhiteSpace(apiKey))
             {
@@ -553,7 +642,7 @@ Begin extraction now:";
 
             try
             {
-                var openAiService = GetOrCreateOpenAiService(apiKey, baseUrl);
+                var openAiService = GetOrCreateOpenAiService(apiKey, baseUrl, useProxy);
                 LoggerService.Instance.LogInfo($"OpenAiService created, sending test request...", "AiService.TestConnectionAsync");
 
                 var request = new ChatCompletionCreateRequest
@@ -591,10 +680,10 @@ Begin extraction now:";
             }
         }
 
-        private OpenAIService CreateOpenAiService(string apiKey, string baseUrl)
+        private OpenAIService CreateOpenAiService(string apiKey, string baseUrl, bool useProxy = false)
         {
             // 使用缓存版本，避免重复创建
-            return GetOrCreateOpenAiService(apiKey, baseUrl);
+            return GetOrCreateOpenAiService(apiKey, baseUrl, useProxy);
         }
     }
 
