@@ -41,5 +41,9 @@ namespace PromptMasterv5.Core.Models
         [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
         [property: JsonPropertyName("isEnableForScreenshotTranslate")]
         private bool isEnableForScreenshotTranslate;
+
+        [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
+        [property: JsonPropertyName("useProxy")]
+        private bool useProxy;
     }
 }

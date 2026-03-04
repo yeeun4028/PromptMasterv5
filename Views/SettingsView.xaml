@@ -1016,6 +1016,12 @@
                                                             <TextBox Text="{Binding SelectedSavedModel.Remark, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
                                                         </StackPanel>
 
+                                                        <CheckBox Content="✈️ 使用 VPN 代理 (海外模型请勾选)" 
+                                                                  IsChecked="{Binding SelectedSavedModel.UseProxy, Mode=TwoWay}"
+                                                                  Style="{StaticResource ToggleSwitchStyle}"
+                                                                  Cursor="Hand"
+                                                                  Margin="0,10,0,0"/>
+
                                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
                                                             <TextBlock x:Name="TestStatusText"
                                                                        Text="{Binding TestStatus}"
