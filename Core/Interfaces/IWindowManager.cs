@@ -12,6 +12,8 @@ namespace PromptMasterv5.Core.Interfaces
         
         void CloseWindow(object viewModel);
         void ShowLauncherWindow();
+        void ShowSettingsWindow(object viewModel);
+        void CloseSettingsWindow();
 
         /// <summary>
         /// 显示贴图窗口（从截图）

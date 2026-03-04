@@ -366,13 +366,11 @@
     </UserControl.Resources>
 
     <Grid>
-        <!-- Modal Overlay -->
-        <Border Background="#66000000" x:Name="ModalOverlay" PreviewMouseRightButtonDown="ModalOverlay_PreviewMouseRightButtonDown">
-            <!-- Main Settings Window -->
-            <Border Width="900" Height="600" Background="{DynamicResource AppBackground}" CornerRadius="12" VerticalAlignment="Center" HorizontalAlignment="Center">
-                <Border.Effect>
-                    <DropShadowEffect Color="#000000" Opacity="0.15" BlurRadius="25" ShadowDepth="0"/>
-                </Border.Effect>
+        <!-- Main Settings Window -->
+        <Border x:Name="SettingsWindow" Width="900" Height="600" Background="{DynamicResource AppBackground}" CornerRadius="12">
+            <Border.Effect>
+                <DropShadowEffect Color="#000000" Opacity="0.15" BlurRadius="25" ShadowDepth="0"/>
+            </Border.Effect>
 
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -2318,6 +2316,5 @@
                     </Grid>
                 </Grid>
             </Border>
-        </Border>
     </Grid>
 </UserControl>

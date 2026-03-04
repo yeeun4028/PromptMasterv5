@@ -1273,8 +1273,6 @@
                             </Border>
                         </Grid>
                     </Border>
-
-                    <views:SettingsView Grid.ColumnSpan="3" Visibility="{Binding IsSettingsOpen, Converter={StaticResource BoolToVis}}" />
                 </Grid>
             </Border>
         </Grid>

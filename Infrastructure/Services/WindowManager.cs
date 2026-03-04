@@ -161,6 +161,11 @@ namespace PromptMasterv5.Infrastructure.Services
                         win.Close();
                         return;
                     }
+                    if (win is Views.SettingsWindow settingsWin && viewModel is ViewModels.MainViewModel)
+                    {
+                        settingsWin.Close();
+                        return;
+                    }
                 }
             });
         }
@@ -178,6 +183,38 @@ namespace PromptMasterv5.Infrastructure.Services
                 vm.RequestClose = () => window.Close();
                 
                 window.Show();
+            });
+        }
+
+        public void ShowSettingsWindow(object viewModel)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                var mainWindow = Application.Current.MainWindow;
+                var window = new SettingsWindow();
+                
+                if (viewModel is ViewModels.MainViewModel mainVM)
+                {
+                    window.SetDataContext(mainVM);
+                }
+                
+                window.Owner = mainWindow;
+                window.Show();
+            });
+        }
+
+        public void CloseSettingsWindow()
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                foreach (Window win in Application.Current.Windows)
+                {
+                    if (win is SettingsWindow settingsWin)
+                    {
+                        settingsWin.Close();
+                        return;
+                    }
+                }
             });
         }
 

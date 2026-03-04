@@ -86,7 +86,17 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public bool IsSettingsOpen
     {
         get => SettingsVM?.IsSettingsOpen ?? false;
-        set { if (SettingsVM != null) SettingsVM.IsSettingsOpen = value; }
+        set 
+        { 
+            if (SettingsVM != null) 
+            {
+                SettingsVM.IsSettingsOpen = value;
+                if (value)
+                {
+                    _windowManager.ShowSettingsWindow(this);
+                }
+            }
+        }
     }
 
     public int SelectedSettingsTab
@@ -563,14 +573,17 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void OpenSettings()
     {
-        SettingsVM.OpenSettingsCommand.Execute(null);
+        IsSettingsOpen = true;
     }
 
     [RelayCommand]
     private void SaveSettings()
     {
-        SettingsVM.CloseSettingsCommand.Execute(null);
-        UpdateWindowHotkeys(); // 使用 MainViewModel 的版本
+        SettingsVM.IsSettingsOpen = false;
+        _settingsService.SaveConfig();
+        _settingsService.SaveLocalConfig();
+        UpdateWindowHotkeys();
+        _windowManager.CloseSettingsWindow();
     }
 
     [RelayCommand]

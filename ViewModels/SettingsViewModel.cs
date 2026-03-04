@@ -35,6 +35,7 @@ namespace PromptMasterv5.ViewModels
         private readonly BaiduService _baiduService;
         private readonly TencentService _tencentService;
         private readonly GoogleService _googleService;
+        private readonly IWindowManager _windowManager;
 
         // 引用 MainViewModel 以访问 Files、Folders 等数据（用于同步恢复）
         // 这是暂时的依赖，后续可以通过消息总线进一步解耦
@@ -188,7 +189,8 @@ namespace PromptMasterv5.ViewModels
             IDialogService dialogService,
             BaiduService baiduService,
             TencentService tencentService,
-            GoogleService googleService)
+            GoogleService googleService,
+            IWindowManager windowManager)
         {
             _settingsService = settingsService;
             _aiService = aiService;
@@ -201,6 +203,7 @@ namespace PromptMasterv5.ViewModels
             _baiduService = baiduService;
             _tencentService = tencentService;
             _googleService = googleService;
+            _windowManager = windowManager;
 
             // 加载凭据到 UI 绑定的属性
             LoadBaiduCredentials();
@@ -225,6 +228,10 @@ namespace PromptMasterv5.ViewModels
             IsSettingsOpen = false;
             _settingsService.SaveConfig();
             _settingsService.SaveLocalConfig();
+            if (_mainViewModel != null)
+            {
+                _windowManager.CloseWindow(_mainViewModel);
+            }
         }
 
         [RelayCommand]
