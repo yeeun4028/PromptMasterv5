@@ -264,5 +264,11 @@ namespace PromptMasterv5.Core.Models
         /// </summary>
         [ObservableProperty]
         private bool voiceDuckVolume = true;
+
+        /// <summary>
+        /// 全局 VPN 代理地址
+        /// </summary>
+        [ObservableProperty]
+        private string proxyAddress = "http://127.0.0.1:10808";
     }
 }

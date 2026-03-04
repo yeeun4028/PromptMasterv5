@@ -67,6 +67,11 @@ namespace PromptMasterv5.Core.Models
         [property: JsonConverter(typeof(JsonEncryptedStringConverter))]
         private string key2 = "";
 
+        // 是否使用代理通道
+        [ObservableProperty]
+        [property: JsonPropertyName("useProxy")]
+        private bool useProxy = false;
+
         // 显示用的字段名称（根据供应商和服务类型）
         public string Key1Label => (Provider, ServiceType) switch
         {
