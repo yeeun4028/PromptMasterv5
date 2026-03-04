@@ -5,6 +5,7 @@ using PromptMasterv5.Core.Models;
 using System;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -19,7 +20,6 @@ namespace PromptMasterv5.Infrastructure.Services.Transcribers
     public class OpenAICompatibleTranscriber : IVoiceTranscriber
     {
         private readonly ISettingsService _settingsService;
-        private readonly IHttpClientFactory _httpClientFactory;
 
         private WaveInEvent? _waveIn;
         private WaveFileWriter? _waveWriter;
@@ -47,10 +47,9 @@ namespace PromptMasterv5.Infrastructure.Services.Transcribers
         private float _savedVolume = -1f;
         private bool _wasMuted = false;
 
-        public OpenAICompatibleTranscriber(ISettingsService settingsService, IHttpClientFactory httpClientFactory)
+        public OpenAICompatibleTranscriber(ISettingsService settingsService)
         {
             _settingsService = settingsService;
-            _httpClientFactory = httpClientFactory;
         }
 
         public void UpdateConfig(string baseUrl, string apiKey, string model)
@@ -228,6 +227,7 @@ namespace PromptMasterv5.Infrastructure.Services.Transcribers
                 string apiKey = config.VoiceApiKey;
                 string baseUrl = config.VoiceApiBaseUrl;
                 string model = config.VoiceApiModel;
+                bool useProxy = false;
 
                 // Try to use centralized model config if VoiceModelId is set
                 if (!string.IsNullOrEmpty(config.VoiceModelId))
@@ -238,6 +238,7 @@ namespace PromptMasterv5.Infrastructure.Services.Transcribers
                         apiKey = selectedModel.ApiKey;
                         baseUrl = selectedModel.BaseUrl;
                         model = selectedModel.ModelName;
+                        useProxy = selectedModel.UseProxy;
                     }
                 }
 
@@ -254,8 +255,43 @@ namespace PromptMasterv5.Infrastructure.Services.Transcribers
                     requestUrl = new Uri(new Uri(baseUrl), "audio/transcriptions").ToString();
                 }
 
-                // 使用 IHttpClientFactory 创建 HttpClient
-                var httpClient = _httpClientFactory.CreateClient("VoiceClient");
+                HttpClient httpClient;
+                if (useProxy)
+                {
+                    var proxyAddress = config.ProxyAddress;
+                    if (!string.IsNullOrWhiteSpace(proxyAddress))
+                    {
+                        var handler = new HttpClientHandler
+                        {
+                            UseProxy = true,
+                            Proxy = new WebProxy(proxyAddress) { BypassProxyOnLocal = false }
+                        };
+                        httpClient = new HttpClient(handler);
+                        LoggerService.Instance.LogInfo($"Voice transcription using proxy: {proxyAddress}", "OpenAICompatibleTranscriber.TranscribeFileAsync");
+                    }
+                    else
+                    {
+                        var handler = new HttpClientHandler
+                        {
+                            UseProxy = false,
+                            Proxy = null
+                        };
+                        httpClient = new HttpClient(handler);
+                        LoggerService.Instance.LogInfo("Voice transcription without proxy (proxy address empty)", "OpenAICompatibleTranscriber.TranscribeFileAsync");
+                    }
+                }
+                else
+                {
+                    var handler = new HttpClientHandler
+                    {
+                        UseProxy = false,
+                        Proxy = null
+                    };
+                    httpClient = new HttpClient(handler);
+                    LoggerService.Instance.LogInfo("Voice transcription with explicit bypass (UseProxy=false)", "OpenAICompatibleTranscriber.TranscribeFileAsync");
+                }
+                
+                httpClient.Timeout = TimeSpan.FromSeconds(60);
 
                 using var request = new HttpRequestMessage(HttpMethod.Post, requestUrl);
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);

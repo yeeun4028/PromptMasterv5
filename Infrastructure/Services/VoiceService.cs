@@ -63,7 +63,7 @@ namespace PromptMasterv5.Infrastructure.Services
                 _currentTranscriber = config.VoiceProvider switch
                 {
                     VoiceProvider.Xunfei => new XunfeiIatTranscriber(_settingsService),
-                    _ => new OpenAICompatibleTranscriber(_settingsService, _httpClientFactory)
+                    _ => new OpenAICompatibleTranscriber(_settingsService)
                 };
 
                 _currentProvider = config.VoiceProvider;

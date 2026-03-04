@@ -91,6 +91,7 @@ namespace PromptMasterv5.Infrastructure.Services.Transcribers
                 LoggerService.Instance.LogInfo($"Auth URL generated (first 100 chars): {authUrl.Substring(0, Math.Min(100, authUrl.Length))}", "XunfeiIatTranscriber.StartRecording");
                 
                 _webSocket = new ClientWebSocket();
+                _webSocket.Options.Proxy = null;
                 LoggerService.Instance.LogInfo("Connecting to WebSocket...", "XunfeiIatTranscriber.StartRecording");
                 await _webSocket.ConnectAsync(new Uri(authUrl), _cts.Token);
                 LoggerService.Instance.LogInfo($"WebSocket connected, state: {_webSocket.State}", "XunfeiIatTranscriber.StartRecording");
