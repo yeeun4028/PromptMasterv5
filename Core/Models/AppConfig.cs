@@ -277,13 +277,13 @@ namespace PromptMasterv5.Core.Models
         /// 主窗口 X 坐标
         /// </summary>
         [ObservableProperty]
-        private double mainWindowLeft = double.NaN;
+        private double mainWindowLeft = -1.0;  // -1 = 未设置（避免 NaN 无法序列化）
 
         /// <summary>
         /// 主窗口 Y 坐标
         /// </summary>
         [ObservableProperty]
-        private double mainWindowTop = double.NaN;
+        private double mainWindowTop = -1.0;   // -1 = 未设置（避免 NaN 无法序列化）
 
         /// <summary>
         /// 主窗口宽度
@@ -302,5 +302,19 @@ namespace PromptMasterv5.Core.Models
         /// </summary>
         [ObservableProperty]
         private bool mainWindowMaximized = false;
+
+        /// <summary>
+        /// 净化所有 double 字段，将 Infinity / NaN 替换为安全默认值。
+        /// 在从磁盘加载配置后调用，防止损坏的 config.json 导致序列化崩溃。
+        /// </summary>
+        public void Sanitize()
+        {
+            // 将 Infinity/NaN 转换为 -1（"未设置"哨兵值），-1 是合法 JSON 数字
+            if (!double.IsFinite(MainWindowLeft))   MainWindowLeft   = -1.0;
+            if (!double.IsFinite(MainWindowTop))    MainWindowTop    = -1.0;
+            if (!double.IsFinite(MainWindowWidth)  || MainWindowWidth  <= 0) MainWindowWidth  = 900;
+            if (!double.IsFinite(MainWindowHeight) || MainWindowHeight <= 0) MainWindowHeight = 600;
+            if (!double.IsFinite(LaunchBarWidth)   || LaunchBarWidth   <= 0) LaunchBarWidth   = 6.0;
+        }
     }
 }

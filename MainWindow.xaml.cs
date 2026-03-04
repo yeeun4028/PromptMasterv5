@@ -601,8 +601,8 @@ namespace PromptMasterv5
                     return;
                 }
 
-                // IsFinite 同时排除 NaN 和 Infinity，比仅检查 !IsNaN 更严格
-                if (double.IsFinite(config.MainWindowLeft) && double.IsFinite(config.MainWindowTop))
+                // -1 是"未设置"哨兵值（替代原来的 NaN，因 NaN 无法被 JSON 序列化）
+                if (config.MainWindowLeft >= 0 && config.MainWindowTop >= 0)
                 {
                     this.Left = config.MainWindowLeft;
                     this.Top  = config.MainWindowTop;
