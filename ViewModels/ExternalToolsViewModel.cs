@@ -518,7 +518,7 @@ namespace PromptMasterv5.ViewModels
             {
                 if (string.IsNullOrWhiteSpace(model.ApiKey)) return "";
 
-                return await _aiService.ChatAsync(text, model.ApiKey, model.BaseUrl, model.ModelName, systemPrompt).ConfigureAwait(false) 
+                return await _aiService.ChatAsync(text, model.ApiKey, model.BaseUrl, model.ModelName, systemPrompt, model.UseProxy).ConfigureAwait(false) 
                        ?? "";
             }
             catch (Exception)
