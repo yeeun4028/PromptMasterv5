@@ -69,6 +69,7 @@
 
         <utils:StringToGeometryConverter x:Key="StringToGeometryConverter"/>
         <utils:DoubleToGridLengthConverter x:Key="DoubleToGridLengthConverter"/>
+        <utils:NavigationWidthConverter x:Key="NavigationWidthConverter"/>
 
         <Style x:Key="Block1ToolTipStyle" TargetType="ToolTip">
             <Setter Property="Background" Value="{DynamicResource Block1Background}"/>
@@ -507,7 +508,14 @@
             <Border Background="{DynamicResource ShellBackground}" CornerRadius="5">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="{Binding LocalConfig.Block1Width, Mode=TwoWay, Converter={StaticResource DoubleToGridLengthConverter}}"/>
+                        <ColumnDefinition>
+                            <ColumnDefinition.Width>
+                                <MultiBinding Converter="{StaticResource NavigationWidthConverter}" Mode="TwoWay">
+                                    <Binding Path="IsNavigationVisible"/>
+                                    <Binding Path="LocalConfig.Block1Width" Mode="TwoWay"/>
+                                </MultiBinding>
+                            </ColumnDefinition.Width>
+                        </ColumnDefinition>
                         <ColumnDefinition Width="{Binding LocalConfig.Block2Width, Mode=TwoWay, Converter={StaticResource DoubleToGridLengthConverter}}"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
