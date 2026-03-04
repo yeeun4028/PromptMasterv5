@@ -270,5 +270,37 @@ namespace PromptMasterv5.Core.Models
         /// </summary>
         [ObservableProperty]
         private string proxyAddress = "http://127.0.0.1:10808";
+
+        // ★★★ 主窗口位置和大小 ★★★
+
+        /// <summary>
+        /// 主窗口 X 坐标
+        /// </summary>
+        [ObservableProperty]
+        private double mainWindowLeft = double.NaN;
+
+        /// <summary>
+        /// 主窗口 Y 坐标
+        /// </summary>
+        [ObservableProperty]
+        private double mainWindowTop = double.NaN;
+
+        /// <summary>
+        /// 主窗口宽度
+        /// </summary>
+        [ObservableProperty]
+        private double mainWindowWidth = 900;
+
+        /// <summary>
+        /// 主窗口高度
+        /// </summary>
+        [ObservableProperty]
+        private double mainWindowHeight = 600;
+
+        /// <summary>
+        /// 主窗口是否最大化
+        /// </summary>
+        [ObservableProperty]
+        private bool mainWindowMaximized = false;
     }
 }

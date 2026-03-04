@@ -154,6 +154,7 @@ namespace PromptMasterv5
         {
             base.OnSourceInitialized(e);
             InitializeTrayIcon();
+            RestoreWindowPosition();
 
             // 挂载窗口消息钩子，检测外部关闭请求（如 taskkill）
             var hwndSource = PresentationSource.FromVisual(this) as HwndSource;
@@ -541,6 +542,7 @@ namespace PromptMasterv5
 
         private void Cleanup()
         {
+            SaveWindowPosition();
             CleanupTimers();
 
             // 取消事件订阅
@@ -551,6 +553,70 @@ namespace PromptMasterv5
 
             // 清理托盘图标
             DisposeNotifyIcon();
+        }
+
+        private void SaveWindowPosition()
+        {
+            if (ViewModel?.Config == null) return;
+
+            try
+            {
+                var config = ViewModel.Config;
+                
+                if (this.WindowState == WindowState.Maximized)
+                {
+                    config.MainWindowMaximized = true;
+                }
+                else
+                {
+                    config.MainWindowMaximized = false;
+                    config.MainWindowLeft = this.Left;
+                    config.MainWindowTop = this.Top;
+                    config.MainWindowWidth = this.Width;
+                    config.MainWindowHeight = this.Height;
+                }
+                
+                LoggerService.Instance.LogInfo($"Window position saved: Left={config.MainWindowLeft}, Top={config.MainWindowTop}, Width={config.MainWindowWidth}, Height={config.MainWindowHeight}, Maximized={config.MainWindowMaximized}", "MainWindow.SaveWindowPosition");
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Instance.LogException(ex, "Failed to save window position", "MainWindow.SaveWindowPosition");
+            }
+        }
+
+        private void RestoreWindowPosition()
+        {
+            if (ViewModel?.Config == null) return;
+
+            try
+            {
+                var config = ViewModel.Config;
+                
+                if (config.MainWindowMaximized)
+                {
+                    this.WindowState = WindowState.Maximized;
+                    LoggerService.Instance.LogInfo("Window restored to maximized state", "MainWindow.RestoreWindowPosition");
+                    return;
+                }
+
+                if (!double.IsNaN(config.MainWindowLeft) && !double.IsNaN(config.MainWindowTop))
+                {
+                    this.Left = config.MainWindowLeft;
+                    this.Top = config.MainWindowTop;
+                }
+
+                if (config.MainWindowWidth > 0 && config.MainWindowHeight > 0)
+                {
+                    this.Width = config.MainWindowWidth;
+                    this.Height = config.MainWindowHeight;
+                }
+
+                LoggerService.Instance.LogInfo($"Window position restored: Left={this.Left}, Top={this.Top}, Width={this.Width}, Height={this.Height}", "MainWindow.RestoreWindowPosition");
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Instance.LogException(ex, "Failed to restore window position", "MainWindow.RestoreWindowPosition");
+            }
         }
 
         /// <summary>
