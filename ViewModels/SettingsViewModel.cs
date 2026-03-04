@@ -281,7 +281,7 @@ namespace PromptMasterv5.ViewModels
 
             foreach (var model in enabledModels)
             {
-                var result = await _aiService.TestConnectionAsync(model.ApiKey, model.BaseUrl, model.ModelName);
+                var result = await _aiService.TestConnectionAsync(model.ApiKey, model.BaseUrl, model.ModelName, model.UseProxy);
                 if (result.Success)
                 {
                     successCount++;
@@ -322,7 +322,7 @@ namespace PromptMasterv5.ViewModels
 
             TestStatus = "测试中...";
             TestStatusColor = System.Windows.Media.Brushes.Gray;
-            var (success2, message, responseTimeMs) = await _aiService.TestConnectionAsync(model.ApiKey, model.BaseUrl, model.ModelName);
+            var (success2, message, responseTimeMs) = await _aiService.TestConnectionAsync(model.ApiKey, model.BaseUrl, model.ModelName, model.UseProxy);
             TestStatus = success2 && responseTimeMs.HasValue ? $"{message} ({responseTimeMs}ms)" : message;
             TestStatusColor = success2 ? System.Windows.Media.Brushes.Green : System.Windows.Media.Brushes.Red;
         }
