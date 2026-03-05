@@ -825,5 +825,100 @@ namespace PromptMasterv5
         {
             this.Hide();
         }
+
+        // ================================================================
+        // MarkdownViewer 右键菜单替换
+        // MarkdownViewer 内部真正接收右键点击的控件是 FlowDocumentScrollViewer，
+        // 必须通过视觉树遍历找到它并直接替换其 ContextMenu。
+        // ================================================================
+        private void MarkdownViewer_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (sender is not DependencyObject root) return;
+            // 延迟到下一帧，确保内部视觉树已完全构建
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
+            {
+                var fdsv = FindDescendant<FlowDocumentScrollViewer>(root);
+                if (fdsv != null)
+                {
+                    fdsv.ContextMenu = BuildEditorContextMenu();
+                }
+            });
+        }
+
+        /// <summary>
+        /// 递归在视觉树中查找第一个 T 类型的后代元素
+        /// </summary>
+        private static T? FindDescendant<T>(DependencyObject parent) where T : DependencyObject
+        {
+            int count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < count; i++)
+            {
+                var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+                if (child is T result) return result;
+                var nested = FindDescendant<T>(child);
+                if (nested != null) return nested;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 构建统一的 UIPro 风格编辑器右键菜单（与 App.xaml.cs 的 TextBox 版保持一致）
+        /// </summary>
+        internal static ContextMenu BuildEditorContextMenu()
+        {
+            var menu = new ContextMenu
+            {
+                Background = Application.Current.Resources["CardBackground"] as System.Windows.Media.Brush,
+                BorderBrush = Application.Current.Resources["DividerBrush"] as System.Windows.Media.Brush,
+                BorderThickness = new Thickness(1),
+                Padding = new Thickness(0, 4, 0, 4),
+            };
+
+            // 圆角 + 阴影模板
+            var menuTemplate = new ControlTemplate(typeof(ContextMenu));
+            var borderFactory = new FrameworkElementFactory(typeof(Border));
+            borderFactory.SetBinding(Border.BackgroundProperty,
+                new System.Windows.Data.Binding { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent), Path = new PropertyPath(WpfControl.BackgroundProperty) });
+            borderFactory.SetBinding(Border.BorderBrushProperty,
+                new System.Windows.Data.Binding { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent), Path = new PropertyPath(WpfControl.BorderBrushProperty) });
+            borderFactory.SetBinding(Border.BorderThicknessProperty,
+                new System.Windows.Data.Binding { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent), Path = new PropertyPath(WpfControl.BorderThicknessProperty) });
+            borderFactory.SetValue(Border.CornerRadiusProperty, new System.Windows.CornerRadius(8));
+            borderFactory.SetValue(Border.PaddingProperty, new Thickness(0, 4, 0, 4));
+            borderFactory.SetValue(Border.EffectProperty, new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = System.Windows.Media.Colors.Black,
+                Direction = 270,
+                ShadowDepth = 4,
+                BlurRadius = 12,
+                Opacity = 0.3
+            });
+            var itemsPresenterFactory = new FrameworkElementFactory(typeof(ItemsPresenter));
+            borderFactory.AppendChild(itemsPresenterFactory);
+            menuTemplate.VisualTree = borderFactory;
+            menu.Template = menuTemplate;
+
+            var fg = Application.Current.Resources["PrimaryTextBrush"] as System.Windows.Media.Brush;
+            var divBrush = Application.Current.Resources["DividerBrush"] as System.Windows.Media.Brush;
+
+            MenuItem MakeItem(string header, ICommand command) => new MenuItem
+            {
+                Header = header,
+                Command = command,
+                Background = System.Windows.Media.Brushes.Transparent,
+                Foreground = fg,
+                Padding = new Thickness(12, 4, 12, 4),
+                Margin = new Thickness(0),
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Icon = null,
+                InputGestureText = string.Empty,
+            };
+
+            menu.Items.Add(MakeItem("复制", ApplicationCommands.Copy));
+            menu.Items.Add(new Separator { Margin = new Thickness(0, 2, 0, 2), Background = divBrush });
+            menu.Items.Add(MakeItem("全选", ApplicationCommands.SelectAll));
+
+            return menu;
+        }
     }
 }

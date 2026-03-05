@@ -1,11 +1,17 @@
 using System;
 using System.Windows;
 using System.Windows.Threading;
+using System.Windows.Controls;
+using System.Windows.Input;
 using Microsoft.Extensions.DependencyInjection;
 using PromptMasterv5.Core.Interfaces;
 using PromptMasterv5.Infrastructure.Services;
 using PromptMasterv5.ViewModels;
-using MessageBox = System.Windows.MessageBox; // 明确指定使用 WPF 的 MessageBox
+using MessageBox = System.Windows.MessageBox;
+using Application = System.Windows.Application;
+using TextBox = System.Windows.Controls.TextBox;
+using WpfControl = System.Windows.Controls.Control;
+using Cursors = System.Windows.Input.Cursors;
 
 namespace PromptMasterv5
 {
@@ -62,6 +68,15 @@ namespace PromptMasterv5
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+
+            // ===== 全局 TextBox 右键菜单劫持 =====
+            // WPF TextBox 内建菜单是运行时动态生成的，无法通过 XAML ContextMenu 属性覆盖。
+            // 必须在类级别注册事件处理器，才能真正替换默认菜单。
+            EventManager.RegisterClassHandler(
+                typeof(TextBox),
+                ContextMenuService.ContextMenuOpeningEvent,
+                new ContextMenuEventHandler(OnTextBoxContextMenuOpening));
+            // =====================================
 
             // Check for existing instance
             bool createdNew;
@@ -221,6 +236,89 @@ namespace PromptMasterv5
             
             services.AddSingleton<ClipboardService>();
             services.AddSingleton<IAudioService, AudioService>();
+        }
+
+        /// <summary>
+        /// 全局 TextBox 右键菜单替换处理器。
+        /// WPF TextBox 的内建菜单是运行时动态生成的，此处理器通过类级别事件劫持，
+        /// 在菜单即将弹出前，清空并重新构建一个符合 UIPro 风格的干净菜单。
+        /// </summary>
+        private static void OnTextBoxContextMenuOpening(object sender, ContextMenuEventArgs e)
+        {
+            if (sender is not TextBox tb) return;
+
+            // 构建样式（在代码里手动实现圆角+阴影+主题色，不依赖 XAML 资源）
+            var menu = new ContextMenu
+            {
+                Background = (System.Windows.Media.Brush)Application.Current.Resources["CardBackground"],
+                BorderBrush = (System.Windows.Media.Brush)Application.Current.Resources["DividerBrush"],
+                BorderThickness = new Thickness(1),
+                Padding = new Thickness(0, 4, 0, 4),
+            };
+
+            // 圆角 + 阴影模板
+            var menuTemplate = new ControlTemplate(typeof(ContextMenu));
+            var borderFactory = new FrameworkElementFactory(typeof(Border));
+            borderFactory.SetBinding(Border.BackgroundProperty,
+                new System.Windows.Data.Binding { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent), Path = new PropertyPath(WpfControl.BackgroundProperty) });
+            borderFactory.SetBinding(Border.BorderBrushProperty,
+                new System.Windows.Data.Binding { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent), Path = new PropertyPath(WpfControl.BorderBrushProperty) });
+            borderFactory.SetBinding(Border.BorderThicknessProperty,
+                new System.Windows.Data.Binding { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent), Path = new PropertyPath(WpfControl.BorderThicknessProperty) });
+            borderFactory.SetValue(Border.CornerRadiusProperty, new System.Windows.CornerRadius(8));
+            borderFactory.SetValue(Border.PaddingProperty, new Thickness(0, 4, 0, 4));
+            var shadow = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = System.Windows.Media.Colors.Black,
+                Direction = 270,
+                ShadowDepth = 4,
+                BlurRadius = 12,
+                Opacity = 0.3
+            };
+            borderFactory.SetValue(Border.EffectProperty, shadow);
+            var itemsPresenterFactory = new FrameworkElementFactory(typeof(ItemsPresenter));
+            borderFactory.AppendChild(itemsPresenterFactory);
+            menuTemplate.VisualTree = borderFactory;
+            menu.Template = menuTemplate;
+
+            // 菜单项样式生成函数
+            static MenuItem MakeItem(string header, ICommand command, bool canCut = true)
+            {
+                var item = new MenuItem
+                {
+                    Header = header,
+                    Command = command,
+                    Background = System.Windows.Media.Brushes.Transparent,
+                    Padding = new Thickness(12, 4, 12, 4),
+                    Margin = new Thickness(0),
+                    Cursor = System.Windows.Input.Cursors.Hand,
+                    // 隐藏图标区和快捷键文字
+                    Icon = null,
+                    InputGestureText = string.Empty,
+                };
+                // 绑定前景色到主题
+                if (Application.Current.Resources["PrimaryTextBrush"] is System.Windows.Media.Brush fg)
+                    item.Foreground = fg;
+                return item;
+            }
+
+            menu.Items.Add(MakeItem("剪切", ApplicationCommands.Cut));
+            menu.Items.Add(MakeItem("复制", ApplicationCommands.Copy));
+            menu.Items.Add(MakeItem("粘贴", ApplicationCommands.Paste));
+
+            // 分隔线
+            var sep = new Separator { Margin = new Thickness(0, 2, 0, 2) };
+            if (Application.Current.Resources["DividerBrush"] is System.Windows.Media.Brush divBrush)
+                sep.Background = divBrush;
+            menu.Items.Add(sep);
+
+            menu.Items.Add(MakeItem("全选", ApplicationCommands.SelectAll));
+
+            // 替换 TextBox 的 ContextMenu 并触发命令绑定刷新
+            tb.ContextMenu = menu;
+
+            // 设置命令目标，使 Cut/Copy/Paste 命令作用于正确的 TextBox
+            menu.CommandBindings.Clear();
         }
 
         private void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)

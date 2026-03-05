@@ -745,6 +745,7 @@
                                     </Grid.ColumnDefinitions>
                                     <Grid Grid.Column="0" Margin="0,20,0,0">
                                         <TextBox x:Name="Block3TitleEditor"
+                                                 ContextMenu="{DynamicResource UnifiedEditorContextMenu}"
                                                  Text="{Binding SelectedFile.Title, UpdateSourceTrigger=PropertyChanged}"
                                                  FontSize="18"
                                                  FontWeight="Bold"
@@ -1009,6 +1010,7 @@
 
                                 <Grid Grid.Row="1">
                                     <TextBox x:Name="Block3ContentEditor"
+                                             ContextMenu="{DynamicResource UnifiedEditorContextMenu}"
                                              Text="{Binding SelectedFile.Content, UpdateSourceTrigger=PropertyChanged}"
                                              AcceptsReturn="True"
                                              TextWrapping="Wrap"
@@ -1042,6 +1044,8 @@
                                 </Grid>
 
                                 <md:MarkdownViewer Grid.Row="1"
+                                                  Loaded="MarkdownViewer_Loaded"
+                                                  ContextMenu="{DynamicResource UnifiedEditorContextMenu}"
                                                   Markdown="{Binding PreviewContent}"
                                                   Pipeline="{Binding Pipeline}"
                                                   xml:lang="zh-CN"
@@ -1315,7 +1319,7 @@
                                                         </Grid.ColumnDefinitions>
                                                         <TextBlock Text="{Binding Name, StringFormat='{}{0}:'}" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Top" Margin="0,6,10,0" HorizontalAlignment="Right" Foreground="{DynamicResource PrimaryTextBrush}" FontFamily="Segoe UI, Microsoft YaHei UI"/>
                                                         <Border x:Name="InputBorder" Grid.Column="1" BorderThickness="0" Background="Transparent" CornerRadius="2,2,0,0">
-                                                            <TextBox x:Name="InputBox" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" Padding="5" FontSize="14" ContextMenu="{DynamicResource Block4EditorContextMenu}" VerticalContentAlignment="Top" AcceptsReturn="True" TextWrapping="Wrap" PreviewKeyDown="TextBox_PreviewKeyDown" Foreground="{DynamicResource PrimaryTextBrush}" FontFamily="Segoe UI, Microsoft YaHei UI" Style="{x:Null}"/>
+                                                            <TextBox x:Name="InputBox" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" Padding="5" FontSize="14" ContextMenu="{DynamicResource UnifiedEditorContextMenu}" VerticalContentAlignment="Top" AcceptsReturn="True" TextWrapping="Wrap" PreviewKeyDown="TextBox_PreviewKeyDown" Foreground="{DynamicResource PrimaryTextBrush}" FontFamily="Segoe UI, Microsoft YaHei UI" Style="{x:Null}"/>
                                                         </Border>
                                                     </Grid>
                                                     <DataTemplate.Triggers>
@@ -1345,7 +1349,7 @@
                                              BorderThickness="0" 
                                              Background="Transparent" 
                                              VerticalContentAlignment="Top" 
-                                             ContextMenu="{DynamicResource Block4EditorContextMenu}"
+                                             ContextMenu="{DynamicResource UnifiedEditorContextMenu}"
                                              FontSize="14" 
                                              FontFamily="Segoe UI, Microsoft YaHei UI">
                                         <TextBox.Style>
