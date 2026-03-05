@@ -40,6 +40,10 @@ namespace PromptMasterv5.Infrastructure.Services
         private List<Keys> _voiceModifiers = new List<Keys>();
         private bool _voiceEnabled = false;
         private bool _voiceKeyHeld = false;
+        // 语音长按计时器：按下后延迟 500ms 才触发，避免单击误触
+        private bool _voiceLongPressArmed = false; // 已进入长按等待阶段
+        private System.Timers.Timer? _voiceLongPressTimer;
+        private const int LongPressThresholdMs = 500;
 
         public event EventHandler? OnVoiceControlTriggered;
         public event EventHandler? OnVoiceControlKeyDown;
@@ -237,7 +241,7 @@ namespace PromptMasterv5.Infrastructure.Services
                 if (e.KeyCode == Keys.ShiftKey) actualKey = NativeMethods.IsKeyDown((int)Keys.LShiftKey) ? Keys.LShiftKey : (NativeMethods.IsKeyDown((int)Keys.RShiftKey) ? Keys.RShiftKey : Keys.ShiftKey);
             }
 
-            if (_voiceEnabled && !_voiceKeyHeld)
+            if (_voiceEnabled && !_voiceKeyHeld && !_voiceLongPressArmed)
             {
                 bool isVoiceKeyPress = (actualKey == _voiceKey || e.KeyCode == _voiceKey) || 
                     (e.KeyCode == Keys.Menu && (_voiceKey == Keys.LMenu || _voiceKey == Keys.RMenu)) ||
@@ -246,8 +250,19 @@ namespace PromptMasterv5.Infrastructure.Services
 
                 if (isVoiceKeyPress && CheckVoiceModifiers(e.KeyCode))
                 {
-                    _voiceKeyHeld = true;
-                    OnVoiceControlKeyDown?.Invoke(this, EventArgs.Empty);
+                    // 进入长按等待阶段，启动计时器，500ms 后才真正触发
+                    _voiceLongPressArmed = true;
+
+                    _voiceLongPressTimer?.Dispose();
+                    _voiceLongPressTimer = new System.Timers.Timer(LongPressThresholdMs) { AutoReset = false };
+                    _voiceLongPressTimer.Elapsed += (s, _) =>
+                    {
+                        // 已持续长按超过阈值：真正触发语音控制
+                        _voiceKeyHeld = true;
+                        OnVoiceControlKeyDown?.Invoke(this, EventArgs.Empty);
+                    };
+                    _voiceLongPressTimer.Start();
+
                     e.Handled = true;
                     e.SuppressKeyPress = true;
                 }
@@ -276,8 +291,8 @@ namespace PromptMasterv5.Infrastructure.Services
                 if (e.KeyCode == Keys.ShiftKey) actualKey = NativeMethods.IsKeyDown((int)Keys.LShiftKey) ? Keys.LShiftKey : (NativeMethods.IsKeyDown((int)Keys.RShiftKey) ? Keys.RShiftKey : Keys.ShiftKey);
             }
 
-            // Voice Control: KeyUp = stop recording and process (push-to-talk)
-            if (_voiceEnabled && _voiceKeyHeld)
+            // Voice Control: KeyUp
+            if (_voiceEnabled)
             {
                 bool isVoiceKeyRelease = (actualKey == _voiceKey || e.KeyCode == _voiceKey) || 
                     (e.KeyCode == Keys.Menu && (_voiceKey == Keys.LMenu || _voiceKey == Keys.RMenu)) ||
@@ -286,17 +301,21 @@ namespace PromptMasterv5.Infrastructure.Services
 
                 if (isVoiceKeyRelease)
                 {
-                    _voiceKeyHeld = false;
-                    OnVoiceControlTriggered?.Invoke(this, EventArgs.Empty);
-                    
-                    // Do NOT suppress the KeyUp event for modifiers like Alt/Ctrl.
-                    // Doing so causes Windows to get stuck with the modifier "down"
-                    // because focus changes (like opening the Voice Control Window)
-                    // can cause Windows to synchronize its internal modifier state
-                    // with the physical hardware. If we drop the physical KeyUp, 
-                    // Windows never knows the key was released.
-                    // e.Handled = true;
-                    // e.SuppressKeyPress = true;
+                    if (_voiceLongPressArmed && !_voiceKeyHeld)
+                    {
+                        // 单击（未到阈值就释放了）——取消定时器，不做任何操作
+                        _voiceLongPressTimer?.Stop();
+                        _voiceLongPressTimer?.Dispose();
+                        _voiceLongPressTimer = null;
+                        _voiceLongPressArmed = false;
+                    }
+                    else if (_voiceKeyHeld)
+                    {
+                        // 长按后抬起——结束录音，触发识别
+                        _voiceKeyHeld = false;
+                        _voiceLongPressArmed = false;
+                        OnVoiceControlTriggered?.Invoke(this, EventArgs.Empty);
+                    }
                 }
             }
         }
@@ -356,6 +375,9 @@ namespace PromptMasterv5.Infrastructure.Services
         public void Dispose()
         {
             Stop();
+            _voiceLongPressTimer?.Stop();
+            _voiceLongPressTimer?.Dispose();
+            _voiceLongPressTimer = null;
             GC.SuppressFinalize(this);
         }
     }
