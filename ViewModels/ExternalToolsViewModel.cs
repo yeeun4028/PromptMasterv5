@@ -121,6 +121,8 @@ namespace PromptMasterv5.ViewModels
         
         private void EnsureAiProfileExists()
         {
+            bool added = false;
+
             // Ensure there is at least one AI profile for selection
             if (!Config.ApiProfiles.Any(p => p.Provider == ApiProvider.AI && p.ServiceType == ServiceType.Translation))
             {
@@ -131,6 +133,7 @@ namespace PromptMasterv5.ViewModels
                     ServiceType = ServiceType.Translation,
                     Id = Guid.NewGuid().ToString() 
                 });
+                added = true;
             }
 
             // Ensure AI OCR profile exists
@@ -143,9 +146,11 @@ namespace PromptMasterv5.ViewModels
                     ServiceType = ServiceType.OCR,
                     Id = Guid.NewGuid().ToString()
                 });
+                added = true;
             }
 
-            _settingsService.SaveConfig();
+            // 仅在实际新增了条目时才写盘
+            if (added) _settingsService.SaveConfig();
             RefreshProfiles();
         }
 

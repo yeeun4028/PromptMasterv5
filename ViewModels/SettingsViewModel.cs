@@ -439,8 +439,6 @@ namespace PromptMasterv5.ViewModels
                 
                 // Update Launcher Hotkey
                 UpdateLauncherHotkey();
-
-                _settingsService.SaveConfig();
             }
             catch (Exception ex)
             {
@@ -453,7 +451,7 @@ namespace PromptMasterv5.ViewModels
             try
             {
                 _keyService.LauncherHotkeyString = Config.LauncherHotkey;
-                _settingsService.SaveConfig();
+                // 注意：此处不调用 SaveConfig()，调用方负责在需要时保存
             }
             catch (Exception ex)
             {
