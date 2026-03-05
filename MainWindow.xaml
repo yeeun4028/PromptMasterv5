@@ -12,6 +12,7 @@
         xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:behaviors="clr-namespace:PromptMasterv5.Infrastructure.Behaviors"
         xmlns:hc="https://handyorg.github.io/handycontrol"
+        xmlns:converters="clr-namespace:PromptMasterv5.Converters"
         mc:Ignorable="d"
         Title="PromptMaster v5" 
         Height="600" Width="1000"
@@ -557,7 +558,7 @@
                                     </Button.ToolTip>
                                     <Button.ContentTemplate>
                                         <DataTemplate>
-                                            <Path Data="{Binding DataContext.LocalConfig.ActionIcons[CreateFile], RelativeSource={RelativeSource AncestorType=Window}, TargetNullValue={StaticResource IconNewDoc}, FallbackValue={StaticResource IconNewDoc}}" Style="{StaticResource ActionIconPathStyle}"/>
+                                            <Path Data="{Binding DataContext.LocalConfig.ActionIcons[CreateFile], RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource StringToGeometryConverter}, FallbackValue={StaticResource IconNewDoc}}" Style="{StaticResource ActionIconPathStyle}"/>
                                         </DataTemplate>
                                     </Button.ContentTemplate>
                                 </Button>
@@ -574,7 +575,7 @@
                                     </Button.ToolTip>
                                     <Button.ContentTemplate>
                                         <DataTemplate>
-                                            <Path Data="{Binding DataContext.LocalConfig.ActionIcons[CreateFolder], RelativeSource={RelativeSource AncestorType=Window}, TargetNullValue={StaticResource IconNewFolder}, FallbackValue={StaticResource IconNewFolder}}" Style="{StaticResource ActionIconPathStyle}"/>
+                                            <Path Data="{Binding DataContext.LocalConfig.ActionIcons[CreateFolder], RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource StringToGeometryConverter}, FallbackValue={StaticResource IconNewFolder}}" Style="{StaticResource ActionIconPathStyle}"/>
                                         </DataTemplate>
                                     </Button.ContentTemplate>
                                 </Button>
@@ -591,7 +592,7 @@
                                     </Button.ToolTip>
                                     <Button.ContentTemplate>
                                         <DataTemplate>
-                                            <Path Data="{Binding DataContext.LocalConfig.ActionIcons[Import], RelativeSource={RelativeSource AncestorType=Window}, TargetNullValue={StaticResource IconImport}, FallbackValue={StaticResource IconImport}}" Style="{StaticResource ActionIconPathStyle}"/>
+                                            <Path Data="{Binding DataContext.LocalConfig.ActionIcons[Import], RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource StringToGeometryConverter}, FallbackValue={StaticResource IconImport}}" Style="{StaticResource ActionIconPathStyle}"/>
                                         </DataTemplate>
                                     </Button.ContentTemplate>
                                 </Button>
@@ -608,7 +609,7 @@
                                     </Button.ToolTip>
                                     <Button.ContentTemplate>
                                         <DataTemplate>
-                                            <Path Data="{Binding DataContext.LocalConfig.ActionIcons[Settings], RelativeSource={RelativeSource AncestorType=Window}, TargetNullValue={StaticResource IconSettings}, FallbackValue={StaticResource IconSettings}}" Style="{StaticResource ActionIconPathStyle}"/>
+                                            <Path Data="{Binding DataContext.LocalConfig.ActionIcons[Settings], RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource StringToGeometryConverter}, FallbackValue={StaticResource IconSettings}}" Style="{StaticResource ActionIconPathStyle}"/>
                                         </DataTemplate>
                                     </Button.ContentTemplate>
                                 </Button>
