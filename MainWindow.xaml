@@ -16,7 +16,7 @@
         mc:Ignorable="d"
         Title="PromptMaster v5" 
         Height="600" Width="1000"
-        WindowStartupLocation="Manual"
+        WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         AllowsTransparency="True"
         ResizeMode="CanResize"

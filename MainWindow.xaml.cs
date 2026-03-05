@@ -168,8 +168,7 @@ namespace PromptMasterv5
             InitializeTrayIcon();
             RestoreWindowPosition();
 
-            // 窗口每次移动或缩放时自动保存位置
-            this.LocationChanged += (_, __) => SaveWindowPosition();
+            // 窗口每次缩放时自动保存大小
             this.SizeChanged += (_, __) => SaveWindowPosition();
 
             // 挂载窗口消息钩子，检测外部关闭请求（如 taskkill）
@@ -579,26 +578,15 @@ namespace PromptMasterv5
             {
                 var config = ViewModel.Config;
                 
-                if (this.WindowState == WindowState.Maximized)
-                {
-                    config.MainWindowMaximized = true;
-                }
-                else
-                {
-                    config.MainWindowMaximized = false;
-
-                    // 仅在值合法时更新，防止 Infinity/NaN 写入导致 ConfigService.Save 崩溃
-                    if (double.IsFinite(this.Left))   config.MainWindowLeft   = this.Left;
-                    if (double.IsFinite(this.Top))    config.MainWindowTop    = this.Top;
-                    if (double.IsFinite(this.Width)  && this.Width  > 0) config.MainWindowWidth  = this.Width;
-                    if (double.IsFinite(this.Height) && this.Height > 0) config.MainWindowHeight = this.Height;
-                }
+                // 仅保存窗口大小
+                if (double.IsFinite(this.Width)  && this.Width  > 0) config.MainWindowWidth  = Math.Round(this.Width, 1);
+                if (double.IsFinite(this.Height) && this.Height > 0) config.MainWindowHeight = Math.Round(this.Height, 1);
                 
-                LoggerService.Instance.LogInfo($"Window position saved: Left={config.MainWindowLeft}, Top={config.MainWindowTop}, Width={config.MainWindowWidth}, Height={config.MainWindowHeight}, Maximized={config.MainWindowMaximized}", "MainWindow.SaveWindowPosition");
+                LoggerService.Instance.LogInfo($"Window size saved: Width={config.MainWindowWidth}, Height={config.MainWindowHeight}", "MainWindow.SaveWindowPosition");
             }
             catch (Exception ex)
             {
-                LoggerService.Instance.LogException(ex, "Failed to save window position", "MainWindow.SaveWindowPosition");
+                LoggerService.Instance.LogException(ex, "Failed to save window size", "MainWindow.SaveWindowPosition");
             }
         }
 
@@ -609,21 +597,8 @@ namespace PromptMasterv5
             try
             {
                 var config = ViewModel.Config;
-                
-                if (config.MainWindowMaximized)
-                {
-                    this.WindowState = WindowState.Maximized;
-                    LoggerService.Instance.LogInfo("Window restored to maximized state", "MainWindow.RestoreWindowPosition");
-                    return;
-                }
 
-                // -1 是"未设置"哨兵值（替代原来的 NaN，因 NaN 无法被 JSON 序列化）
-                if (config.MainWindowLeft >= 0 && config.MainWindowTop >= 0)
-                {
-                    this.Left = config.MainWindowLeft;
-                    this.Top  = config.MainWindowTop;
-                }
-
+                // 仅恢复窗口大小（如果有效）
                 if (double.IsFinite(config.MainWindowWidth)  && config.MainWindowWidth  > 0 &&
                     double.IsFinite(config.MainWindowHeight) && config.MainWindowHeight > 0)
                 {
@@ -631,11 +606,11 @@ namespace PromptMasterv5
                     this.Height = config.MainWindowHeight;
                 }
 
-                LoggerService.Instance.LogInfo($"Window position restored: Left={this.Left}, Top={this.Top}, Width={this.Width}, Height={this.Height}", "MainWindow.RestoreWindowPosition");
+                LoggerService.Instance.LogInfo($"Window size restored: Width={this.Width}, Height={this.Height}", "MainWindow.RestoreWindowPosition");
             }
             catch (Exception ex)
             {
-                LoggerService.Instance.LogException(ex, "Failed to restore window position", "MainWindow.RestoreWindowPosition");
+                LoggerService.Instance.LogException(ex, "Failed to restore window size", "MainWindow.RestoreWindowPosition");
             }
         }
 
