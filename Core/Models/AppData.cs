@@ -10,6 +10,7 @@ namespace PromptMasterv5.Core.Models
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public Dictionary<string, string>? VoiceCommands { get; set; } = null;
         public Dictionary<string, VoiceCommand> VoiceCommandsV2 { get; set; } = new();
+        public Dictionary<string, string> VoiceCommandIntentCache { get; set; } = new();
         public List<ApiProfile> ApiProfiles { get; set; } = new();
         public List<AiModelConfig> SavedModels { get; set; } = new();
     }

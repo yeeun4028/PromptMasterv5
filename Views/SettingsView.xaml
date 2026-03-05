@@ -2098,9 +2098,9 @@
                                                         Style="{StaticResource TextLinkButtonStyle}"
                                                         HorizontalAlignment="Left"/>
                                                         
-                                                <TextBlock Text="清除 AI 意图缓存可以重置指令的智能映射结果" Opacity="0.7" Margin="0,20,0,5"/>
-                                                <Button Content="清空 AI 意图缓存"
-                                                        Command="{Binding SettingsVM.ClearVoiceCommandCacheCommand}"
+                                                <TextBlock Text="打开 AI 意图缓存可以查看指令的智能映射结果" Opacity="0.7" Margin="0,20,0,5"/>
+                                                <Button Content="打开 AI 意图缓存"
+                                                        Command="{Binding SettingsVM.OpenVoiceCommandCacheCommand}"
                                                         Style="{StaticResource PrimaryButtonStyle}"
                                                         HorizontalAlignment="Left"
                                                         Height="32" Width="140"/>

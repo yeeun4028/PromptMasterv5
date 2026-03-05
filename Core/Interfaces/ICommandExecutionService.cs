@@ -10,6 +10,8 @@ namespace PromptMasterv5.Core.Interfaces
         IReadOnlyList<string> GetCommandKeys();
         System.Collections.Generic.Dictionary<string, VoiceCommand> GetCommands();
         void SetCommands(System.Collections.Generic.Dictionary<string, VoiceCommand> commands);
+        System.Collections.Generic.Dictionary<string, string> GetIntentCache();
+        void SetIntentCache(System.Collections.Generic.Dictionary<string, string> intentCache);
         void ClearIntentCache();
         event System.EventHandler CommandsChanged;
 

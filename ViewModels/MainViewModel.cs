@@ -1006,19 +1006,20 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _saveSubject.OnNext(System.Reactive.Unit.Default);
     }
 
-    public async Task PerformLocalBackup()
-    {
-        try
+        public async Task PerformLocalBackup()
         {
-            var voiceCommandService = (Application.Current as App)?.ServiceProvider.GetRequiredService<ICommandExecutionService>();
-            var voiceCommands = voiceCommandService?.GetCommands() ?? new Dictionary<string, VoiceCommand>();
-            await _localDataService.SaveAsync(Folders, Files, voiceCommands);
+            try
+            {
+                var voiceCommandService = (Application.Current as App)?.ServiceProvider.GetRequiredService<ICommandExecutionService>();
+                var voiceCommands = voiceCommandService?.GetCommands() ?? new Dictionary<string, VoiceCommand>();
+                var intentCache = voiceCommandService?.GetIntentCache() ?? new Dictionary<string, string>();
+                await _localDataService.SaveAsync(Folders, Files, voiceCommands, intentCache);
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Instance.LogException(ex, "Failed to perform local backup", "MainViewModel.PerformLocalBackup");
+            }
         }
-        catch (Exception ex)
-        {
-            LoggerService.Instance.LogException(ex, "Failed to perform local backup", "MainViewModel.PerformLocalBackup");
-        }
-    }
 
     /// <summary>
     /// 当 Files 集合发生变化时（添加/删除项目），附加或移除监听器并触发保存

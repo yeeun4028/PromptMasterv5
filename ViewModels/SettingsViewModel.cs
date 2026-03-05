@@ -554,19 +554,27 @@ namespace PromptMasterv5.ViewModels
         }
 
         [RelayCommand]
-        private void ClearVoiceCommandCache()
+        private void OpenVoiceCommandCache()
         {
             try
             {
-                var voiceCommandService = (System.Windows.Application.Current as App)?.ServiceProvider.GetRequiredService<ICommandExecutionService>();
-                voiceCommandService?.ClearIntentCache();
-                _dialogService.ShowToast("AI 意图缓存已清空", "Success");
-                LoggerService.Instance.LogInfo("Triggered ClearVoiceCommandCache", "SettingsViewModel.ClearVoiceCommandCache");
+                string cachePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Config.VoiceCommandCacheConfigPath);
+                if (!System.IO.File.Exists(cachePath))
+                {
+                    System.IO.File.WriteAllText(cachePath, "{}");
+                }
+
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = cachePath,
+                    UseShellExecute = true
+                });
+                LoggerService.Instance.LogInfo("Opened Voice Command Cache", "SettingsViewModel.OpenVoiceCommandCache");
             }
             catch (Exception ex)
             {
-                _dialogService.ShowAlert($"清空失败: {ex.Message}", "错误");
-                LoggerService.Instance.LogException(ex, "Failed to clear intent cache", "SettingsViewModel.ClearVoiceCommandCache");
+                _dialogService.ShowAlert($"无法打开缓存文件: {ex.Message}", "错误");
+                LoggerService.Instance.LogException(ex, "Failed to open intent cache", "SettingsViewModel.OpenVoiceCommandCache");
             }
         }
 
@@ -655,6 +663,20 @@ namespace PromptMasterv5.ViewModels
                 _mainViewModel.SidebarVM.Files = _mainViewModel.Files;
                 _mainViewModel.UpdateFilesViewFilter();
                 _mainViewModel.FilesView?.Refresh();
+
+                // Restore voice commands and intent cache
+                var voiceCommandService = (System.Windows.Application.Current as App)?.ServiceProvider.GetRequiredService<ICommandExecutionService>();
+                if (voiceCommandService != null)
+                {
+                    if (data.VoiceCommandsV2 != null && data.VoiceCommandsV2.Count > 0)
+                    {
+                        voiceCommandService.SetCommands(data.VoiceCommandsV2);
+                    }
+                    if (data.VoiceCommandIntentCache != null && data.VoiceCommandIntentCache.Count > 0)
+                    {
+                        voiceCommandService.SetIntentCache(data.VoiceCommandIntentCache);
+                    }
+                }
 
                 // Save to local
                 await _mainViewModel.PerformLocalBackup();
@@ -757,6 +779,20 @@ namespace PromptMasterv5.ViewModels
                 _mainViewModel.UpdateFilesViewFilter();
                 _mainViewModel.FilesView?.Refresh();
 
+                // Restore voice commands and intent cache for local restore
+                var voiceCommandService = (System.Windows.Application.Current as App)?.ServiceProvider.GetRequiredService<ICommandExecutionService>();
+                if (voiceCommandService != null)
+                {
+                    if (data.VoiceCommandsV2 != null && data.VoiceCommandsV2.Count > 0)
+                    {
+                        voiceCommandService.SetCommands(data.VoiceCommandsV2);
+                    }
+                    if (data.VoiceCommandIntentCache != null && data.VoiceCommandIntentCache.Count > 0)
+                    {
+                        voiceCommandService.SetIntentCache(data.VoiceCommandIntentCache);
+                    }
+                }
+
                 RestoreStatus = $"✅ 本地恢复成功: {selected.FileName}";
                 RestoreStatusColor = System.Windows.Media.Brushes.Green;
             }
@@ -780,8 +816,9 @@ namespace PromptMasterv5.ViewModels
             {
                 var voiceCommandService = (System.Windows.Application.Current as App)?.ServiceProvider.GetRequiredService<ICommandExecutionService>();
                 var voiceCommands = voiceCommandService?.GetCommands() ?? new Dictionary<string, VoiceCommand>();
+                var intentCache = voiceCommandService?.GetIntentCache() ?? new Dictionary<string, string>();
                 
-                await _dataService.SaveAsync(_mainViewModel.SidebarVM.Folders, _mainViewModel.Files, voiceCommands);
+                await _dataService.SaveAsync(_mainViewModel.SidebarVM.Folders, _mainViewModel.Files, voiceCommands, intentCache);
                 _mainViewModel.LocalConfig.LastCloudSyncTime = DateTime.Now; // Update sync time
                 _mainViewModel.IsDirty = false; // Reset dirty state indicator
                 _mainViewModel.IsEditMode = false; // Switch to preview mode on successful backup

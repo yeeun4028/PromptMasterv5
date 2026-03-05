@@ -239,6 +239,21 @@ namespace PromptMasterv5.Infrastructure.Services
             LoggerService.Instance.LogInfo("Intent cache cleared by user.", "CommandExecutionService.ClearIntentCache");
         }
 
+        public Dictionary<string, string> GetIntentCache() => new Dictionary<string, string>(_intentCache);
+
+        public void SetIntentCache(Dictionary<string, string> intentCache)
+        {
+            if (intentCache == null) return;
+            
+            // Merge the new intent cache with the existing one
+            foreach (var kvp in intentCache)
+            {
+                _intentCache[kvp.Key] = kvp.Value;
+            }
+            SaveIntentCache();
+            LoggerService.Instance.LogInfo($"Merged and saved {intentCache.Count} cached intents", "CommandExecutionService.SetIntentCache");
+        }
+
         public async System.Threading.Tasks.Task<bool> ExecuteCommandAsync(string text)
         {
             if (string.IsNullOrWhiteSpace(text)) return false;
@@ -317,10 +332,9 @@ namespace PromptMasterv5.Infrastructure.Services
 
 【路由规则】
 1. 分析用户的真实意图，并在上述指令集中寻找最匹配的一项。
-2. 允许处理同音错别字、语气词、以及模糊描述（例如用户说“电脑好卡”，应映射到“清理文件”）。
-3. 绝对严格的输出格式：只能输出指令的 Name（例如：清理文件）。
-4. 绝对禁止输出任何标点符号、解释性文字或前缀。
-5. 如果用户的输入纯粹是闲聊，或者完全不匹配任何指令，请严格输出单词：NONE";
+2. 绝对严格的输出格式：只能输出指令的 Name（例如：清理任务栏）。
+3. 如果用户的输入纯粹是闲聊、识别错误，或者无法确信对应哪个指令，请严格输出单词：NONE
+4. 【严重警告】“关机”和“重启”是破坏性高危动作！除非用户的输入中明确包含“关机”、“关闭电脑”、“重启”、“重新启动”等极为明显的字眼，否则绝对禁止将其映射到这两个指令上！宁可返回 NONE 也不要误判！";
 
                 string aiResult = await _aiService.InterpretIntentAsync(systemPrompt, text, _settingsService.Config).ConfigureAwait(false);
 
@@ -332,8 +346,23 @@ namespace PromptMasterv5.Infrastructure.Services
 
                 if (_commands.TryGetValue(aiResult, out var aiMappedCmd))
                 {
+                    // 【新增防线：大模型高危操作二次硬核校验】
+                    if (IsDangerousCommand(aiMappedCmd))
+                    {
+                        // 定义一个高危动作必须要包含的核心词库
+                        var dangerKeywords = new[] { "关机", "关闭电脑", "重启", "重新启动", "电源" };
+                        
+                        // 如果用户的原始语音里根本没有这些强意图词汇，直接拒绝大模型的建议！
+                        if (!dangerKeywords.Any(k => normalizedText.Contains(k)))
+                        {
+                            LoggerService.Instance.LogWarning($"[Semantic Routing] 拦截到大模型的危险幻觉！用户说 '{normalizedText}'，大模型却建议执行高危指令 '{aiResult}'。已强制拒绝执行！", "CommandExecutionService.ExecuteCommandAsync");
+                            return false;
+                        }
+                    }
+
                     LoggerService.Instance.LogInfo($"[Semantic Routing] AI successfully mapped intent: '{normalizedText}' -> '{aiResult}'", "CommandExecutionService.ExecuteCommandAsync");
 
+                    // 校验通过后，才允许写入缓存和执行
                     // 【线程安全】直接操作 ConcurrentDictionary 是绝对安全的
                     _intentCache[normalizedText] = aiResult;
                     SaveIntentCache();
