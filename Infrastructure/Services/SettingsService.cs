@@ -167,11 +167,14 @@ namespace PromptMasterv5.Infrastructure.Services
         {
             if (Config.WebDirectTargets == null) Config.WebDirectTargets = new();
 
+            bool added = false;
+
             void AddIfMissing(string name, string url, string icon)
             {
                 if (!Config.WebDirectTargets.Any(t => t.Name.Equals(name, System.StringComparison.OrdinalIgnoreCase)))
                 {
                     Config.WebDirectTargets.Add(new WebTarget { Name = name, UrlTemplate = url, IconData = icon });
+                    added = true;
                 }
             }
 
@@ -206,9 +209,6 @@ namespace PromptMasterv5.Infrastructure.Services
             // 9. AI Studio (Google)
             AddIfMissing("AI Studio", "https://aistudio.google.com/prompts/new_chat?q={0}",
                 "M12,2L14.5,9.5L22,12L14.5,14.5L12,22L9.5,14.5L2,12L9.5,9.5Z M12,8L13,10.5L15.5,11.5L13,12.5L12,15L11,12.5L8.5,11.5L11,10.5Z");
-
-            // Save updates
-            SaveConfig();
 
             // Migration: Ensure all targets have ?q={0} (for Userscript support)
             bool needsSave = false;
@@ -269,7 +269,8 @@ namespace PromptMasterv5.Infrastructure.Services
                 }
             }
 
-            if (needsSave) SaveConfig();
+            // 仅在有实际变化时才写盘（避免启动时无意义的重复保存）
+            if (added || needsSave) SaveConfig();
         }
 
         public void SaveConfig()

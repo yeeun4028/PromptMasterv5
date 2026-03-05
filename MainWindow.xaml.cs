@@ -116,18 +116,9 @@ namespace PromptMasterv5
 
         private void Current_Exit(object sender, ExitEventArgs e)
         {
-            // 在退出前最后保存一次窗口位置并持久化配置
-            try
-            {
-                SaveWindowPosition();
-                ViewModel?.SettingsService.SaveConfig();
-            }
-            catch (Exception ex)
-            {
-                LoggerService.Instance.LogException(ex, "Failed to save window position on exit", "MainWindow.Current_Exit");
-            }
-
-            // 确保无论程序以何种方式结束，托盘图标必定被销毁
+            // 此处是 WPF 内部的最终退出钩子，不执行保存或清理——
+            // 这些操作已由 Tray_Exit_Click → Cleanup() 完成。
+            // 此处仅作防御性的 DisposeNotifyIcon，处理非托盘退出路径（如系统关机）。
             DisposeNotifyIcon();
         }
 
