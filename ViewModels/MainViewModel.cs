@@ -313,7 +313,16 @@ public partial class MainViewModel : ObservableObject, IDisposable
         {
             UpdateFilesViewFilter();
             FilesView?.Refresh();
-            SelectedFile = null;
+            
+            if (FilesView != null && !FilesView.IsEmpty)
+            {
+                var firstItem = FilesView.Cast<PromptItem>().FirstOrDefault();
+                SelectedFile = firstItem;
+            }
+            else
+            {
+                SelectedFile = null;
+            }
         });
         WeakReferenceMessenger.Default.Register<RequestSelectFileMessage>(this, (_, m) =>
         {
