@@ -82,6 +82,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty] private LocalSettings localConfig;
     [ObservableProperty] private bool isFullMode = true;
 
+    // Expose SettingsService for MainWindow
+    public ISettingsService SettingsService => _settingsService;
+
+
     // 委托属性：转发到 SettingsViewModel（保持 XAML 兼容性）
     public bool IsSettingsOpen
     {

@@ -116,6 +116,17 @@ namespace PromptMasterv5
 
         private void Current_Exit(object sender, ExitEventArgs e)
         {
+            // 在退出前最后保存一次窗口位置并持久化配置
+            try
+            {
+                SaveWindowPosition();
+                ViewModel?.SettingsService.SaveConfig();
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Instance.LogException(ex, "Failed to save window position on exit", "MainWindow.Current_Exit");
+            }
+
             // 确保无论程序以何种方式结束，托盘图标必定被销毁
             DisposeNotifyIcon();
         }
@@ -142,6 +153,7 @@ namespace PromptMasterv5
             }
         }
 
+
         /// <summary>
         /// 公共方法：强制清理托盘图标（可从 App 层调用）
         /// </summary>
@@ -155,6 +167,10 @@ namespace PromptMasterv5
             base.OnSourceInitialized(e);
             InitializeTrayIcon();
             RestoreWindowPosition();
+
+            // 窗口每次移动或缩放时自动保存位置
+            this.LocationChanged += (_, __) => SaveWindowPosition();
+            this.SizeChanged += (_, __) => SaveWindowPosition();
 
             // 挂载窗口消息钩子，检测外部关闭请求（如 taskkill）
             var hwndSource = PresentationSource.FromVisual(this) as HwndSource;
@@ -825,6 +841,7 @@ namespace PromptMasterv5
         {
             this.Hide();
         }
+
 
         // ================================================================
         // MarkdownViewer 右键菜单替换
